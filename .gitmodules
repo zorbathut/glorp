@@ -1,0 +1,3 @@
+[submodule "Glop"]
+	path = Glop
+	url = ssh://gituser@thunderingvictory.dyndns.org/Volumes/Squee/Glop
