@@ -117,6 +117,11 @@ def Conf():
       
       env.Append(ENV = {"PATH" : os.environ['PATH'], "TEMP" : os.environ['TEMP']})  # this is not really ideal
       
+      # Check for makensis
+      installer = conf.CheckFile(["/cygdrive/c/Program Files (x86)/NSIS"], "makensis")
+      if not installer:
+        env.Exit(1)
+      
       # Set up our environment defaults
       if False:
         env.Append(CPPPATH = Split("/usr/mingw/local/include"), LIBPATH = Split("/usr/mingw/local/lib"), CCFLAGS=Split("-mno-cygwin"), CPPFLAGS=Split("-mno-cygwin"), CXXFLAGS=Split("-mno-cygwin"), LINKFLAGS=Split("-mwindows -mno-cygwin"))
@@ -142,10 +147,6 @@ def Conf():
 
         curldepend="ws2_32"
         
-        # Check for makensis
-        installer = conf.CheckFile(["/cygdrive/c/Program Files (x86)/NSIS"], "makensis")
-        if not installer:
-          env.Exit(1)
           
         defaultdata = ""
       
@@ -265,4 +266,4 @@ def Conf():
     installer = ""
     defaultdata = ""
   
-  return env, categories, flagtypes, platform
+  return env, categories, flagtypes, platform, installer

@@ -172,14 +172,14 @@ public:
   Text(const std::string &x) : Destroyable<FancyTextFrame>(x) { };
 };
 
-void glorp_init(const string &name) {
+void glorp_init(const string &name, int width, int height) {
   // Initialize
   LogToFunction(&log_to_debugstring);
   System::Init();
 
   window()->SetTitle(name);
   window()->SetVSync(true);
-  ASSERT(window()->Create(1000, 750, false));
+  ASSERT(window()->Create(width, height, false));
   
   lua_State *L = lua_open();   /* opens Lua */
   luaL_openlibs(L);

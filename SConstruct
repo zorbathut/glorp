@@ -6,11 +6,13 @@ import os
 sys.path.insert(1, os.getcwd() + "/glop/site_scons")
 
 from SConstruct_config import Conf
-#from SConstruct_installer import Installers
+from SConstruct_installer import Installers
 
 import copy
 import sys
 import re
+
+from util import exe_rv
 
 # Globals
 Decider('MD5-timestamp')
@@ -19,8 +21,8 @@ SetOption('implicit_cache', 1)
 Import('name')
 Import('sources')
 
-env, categories, flagtypes, platform = Conf()
-#MakeDeployables, MakeInstaller = Installers(platform)
+env, categories, flagtypes, platform, installers = Conf()
+MakeDeployables, MakeInstaller = Installers(platform)
 
 #stdpackage = Split("debug os util parse args init")
 
@@ -33,14 +35,14 @@ buildables = [
 
 def addReleaseVersion(buildables, item, suffix):
   tversion = [item[0] + "-" + suffix] + item[1:]
-  tversion[2] = tversion[2] + ["version_" + suffix]
+  tversion[2] = tversion[2] + ["../version_" + suffix]
   buildables += [tversion]
 
 def splitVersions(buildables, name):
   for item in [x for x in buildables if x[0] == name]:
     addReleaseVersion(buildables, item, "demo")
     addReleaseVersion(buildables, item, "release")
-    item[2] += ["version_local"]
+    item[2] += ["../version_local"]
 
 splitVersions(buildables, name)  # craft2
 
@@ -66,11 +68,11 @@ def cullitude(item, abbreviation, ptmp):
       includeculls[item] = []
       
     if item.rsplit('.', 1)[1] == "cpp":
-      includeculls[item] += env.Command("#build/%s.%s.o" % (item, abbreviation), built[(build[1], item.rsplit('.', 1)[0])], Copy("$TARGET", "$SOURCE"))
+      includeculls[item] += env.Command("#build/glorp/%s.%s.o" % (item, abbreviation), built[(build[1], item.rsplit('.', 1)[0])], Copy("$TARGET", "$SOURCE"))
     elif item.rsplit('.', 1)[1] == "h":
       if not item in includecullheaders:
-        includecullheaders[item] = env.Command("#build/%s.cpp" % item, item, Copy("$TARGET", "$SOURCE"))
-      includeculls[item] += env.Object("#build/%s.%s.o" % (item, abbreviation), includecullheaders[item], **ptmp)
+        includecullheaders[item] = env.Command("#build/glorp/%s.cpp" % item, item, Copy("$TARGET", "$SOURCE"))
+      includeculls[item] += env.Object("#build/glorp/%s.%s.o" % (item, abbreviation), includecullheaders[item], **ptmp)
     else:
       fnord();
     
@@ -97,7 +99,7 @@ for build in buildables:
   
   for item in build[2]:
     if not (build[1], item) in built:
-      built[(build[1], item)] = env.Object("#build/%s.%s.o" % (item, abbreviation), "%s.cpp" % item, **params)
+      built[(build[1], item)] = env.Object("#build/glorp/%s.%s.o" % (item, abbreviation), "%s.cpp" % item, **params)
       
       # enable the somewhat-slow includecull structures
       if provideincludecull:
@@ -110,13 +112,13 @@ for build in buildables:
   if len(build) > 3:
     for item in build[3]:
       if not (build[1], item) in built:
-        built[(build[1], item)] = env.Object("#build/%s.%s.o" % (item, abbreviation), "%s.c" % item, **params)
+        built[(build[1], item)] = env.Object("#build/glorp/%s.%s.o" % (item, abbreviation), "%s.c" % item, **params)
       objects += built[(build[1], item)]
       
   if len(build) > 4 and platform=="win":
     for item in build[4]:
       if not (build[1], item) in built:
-        built[(build[1], item)] = env.Command("#build/%s.%s.res" % (item, abbreviation), "%s.rc" % item, "nice windres $SOURCE -O coff -o $TARGET")
+        built[(build[1], item)] = env.Command("#build/glorp/%s.%s.res" % (item, abbreviation), "%s.rc" % item, "nice windres $SOURCE -O coff -o $TARGET")
       objects += built[(build[1], item)]
   
   objects += ["glop/build-dbg-Glop/libGlopDbg.a"]
@@ -125,6 +127,7 @@ for build in buildables:
 
 data_dests = {}
 data_dests["release"] = []
+data_dests["demo"] = []
   
 if 0:
   # data copying and merging
@@ -132,7 +135,6 @@ if 0:
 
   data_vecedit = [x for x in data_source if x.split('/')[0] == "vecedit"]
   data_oggize = [x for x in data_source if x.split('.')[-1] == "wav"]
-  data_merge = [x for x in data_source if x.split('.')[-1] == "unmerged"]
   data_copy = [x for x in data_source if not (x in data_vecedit or x in data_oggize or x in data_merge)]
 
   extramergedeps = {"base/tank.dwh" : ["base/weapon_sparker.dwh"], "base/factions.dwh" : [x for x in data_copy if x.rsplit('/', 1)[0] == "base/faction_icons"]}
@@ -148,18 +150,6 @@ if 0:
     
     for item in data_oggize:
       results += env.Command(dest + "/" + item.rsplit('.', 1)[0] + ".ogg", "data_source/" + item, "%s -q 6 -o $TARGET $SOURCE" % oggpath)
-    
-    for item in data_merge:
-      identifier = item.split('.')[-3].split('/')[-1]
-      destination = item.rsplit('.', 1)[0]
-      if destination in extramergedeps:
-        emgd = [dest + "/" + x for x in extramergedeps[item.rsplit('.', 1)[0]]]
-      else:
-        emgd = []
-      results += env.Command(dest + "/" + item.rsplit('.', 1)[-2], [programs["merger"], csvs[identifier], "data_source/" + item, dest + "/base/hierarchy.dwh"] + emgd, "./${SOURCES[0]} ${SOURCES[1]} ${SOURCES[2]} $TARGET --fileroot=%s %s --addr2line" % (dest, mergeflags))
-    
-    for item in data_vecedit:
-      results += env.Command(dest + "/" + item, "data_source/" + item, Copy("$TARGET", '$SOURCE'))
     
     return results
 
@@ -177,29 +167,24 @@ for key, value in programs.items():
   programs_stripped[key] = commandstrip(env, value)
 
 deployfiles = []
-#deployfiles = MakeDeployables(env, commandstrip);
-deployfiles += env.Command('#build/deploy/license.txt', '#resources/license.txt', Copy("$TARGET", '$SOURCE'))
+#deployfiles += env.Command('#build/deploy/license.txt', '#resources/license.txt', Copy("$TARGET", '$SOURCE'))
 #deployfiles += [programs_stripped["reporter"]]
 
-if 0:
-  # installers
-  with open("version_data") as f:
-    version = f.readline()
+version = str.strip(exe_rv("BASHHACK (cd .. && git describe)")[0])
 
-  def MakeInstallerShell(name, shopcaches):
-    return name
-    #return MakeInstaller(env=env, type=name, shopcaches=shopcaches, version=version, binaries=programs_stripped, data=data_dests, deployables=deployfiles, installers=installers, suffix="%s%s" % (name, quick))
+def MakeInstallerShell(typ):
+  return MakeInstaller(name=name, env=env, type=typ, version=version, binaries=programs_stripped, data=data_dests, deployables=deployfiles, installers=installers, suffix=typ)
 
-  allpackages = []
+allpackages = []
 
-  allpackages += Alias("packagedemo", MakeInstallerShell("demo"))
-  allpackages += Alias("package", Alias("packagerelease", MakeInstallerShell("release")))
+allpackages += Alias("packagedemo", MakeInstallerShell("demo"))
+allpackages += Alias("package", Alias("packagerelease", MakeInstallerShell("release")))
 
-  Alias("allpackages", allpackages)
+Alias("allpackages", allpackages)
 
 # version_*.cpp
 def addVersionFile(type):
-  env.Command('#version_%s.cpp' % type, [], 'echo extern const char dnet_version[] = \\"0.0\\"\; > $TARGET')
+  env.Command('#version_%s.cpp' % type, [], 'echo extern const char game_version[] = \\"' + version + '\\"\; > $TARGET')
 
 for item in "local demo release".split():
   addVersionFile(item)
@@ -209,8 +194,7 @@ env.Clean("#build", "#build")
 #env.Clean("data_release", "data_release")
 #env.Clean("data_demo", "data_demo")
 
-libcopy = env.Command("#build/libfreetype-6.dll", "glop/Glop/cygwin/dll/libfreetype-6.dll", Copy("$TARGET", '$SOURCE'))
-libcopy = env.Command("#build/fmodex.dll", "glop/Glop/cygwin/dll/fmodex.dll", Copy("$TARGET", '$SOURCE'))
+libcopy = [env.Command("#build/libfreetype-6.dll", "glop/Glop/cygwin/dll/libfreetype-6.dll", Copy("$TARGET", '$SOURCE')), env.Command("#build/fmodex.dll", "glop/Glop/cygwin/dll/fmodex.dll", Copy("$TARGET", '$SOURCE'))]
 env.Dir("build")
 
 # How we actually do stuff
