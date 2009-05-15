@@ -4,6 +4,7 @@ from __future__ import with_statement
 import os
 import commands
 import sys
+import re
 
 from SCons.Environment import Environment
 from SCons.Util import Split
@@ -18,13 +19,16 @@ def Installers(platform):
       deploy_dlls = Split("fmodex.dll libfreetype-6.dll")
       
       deployfiles = []
-      paths = ["../build/usr/mingw/local/bin/", "/usr/mingw/local/lib/", "/bin/"]
+      paths = ["Glop/Glop/cygwin/dll/"]
       
       for item in deploy_dlls:
+        found = False
         for prefix in paths:
           if os.path.exists(prefix + item):
             deployfiles += [commandstrip(env, prefix + item)]
+            found = True
             break
+        assert(found)
 
       return deployfiles
 
@@ -50,8 +54,8 @@ def Installers(platform):
         uninstall = 'RMDir "$INSTDIR\\%s"\n' % line + uninstall
 
       for line in files:
-        install = install + 'File "/oname=data\\%s" "%s"\n' % (line.split('\\', 1)[1], line)
-        uninstall = 'Delete "$INSTDIR\\data\\%s"\n' % line.split('\\', 1)[1] + uninstall
+        install = install + 'File "/oname=%s" "%s"\n' % (line.split('\\', 1)[1], line.split('\\', 1)[1])
+        uninstall = 'Delete "$INSTDIR\\%s"\n' % line.split('\\', 1)[1] + uninstall
 
       #install = install + 'File "/oname=settings" "settings.%s"\n' % copyprefix
       #uninstall = 'Delete "$INSTDIR\\settings"\n' + uninstall;
@@ -78,7 +82,7 @@ def Installers(platform):
             elif line == "$$$OUTFILE$$$":
               print >> otp, 'OutFile "%s"' % finaltarget
             else:
-              print >> otp, line.replace("$$$LONGNAME$$$", longname)
+              print >> otp, line.replace("$$$LONGNAME$$$", longname).replace("$$$EXENAME$$$", name + ".exe")
 
     def MakeInstaller(env, type, version, binaries, data, deployables, installers, suffix, name, longname):
       nsipath = '#build/installer_%s.nsi' % (suffix)
@@ -88,7 +92,7 @@ def Installers(platform):
       
       deps = data[type] + deployables + [mainexe]
       
-      nsirv = env.Command(nsipath, ['installer.nsi.template', 'SConstruct_installer.py'] + deps, dispatcher(generateInstaller, name=name, longname=longname, copyprefix=type, files=[str(x) for x in data[type]], deployfiles=[str(x) for x in deployables], finaltarget=finalpath, mainexe=mainexe, version=ident)) # Technically it only depends on those files existing, not their actual contents.
+      nsirv = env.Command(nsipath, ['installer.nsi.template', 'SConstruct_installer.py'] + deps, dispatcher(generateInstaller, name=name, longname=longname, copyprefix=type, files=[str(x) for x in data[type]], deployfiles=[re.search(r"build/deploy/.*", str(x)).group(0) for x in deployables], finaltarget=finalpath, mainexe=mainexe, version=ident)) # Technically it only depends on those files existing, not their actual contents.
       return env.Command(finalpath, nsirv + deps, "%s - < ${SOURCES[0]}" % installers)
     
     return MakeDeployables, MakeInstaller

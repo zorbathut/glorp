@@ -11,6 +11,7 @@ from SConstruct_installer import Installers
 import copy
 import sys
 import re
+import dircache
 
 from util import exe_rv
 
@@ -18,7 +19,7 @@ from util import exe_rv
 Decider('MD5-timestamp')
 SetOption('implicit_cache', 1)
 
-Import('name sources longname')
+Import('name sources longname data')
 
 env, categories, flagtypes, platform, installers = Conf()
 MakeDeployables, MakeInstaller = Installers(platform)
@@ -124,9 +125,20 @@ for build in buildables:
   
   programs[build[0]] = env.Program("#build/" + build[0], objects, **params)[0]
 
+def make_data():
+  rv = ["../" + x for x in data]
+  
+  list = dircache.listdir("..")
+  for item in list:
+    if item.find(".lua") != -1:
+      print(item)
+      rv += ["../" + item]
+  
+  return rv
+
 data_dests = {}
-data_dests["release"] = []
-data_dests["demo"] = []
+data_dests["release"] = make_data()
+data_dests["demo"] = make_data()
   
 if 0:
   # data copying and merging
@@ -159,13 +171,13 @@ if 0:
 
 # deploy directory and associated
 def commandstrip(env, source):
-  return env.Command('#build/deploy/%s' % str(source).split('/')[-1], source, "cp $SOURCE $TARGET && strip -s $TARGET")[0]
+  return env.Command('#build/deploy/%s' % str(source).split('/')[-1], source, "cp $SOURCE $TARGET && (strip -s $TARGET || true)")[0]
 
 programs_stripped = {}
 for key, value in programs.items():
   programs_stripped[key] = commandstrip(env, value)
 
-deployfiles = []
+deployfiles = MakeDeployables(env, commandstrip)
 #deployfiles += env.Command('#build/deploy/license.txt', '#resources/license.txt', Copy("$TARGET", '$SOURCE'))
 #deployfiles += [programs_stripped["reporter"]]
 

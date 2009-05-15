@@ -4,7 +4,7 @@ $$$VERSION$$$
 $$$TYPE$$$
 !define PRODUCT_PUBLISHER "Mandible Games"
 !define PRODUCT_WEB_SITE "http://www.mandible-games.com"
-!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\d-net.exe"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\$$$EXENAME$$$"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
@@ -27,7 +27,7 @@ SetCompressor bzip2
 ; Instfiles page
 !insertmacro MUI_PAGE_INSTFILES
 ; Finish page
-!define MUI_FINISHPAGE_RUN "$INSTDIR\d-net.exe"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\$$$EXENAME$$$"
 !insertmacro MUI_PAGE_FINISH
 
 ; Uninstaller pages
@@ -53,22 +53,22 @@ Section "MainSection" SEC01
 $$$INSTALL$$$
 
   CreateDirectory "$SMPROGRAMS\$$$LONGNAME$$$"
-  CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\$$$LONGNAME$$$.lnk" "$INSTDIR\d-net.exe"
-  CreateShortCut "$DESKTOP\$$$LONGNAME$$$.lnk" "$INSTDIR\d-net.exe"
+  CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\$$$LONGNAME$$$.lnk" "$INSTDIR\$$$EXENAME$$$"
+  CreateShortCut "$DESKTOP\$$$LONGNAME$$$.lnk" "$INSTDIR\$$$EXENAME$$$"
 SectionEnd
 
 Section -AdditionalIcons
   WriteIniStr "$INSTDIR\Mandible Games.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
-  CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\Mandible Games.lnk" "$INSTDIR\Mandible Games.url" "" "$INSTDIR\d-net.exe" 1
+  CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\Mandible Games.lnk" "$INSTDIR\Mandible Games.url" "" "$INSTDIR\$$$EXENAME$$$" 1
   CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\Uninstall.lnk" "$INSTDIR\uninst.exe"
 SectionEnd
 
 Section -Post
   WriteUninstaller "$INSTDIR\uninst.exe"
-  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\d-net.exe"
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\$$$EXENAME$$$"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
-  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\d-net.exe"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\$$$EXENAME$$$"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
