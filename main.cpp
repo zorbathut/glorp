@@ -176,12 +176,12 @@ public:
   Text(const std::string &x) : Destroyable<FancyTextFrame>(x) { };
 };
 
-int main() {
+void Init(const string &title) {
   // Initialize
   LogToFunction(&log_to_debugstring);
   System::Init();
 
-  window()->SetTitle("lol");
+  window()->SetTitle(title);
   window()->SetVSync(true);
   ASSERT(window()->Create(1024, 768, false));
   

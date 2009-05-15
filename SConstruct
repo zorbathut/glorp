@@ -17,6 +17,7 @@ Decider('MD5-timestamp')
 SetOption('implicit_cache', 1)
 
 Import('name')
+Import('sources')
 
 env, categories, flagtypes, platform = Conf()
 #MakeDeployables, MakeInstaller = Installers(platform)
@@ -27,7 +28,7 @@ SConscript("glop/SConstruct")
 
 # List of buildables
 buildables = [
-  [name, "GAME", Split("main debug debug_911_off os util parse args init")],
+  [name, "GAME", Split("core debug debug_911_off os util parse args init") + ["../" + x for x in Split(sources)]],
 ]
 
 def addReleaseVersion(buildables, item, suffix):
