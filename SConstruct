@@ -30,7 +30,7 @@ SConscript("glop/SConstruct")
 
 # List of buildables
 buildables = [
-  [name, "GAME", Split("core debug debug_911_off os util parse args init") + ["../" + x for x in Split(sources)]],
+  [name, "GAME", Split("core debug debug_911_off os util parse args init") + ["../" + x for x in Split(sources)], [], Split("resource")],
 ]
 
 def addReleaseVersion(buildables, item, suffix):
@@ -139,35 +139,6 @@ def make_data():
 data_dests = {}
 data_dests["release"] = make_data()
 data_dests["demo"] = make_data()
-  
-if 0:
-  # data copying and merging
-  data_source = traverse("data_source")
-
-  data_vecedit = [x for x in data_source if x.split('/')[0] == "vecedit"]
-  data_oggize = [x for x in data_source if x.split('.')[-1] == "wav"]
-  data_copy = [x for x in data_source if not (x in data_vecedit or x in data_oggize or x in data_merge)]
-
-  extramergedeps = {"base/tank.dwh" : ["base/weapon_sparker.dwh"], "base/factions.dwh" : [x for x in data_copy if x.rsplit('/', 1)[0] == "base/faction_icons"]}
-
-  csvs = dict([(re.match("^build/notes_(.*)\.csv$", str(item)).group(1), item) for item in env.Command(["build/notes_%s.csv" % item.split('.')[-3].split('/')[-1] for item in data_merge], [programs["ods2csv"], "notes.ods"], "./$SOURCE notes.ods --addr2line")])
-
-  def make_datadir(dest, mergeflags = ""):
-    results = []
-    vecresults = []
-    
-    for item in data_copy:
-      results += env.Command(dest + "/" + item, "data_source/" + item, Copy("$TARGET", '$SOURCE'))
-    
-    for item in data_oggize:
-      results += env.Command(dest + "/" + item.rsplit('.', 1)[0] + ".ogg", "data_source/" + item, "%s -q 6 -o $TARGET $SOURCE" % oggpath)
-    
-    return results
-
-  data_dests = {}
-  data_dests["release"] = make_datadir("data_release")
-  data_dests["demo"] = make_datadir("data_demo", "--demo")
-
 
 # deploy directory and associated
 def commandstrip(env, source):

@@ -59,7 +59,7 @@ SectionEnd
 
 Section -AdditionalIcons
   WriteIniStr "$INSTDIR\Mandible Games.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
-  CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\Mandible Games.lnk" "$INSTDIR\Mandible Games.url" "" "$INSTDIR\$$$EXENAME$$$" 1
+  CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\Mandible Games.lnk" "$INSTDIR\Mandible Games.url" "" "$INSTDIR\$$$EXENAME$$$" 0
   CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\Uninstall.lnk" "$INSTDIR\uninst.exe"
 SectionEnd
 
