@@ -28,7 +28,7 @@ def Installers(platform):
 
       return deployfiles
 
-    def generateInstaller(name, target, source, copyprefix, files, deployfiles, finaltarget, mainexe, version):
+    def generateInstaller(target, source, name, copyprefix, files, deployfiles, finaltarget, mainexe, version, longname):
 
       directories = {"data" : None}
       
@@ -41,7 +41,6 @@ def Installers(platform):
       deployfiles = [x.replace('/', '\\') for x in deployfiles]
       
       mainexe = str(mainexe).replace('/', '\\')
-      vecedit = str(vecedit).replace('/', '\\')
       
       install = ""
       uninstall = ""
@@ -54,8 +53,8 @@ def Installers(platform):
         install = install + 'File "/oname=data\\%s" "%s"\n' % (line.split('\\', 1)[1], line)
         uninstall = 'Delete "$INSTDIR\\data\\%s"\n' % line.split('\\', 1)[1] + uninstall
 
-      install = install + 'File "/oname=settings" "settings.%s"\n' % copyprefix
-      uninstall = 'Delete "$INSTDIR\\settings"\n' + uninstall;
+      #install = install + 'File "/oname=settings" "settings.%s"\n' % copyprefix
+      #uninstall = 'Delete "$INSTDIR\\settings"\n' + uninstall;
 
       for line in deployfiles:
         install = install + 'File "/oname=%s" "%s"\n' % (line.rsplit('\\', 1)[1], line)
@@ -79,17 +78,17 @@ def Installers(platform):
             elif line == "$$$OUTFILE$$$":
               print >> otp, 'OutFile "%s"' % finaltarget
             else:
-              print >> otp, line
+              print >> otp, line.replace("$$$LONGNAME$$$", longname)
 
-    def MakeInstaller(env, type, version, binaries, data, deployables, installers, suffix, name):
-      nsipath = 'build/installer_%s.nsi' % (suffix)
-      ident = '%s-%s' % (version, suffix)
-      finalpath = 'build/%s-%s-%s.exe' % (name, version, suffix)
+    def MakeInstaller(env, type, version, binaries, data, deployables, installers, suffix, name, longname):
+      nsipath = '#build/installer_%s.nsi' % (suffix)
+      ident = '%s%s' % (version, suffix)
+      finalpath = 'build/%s-%s%s.exe' % (name, version, suffix)
       mainexe = binaries[name + "-" + type]
       
       deps = data[type] + deployables + [mainexe]
       
-      nsirv = env.Command(nsipath, ['installer.nsi.template', 'SConstruct_installer.py'] + deps, dispatcher(generateInstaller, name=name, copyprefix=type, files=[str(x) for x in data[type]], deployfiles=[str(x) for x in deployables], finaltarget=finalpath, mainexe=mainexe, version=ident)) # Technically it only depends on those files existing, not their actual contents.
+      nsirv = env.Command(nsipath, ['installer.nsi.template', 'SConstruct_installer.py'] + deps, dispatcher(generateInstaller, name=name, longname=longname, copyprefix=type, files=[str(x) for x in data[type]], deployfiles=[str(x) for x in deployables], finaltarget=finalpath, mainexe=mainexe, version=ident)) # Technically it only depends on those files existing, not their actual contents.
       return env.Command(finalpath, nsirv + deps, "%s - < ${SOURCES[0]}" % installers)
     
     return MakeDeployables, MakeInstaller

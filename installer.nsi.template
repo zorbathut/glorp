@@ -1,0 +1,109 @@
+
+!define PRODUCT_NAME "$$$LONGNAME$$$"
+$$$VERSION$$$
+$$$TYPE$$$
+!define PRODUCT_PUBLISHER "Mandible Games"
+!define PRODUCT_WEB_SITE "http://www.mandible-games.com"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\d-net.exe"
+!define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
+!define PRODUCT_UNINST_ROOT_KEY "HKLM"
+
+SetCompressor bzip2
+
+; MUI 1.67 compatible ------
+!include "MUI.nsh"
+
+; MUI Settings
+!define MUI_ABORTWARNING
+!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
+!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
+
+; Welcome page
+!insertmacro MUI_PAGE_WELCOME
+; License page
+;!insertmacro MUI_PAGE_LICENSE "resources\license.txt"
+; Directory page
+!insertmacro MUI_PAGE_DIRECTORY
+; Instfiles page
+!insertmacro MUI_PAGE_INSTFILES
+; Finish page
+!define MUI_FINISHPAGE_RUN "$INSTDIR\d-net.exe"
+!insertmacro MUI_PAGE_FINISH
+
+; Uninstaller pages
+!insertmacro MUI_UNPAGE_INSTFILES
+
+; Language files
+!insertmacro MUI_LANGUAGE "English"
+
+; Reserve files
+!insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
+
+Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
+$$$OUTFILE$$$
+InstallDir "$PROGRAMFILES\$$$LONGNAME$$$"
+InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
+ShowInstDetails show
+ShowUnInstDetails show
+
+Section "MainSection" SEC01
+  SetOutPath "$INSTDIR"
+  SetOverwrite try
+
+$$$INSTALL$$$
+
+  CreateDirectory "$SMPROGRAMS\$$$LONGNAME$$$"
+  CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\$$$LONGNAME$$$.lnk" "$INSTDIR\d-net.exe"
+  CreateShortCut "$DESKTOP\$$$LONGNAME$$$.lnk" "$INSTDIR\d-net.exe"
+SectionEnd
+
+Section -AdditionalIcons
+  WriteIniStr "$INSTDIR\Mandible Games.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
+  CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\Mandible Games.lnk" "$INSTDIR\Mandible Games.url" "" "$INSTDIR\d-net.exe" 1
+  CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\Uninstall.lnk" "$INSTDIR\uninst.exe"
+SectionEnd
+
+Section -Post
+  WriteUninstaller "$INSTDIR\uninst.exe"
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\d-net.exe"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\d-net.exe"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
+SectionEnd
+
+
+
+Function un.onUninstSuccess
+  HideWindow
+  MessageBox MB_ICONINFORMATION|MB_OK "$(^Name) was successfully removed from your computer."
+FunctionEnd
+
+Function un.onInit
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove $(^Name) and all of its components?" IDYES +2
+  Abort
+FunctionEnd
+
+
+Section Uninstall
+$$$UNINSTALL$$$
+  
+  Delete "$INSTDIR\Mandible Games.url"
+  Delete "$INSTDIR\addr2linetmp.txt"
+  Delete "$INSTDIR\stderr.txt"
+  Delete "$INSTDIR\stdout.txt"
+  Delete "$INSTDIR\uninst.exe"
+  RMDir "$INSTDIR"
+  
+  Delete "$DESKTOP\$$$LONGNAME$$$.lnk"
+  Delete "$SMPROGRAMS\$$$LONGNAME$$$\Uninstall.lnk"
+  Delete "$SMPROGRAMS\$$$LONGNAME$$$\Mandible Games.lnk"
+  Delete "$SMPROGRAMS\$$$LONGNAME$$$\$$$LONGNAME$$$.lnk"
+  RMDir "$SMPROGRAMS\$$$LONGNAME$$$"
+
+  DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
+  DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
+  SetAutoClose true
+SectionEnd

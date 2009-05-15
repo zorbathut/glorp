@@ -18,8 +18,7 @@ from util import exe_rv
 Decider('MD5-timestamp')
 SetOption('implicit_cache', 1)
 
-Import('name')
-Import('sources')
+Import('name sources longname')
 
 env, categories, flagtypes, platform, installers = Conf()
 MakeDeployables, MakeInstaller = Installers(platform)
@@ -172,13 +171,13 @@ deployfiles = []
 
 version = str.strip(exe_rv("BASHHACK (cd .. && git describe)")[0])
 
-def MakeInstallerShell(typ):
-  return MakeInstaller(name=name, env=env, type=typ, version=version, binaries=programs_stripped, data=data_dests, deployables=deployfiles, installers=installers, suffix=typ)
+def MakeInstallerShell(typ, suffix):
+  return MakeInstaller(name=name, env=env, type=typ, version=version, binaries=programs_stripped, data=data_dests, deployables=deployfiles, installers=installers, suffix=suffix, longname=longname)
 
 allpackages = []
 
-allpackages += Alias("packagedemo", MakeInstallerShell("demo"))
-allpackages += Alias("package", Alias("packagerelease", MakeInstallerShell("release")))
+allpackages += Alias("packagedemo", MakeInstallerShell("demo", "-demo"))
+allpackages += Alias("package", Alias("packagerelease", MakeInstallerShell("release", "")))
 
 Alias("allpackages", allpackages)
 

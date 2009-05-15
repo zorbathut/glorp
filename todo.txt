@@ -1,0 +1,3 @@
+* Support for lua files
+* Support for datafiles
+* Support for sound (+compression)
