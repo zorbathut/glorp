@@ -1,0 +1,10 @@
+#ifndef GLORP_CORE
+#define GLORP_CORE
+
+#include <string>
+
+using namespace std;
+
+void glorp_init(const string &name, int x, int y);
+
+#endif
