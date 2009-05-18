@@ -14,6 +14,7 @@ import re
 import dircache
 
 from util import exe_rv
+from util import traverse
 
 # Globals
 Decider('MD5-timestamp')
@@ -21,7 +22,7 @@ SetOption('implicit_cache', 1)
 
 Import('name sources longname data')
 
-env, categories, flagtypes, platform, installers = Conf()
+env, categories, flagtypes, platform, installers, oggpath = Conf()
 MakeDeployables, MakeInstaller = Installers(platform)
 
 #stdpackage = Split("debug os util parse args init")
@@ -125,6 +126,11 @@ for build in buildables:
   
   programs[build[0]] = env.Program("#build/" + build[0], objects, **params)[0]
 
+data_source = traverse("../data")
+
+data_oggize = [x for x in data_source if x.split('.')[-1] == "wav"]
+data_copy = [x for x in data_source if not (x in data_oggize)]
+
 def make_data():
   rv = ["../" + x for x in data]
   
@@ -133,6 +139,15 @@ def make_data():
     if item.find(".lua") != -1:
       print(item)
       rv += ["../" + item]
+  
+  for item in data_oggize:
+    rv += env.Command("../build/data/" + item.rsplit('.', 1)[0] + ".ogg", "../data/" + item, "%s -q 6 -o $TARGET $SOURCE" % oggpath)
+  
+  for item in data_copy:
+    rv += ["../data/" + item]
+  
+  for item in rv:
+    print(str(item))
   
   return rv
 

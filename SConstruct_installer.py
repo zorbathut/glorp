@@ -36,9 +36,21 @@ def Installers(platform):
 
       directories = {"data" : None}
       
+      rfiles = []
+      for item in files:
+        print("files work", str(item))
+        if str.find(str(item), "cygdrive") != -1:
+          print("complex")
+          rfiles += [re.compile(".*no_such_thing/").sub("", str(item))]
+          print(re.compile(".*no_such_thing/").sub("", str(item)))
+        else:
+          print("simple")
+          rfiles += [item]
+      files = rfiles
+      
       for item in [x.split('/', 1)[1] for x in files]:
         for steps in range(len(item.split('/')) - 1):
-          directories["data/" + item.rsplit('/', steps + 1)[0]] = None
+          directories[item.rsplit('/', steps + 1)[0]] = None
       
       directories = [x.replace('/', '\\') for x in directories.iterkeys()]
       files = [x.replace('/', '\\') for x in files]
@@ -54,7 +66,12 @@ def Installers(platform):
         uninstall = 'RMDir "$INSTDIR\\%s"\n' % line + uninstall
 
       for line in files:
-        install = install + 'File "/oname=%s" "%s"\n' % (line.split('\\', 1)[1], line.split('\\', 1)[1])
+        print(line)
+        if str.find(line, "build\\") != -1:
+          src = line
+        else:
+          src = line.split('\\', 1)[1]
+        install = install + 'File "/oname=%s" "%s"\n' % (line.split('\\', 1)[1], src)
         uninstall = 'Delete "$INSTDIR\\%s"\n' % line.split('\\', 1)[1] + uninstall
 
       #install = install + 'File "/oname=settings" "settings.%s"\n' % copyprefix

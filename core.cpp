@@ -22,6 +22,7 @@
 
 #include "debug.h"
 #include "util.h"
+#include "core.h"
 
 using namespace std;
 
@@ -226,7 +227,7 @@ void glorp_init(const string &name, int width, int height) {
   loadfile(L, "main.lua");
   
   dprintf("lol");
-  SoundSample *ss = SoundSample::Load("ping.wav");
+  SoundSample *ss = SSLoad("ping");
   dprintf("wut");
   dprintf("ss is %08x", ss);
   ss->Play();
@@ -248,4 +249,13 @@ void glorp_init(const string &name, int width, int height) {
   }
   
   dprintf("exiting");
+}
+
+SoundSample *SSLoad(const string &fname_base) {
+  SoundSample *rv;
+  rv = SoundSample::Load("data/" + fname_base + ".ogg");
+  if(rv) return rv;
+  rv = SoundSample::Load("data/" + fname_base + ".wav");
+  if(rv) return rv;
+  CHECK(0);
 }

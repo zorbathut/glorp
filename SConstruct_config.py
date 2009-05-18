@@ -199,6 +199,10 @@ def Conf():
     if not conf.CheckLibWithHeader(None, "luabind/luabind.hpp", "c++", "luabind::open(NULL);", autoadd=0):
       env.Exit(1)
     
+    # Check for oggenc
+    oggpath = conf.CheckFile(["/cygdrive/c/windows/util", "/usr/bin"], "oggenc")
+    if not oggpath:
+      env.Exit(1)
     
     if False:
       # libm
@@ -253,11 +257,6 @@ def Conf():
         env.Exit(1)
       env.MergeFlags(dict([(k + "_EDITOR", v) for k, v in env.ParseFlags(conf.Execute(wxpath + " --libs --cxxflags --gl-libs")).items()]))
 
-      # Check for oggenc
-      oggpath = conf.CheckFile(["/cygdrive/c/windows/util", "/usr/bin"], "oggenc")
-      if not oggpath:
-        env.Exit(1)
-
     env = conf.Finish()
     
   else:
@@ -266,4 +265,4 @@ def Conf():
     installer = ""
     defaultdata = ""
   
-  return env, categories, flagtypes, platform, installer
+  return env, categories, flagtypes, platform, installer, oggpath
