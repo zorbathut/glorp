@@ -10,6 +10,7 @@
 #include <Glop/Thread.h>
 #include <Glop/glop3d/Camera.h>
 #include <Glop/glop3d/Mesh.h>
+#include <Glop/Sound.h>
 
 #include <iostream>
 
@@ -173,10 +174,16 @@ public:
 };
 
 void glorp_init(const string &name, int width, int height) {
+  //dprintf("inity");
   // Initialize
+  OutputDebugString("floppa");
   LogToFunction(&log_to_debugstring);
+  OutputDebugString("florby");
   System::Init();
 
+  OutputDebugString("florba");
+  dprintf("chupa");
+  
   window()->SetTitle(name);
   window()->SetVSync(true);
   ASSERT(window()->Create(width, height, false));
@@ -217,6 +224,12 @@ void glorp_init(const string &name, int width, int height) {
   window()->AddFrame(everything);
   
   loadfile(L, "main.lua");
+  
+  dprintf("lol");
+  SoundSample *ss = SoundSample::Load("ping.wav");
+  dprintf("wut");
+  dprintf("ss is %08x", ss);
+  ss->Play();
   
   int lasttick = system()->GetTime();
   while(window()->IsCreated()) {

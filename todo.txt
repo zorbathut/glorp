@@ -1,3 +1,5 @@
-* Iconz
+* dprintf crashes
 * Support for sound (+compression)
 * Reporter
+
+FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2009.

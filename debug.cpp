@@ -105,6 +105,7 @@ deque<string> &dbgrecord() {
   return dbr;
 }
 
+/*
 int rdprintf(const char *bort, ...) {
   CHECK(!inthread);
   inthread = true;
@@ -145,7 +146,7 @@ int rdprintf(const char *bort, ...) {
   inthread = false;
   
   return 0;
-};
+};*/
 
 static bool reentering = false;
 void HandleFailure(const char *file, int line) {
