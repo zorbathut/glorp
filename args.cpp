@@ -120,7 +120,7 @@ map< string, string > getFlagDescriptions() {
 
 void initFlags(int *argcp, const char *argv[], int ignoreargs, const string &settings) {
   int argc = *argcp;
-  *argcp = ignoreargs;
+  *argcp = min(*argcp, ignoreargs);
   
   map<string, LinkageData> &links = getLinkageSingleton();
   for(map<string, LinkageData>::iterator itr = links.begin(); itr != links.end(); itr++) {

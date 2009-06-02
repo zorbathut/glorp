@@ -24,7 +24,7 @@ def Conf():
   # Set up our environment
   env = Environment(LINKFLAGS = Split("-g -O2 -Wl,--as-needed"), CXXFLAGS=Split("-Wall -Wno-sign-compare -Wno-uninitialized -g -O2"), CPPDEFINES=["DPRINTF_MARKUP"], CXX="nice glorp/ewrap $TARGET g++")
   
-  categories = Split("GAME")
+  categories = Split("GAME REPORTER")
   flagtypes = Split("CCFLAGS CPPFLAGS CXXFLAGS LINKFLAGS LIBS CPPPATH LIBPATH CPPDEFINES")
   
   for flag in flagtypes:
@@ -84,11 +84,13 @@ def Conf():
     conf = env.Configure(custom_tests = {'CheckFile' : CheckFile, 'Execute' : Execute})
 
     curldepend=""
+    
+    env.Append(CPPDEFINES_REPORTER = "SUPPRESS_GLOP")
 
     if platform == "win": # Cygwin
       env.Append(CCFLAGS=Split("-mno-cygwin"), CPPFLAGS=Split("-mno-cygwin"), CXXFLAGS=Split("-mno-cygwin"), LINKFLAGS=Split("-mwindows -mno-cygwin"))
-      env.Append(CPPPATH=["glop/Glop/cygwin/include", "lua/include", "/usr/mingw/local/include"], LIBPATH=["glop/Glop/cygwin/lib", "/lib/mingw", "lua/lib", "/usr/mingw/local/lib"])
-      env.Append(CPPPATH_GAME = "glop/build-dbg-Glop")
+      env.Append(CPPPATH=["lua/include", "/usr/mingw/local/include"], LIBPATH=["/lib/mingw", "/usr/mingw/local/lib", "lua/lib"])
+      env.Append(CPPPATH_GAME = ["glop/build-dbg-Glop"], LIBPATH_GAME = ["glop/Glop/cygwin/lib"])
       env.Append(CPPDEFINES = "WIN32")
       
       if not conf.CheckLibWithHeader("opengl32", "GL/gl.h", "c++", "glLoadIdentity();", autoadd=0):
@@ -190,7 +192,7 @@ def Conf():
     for lib in boostlibs:
       if not conf.CheckLib(lib, autoadd=0):
         env.Exit(1)
-
+    
     if not conf.CheckLibWithHeader("lua", "lua.hpp", "c++", "lua_open();", autoadd=0):
       env.Exit(1)
     env.Append(LIBS="lua")
@@ -204,32 +206,32 @@ def Conf():
     if not oggpath:
       env.Exit(1)
     
+    # libm
+    if not conf.CheckLib("m", autoadd=0):
+      env.Exit(1)
+    env.Append(LIBS="m")
+
+    # zlib
+    if not conf.CheckLib("z", "compress", autoadd=0):
+      env.Exit(1)
+    env.Append(LIBS_GAME="z")
+    env.Append(LIBS_EDITOR="z")
+    env.Append(LIBS_REPORTER="z")
+    env.Append(LIBS_CONSOLE_MERGER="z")
+    env.Append(LIBS_CONSOLE_ODS2CSV="z")
+
+    # curl
+    curlpath = conf.CheckFile(["/usr/mingw/local/bin", "/usr/local/bin", "/usr/bin"], "curl-config")
+    if not curlpath:
+      env.Exit(1)
+    env.MergeFlags(dict([(k + "_REPORTER", v) for k, v in env.ParseFlags(conf.Execute(curlpath + " --cflags --static-libs")).items()]))
+    env.Append(CPPDEFINES_REPORTER="CURL_STATICLIB") # sigh
+    
     if False:
-      # libm
-      if not conf.CheckLib("m", autoadd=0):
-        env.Exit(1)
-      env.Append(LIBS="m")
-
-      # zlib
-      if not conf.CheckLib("z", "compress", autoadd=0):
-        env.Exit(1)
-      env.Append(LIBS_GAME="z")
-      env.Append(LIBS_EDITOR="z")
-      env.Append(LIBS_REPORTER="z")
-      env.Append(LIBS_CONSOLE_MERGER="z")
-      env.Append(LIBS_CONSOLE_ODS2CSV="z")
-
       # libpng
       if not conf.CheckLib("png", "png_create_read_struct", autoadd=0):
         env.Exit(1)
       env.Append(LIBS_EDITOR="png")
-
-      # curl
-      curlpath = conf.CheckFile(["/usr/mingw/local/bin", "/usr/local/bin", "/usr/bin"], "curl-config")
-      if not curlpath:
-        env.Exit(1)
-      env.MergeFlags(dict([(k + "_REPORTER", v) for k, v in env.ParseFlags(conf.Execute(curlpath + " --cflags --static-libs")).items()]))
-      env.Append(CPPDEFINES_REPORTER="CURL_STATICLIB") # sigh
 
       # xerces
       if not conf.CheckLib("xerces-c", autoadd=0):

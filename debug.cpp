@@ -105,8 +105,9 @@ deque<string> &dbgrecord() {
   return dbr;
 }
 
-/*
-int rdprintf(const char *bort, ...) {
+#ifdef SUPPRESS_GLOP
+
+int dprintf(const char *bort, ...) {
   CHECK(!inthread);
   inthread = true;
 
@@ -146,7 +147,9 @@ int rdprintf(const char *bort, ...) {
   inthread = false;
   
   return 0;
-};*/
+};
+
+#endif
 
 static bool reentering = false;
 void HandleFailure(const char *file, int line) {

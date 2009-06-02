@@ -1,7 +1,6 @@
 
 #include "args.h"
 #include "os.h"
-#include "package_conf.h"
 #include "util.h"
 #include "version.h"
 
@@ -44,7 +43,7 @@ void Prepare911(const char *crashfname, int crashline) {
     }
     
     vector<string> params;
-    boost::assign::push_back(params)(package_id)(fname)(package_id + "-" + dnet_version)(crashfname)(StringPrintf("%d", crashline))(StringPrintf("%d", exesize()));
+    boost::assign::push_back(params)(game_slug)(fname)(string(game_slug) + "-" + game_version)(crashfname)(StringPrintf("%d", crashline))(StringPrintf("%d", exesize()));
     SpawnProcess("reporter", params);
   }
 };

@@ -9,9 +9,18 @@
 #include <deque>
 #include <string>
 
-#include <Glop/Base.h>
+#ifndef SUPPRESS_GLOP
 
-#define dprintf LOGF
+  #include <Glop/Base.h>
+
+  #define dprintf LOGF
+
+#else
+
+#define CHECK(expression) ((expression) ? (void)(0) : (dprintf("Error at %s:%d - %s\n", __FILE__, __LINE__, #expression), exit(1)))
+int dprintf(const char *bort, ...);
+
+#endif
 
 using namespace std;
 

@@ -31,7 +31,8 @@ SConscript("glop/SConstruct")
 
 # List of buildables
 buildables = [
-  [name, "GAME", Split("core debug debug_911_off os util parse args init") + ["../" + x for x in Split(sources)], [], Split("resource")],
+  [name, "GAME", Split("core debug debug_911_on os util parse args init") + ["../" + x for x in Split(sources)], [], Split("resource")],
+  ["reporter", "REPORTER", Split("reporter_main debug_911_off os_ui os debug util parse args init")],
 ]
 
 def addReleaseVersion(buildables, item, suffix):
@@ -45,7 +46,8 @@ def splitVersions(buildables, name):
     addReleaseVersion(buildables, item, "release")
     item[2] += ["../version_local"]
 
-splitVersions(buildables, name)  # craft2
+splitVersions(buildables, name)
+splitVersions(buildables, "reporter")
 
 
 
@@ -137,7 +139,7 @@ def make_data():
   list = dircache.listdir("..")
   for item in list:
     if item.find(".lua") != -1:
-      print(item)
+      #print(item)
       rv += ["../" + item]
   
   for item in data_oggize:
@@ -147,7 +149,8 @@ def make_data():
     rv += ["../data/" + item]
   
   for item in rv:
-    print(str(item))
+    #print(str(item))
+    pass
   
   return rv
 
@@ -165,7 +168,7 @@ for key, value in programs.items():
 
 deployfiles = MakeDeployables(env, commandstrip)
 #deployfiles += env.Command('#build/deploy/license.txt', '#resources/license.txt', Copy("$TARGET", '$SOURCE'))
-#deployfiles += [programs_stripped["reporter"]]
+deployfiles += [programs_stripped["reporter-release"]]
 
 version = str.strip(exe_rv("BASHHACK (cd .. && git describe)")[0])
 
@@ -181,7 +184,7 @@ Alias("allpackages", allpackages)
 
 # version_*.cpp
 def addVersionFile(type):
-  env.Command('#version_%s.cpp' % type, [], 'echo extern const char game_version[] = \\"' + version + '\\"\; > $TARGET')
+  env.Command('#version_%s.cpp' % type, [], """echo "extern const char game_version[] = \\"%s\\";  extern const char game_fullname[] = \\"%s\\";  extern const char game_slug[] = \\"%s\\";" > $TARGET""" % (version, longname, name))
 
 for item in "local demo release".split():
   addVersionFile(item)

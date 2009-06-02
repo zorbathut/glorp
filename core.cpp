@@ -28,6 +28,9 @@ using namespace std;
 
 void log_to_debugstring(const string &str) {
   OutputDebugString(str.c_str());
+  dbgrecord().push_back(str);
+  if(dbgrecord().size() > 10000)
+    dbgrecord().pop_front();
 }
 
 extern "C" {
@@ -177,23 +180,16 @@ public:
 void glorp_init(const string &name, int width, int height) {
   //dprintf("inity");
   // Initialize
-  OutputDebugString("floppa");
   LogToFunction(&log_to_debugstring);
-  OutputDebugString("florby");
   System::Init();
 
-  OutputDebugString("florba");
-  dprintf("chupa");
-  
   window()->SetTitle(name);
   window()->SetVSync(true);
   ASSERT(window()->Create(width, height, false));
   
   lua_State *L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
-  dprintf("rega");
   lua_register(L, "print", debug_print);
-  dprintf("regb");
   
   {
     using namespace luabind;
@@ -226,10 +222,7 @@ void glorp_init(const string &name, int width, int height) {
   
   loadfile(L, "main.lua");
   
-  dprintf("lol");
   SoundSample *ss = SSLoad("ping");
-  dprintf("wut");
-  dprintf("ss is %08x", ss);
   ss->Play();
   
   int lasttick = system()->GetTime();
