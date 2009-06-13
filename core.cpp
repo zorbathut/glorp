@@ -23,6 +23,8 @@
 #include "debug.h"
 #include "util.h"
 #include "core.h"
+#include "args.h"
+#include "init.h"
 
 using namespace std;
 
@@ -177,12 +179,15 @@ public:
   Text(const std::string &x) : Destroyable<FancyTextFrame>(x) { };
 };
 
-void glorp_init(const string &name, int width, int height) {
+void glorp_init(const string &name, int width, int height, int argc, const char **argv) {
   //dprintf("inity");
   // Initialize
   LogToFunction(&log_to_debugstring);
   System::Init();
 
+  setInitFlagFile("glorp/settings");
+  initProgram(&argc, const_cast<const char ***>(&argv));
+  
   window()->SetTitle(name);
   window()->SetVSync(true);
   ASSERT(window()->Create(width, height, false));
