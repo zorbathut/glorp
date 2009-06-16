@@ -227,12 +227,12 @@ def Conf():
     env.MergeFlags(dict([(k + "_REPORTER", v) for k, v in env.ParseFlags(conf.Execute(curlpath + " --cflags --static-libs")).items()]))
     env.Append(CPPDEFINES_REPORTER="CURL_STATICLIB") # sigh
     
+    # libpng
+    if not conf.CheckLib("png", "png_create_read_struct", autoadd=0):
+      env.Exit(1)
+    env.Append(LIBS_GAME="png")
+      
     if False:
-      # libpng
-      if not conf.CheckLib("png", "png_create_read_struct", autoadd=0):
-        env.Exit(1)
-      env.Append(LIBS_EDITOR="png")
-
       # xerces
       if not conf.CheckLib("xerces-c", autoadd=0):
         env.Exit(1)

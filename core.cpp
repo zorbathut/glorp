@@ -28,6 +28,9 @@
 
 using namespace std;
 
+const int virt_width = 750;
+const int virt_height = 1000;
+
 void log_to_debugstring(const string &str) {
   OutputDebugString(str.c_str());
   dbgrecord().push_back(str);
@@ -132,41 +135,30 @@ private:
   friend std::ostream& operator<<(std::ostream &, const Sprite &);
   string icon;
 
-  float x;
-  float y;
-  float dx;
-  float dy;
-  float ts;
-  float size;
+  float sx;
+  float sy;
+  float ex;
+  float ey;
   Texture *tex;
 
 public:
   
   void Render() const {
-    float lx = x + dx * (system()->GetTime() - ts) / 1000;
-    float ly = y + dy * (system()->GetTime() - ts) / 1000;
-    
-    float ts = size * 1024 / 2;
-    int sx = (int)(lx * 1024 - ts);
-    int sy = (int)(ly * 768 - ts);
-    int ex = (int)(lx * 1024 + ts);
-    int ey = (int)(ly * 768 + ts);
-        
-    GlUtils2d::RenderTexture(sx, sy, ex, ey, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    GlUtils2d::RenderTexture((int)(sx / virt_width * window()->GetWidth()), (int)(sy / virt_height * window()->GetHeight()), (int)(ex / virt_width * window()->GetWidth()), (int)(ey / virt_height * window()->GetHeight()), tex);
   }
   
   Sprite(const string &image) {
-    tex = Texture::Load("art/" + image);
+    tex = Texture::Load("data/" + image + ".png");
+    dprintf("%s", ("data/" + image + ".png").c_str());
     CHECK(tex);
   }
   
-  void Move(float in_x, float in_y, float in_dx, float in_dy, float in_size) {
-    x = in_x;
-    y = in_y;
-    dx = in_dx;
-    dy = in_dy;
-    ts = system()->GetTime();
-    size = in_size;
+  void Move(float in_sx, float in_sy, float in_ex, float in_ey) {
+    sx = in_sx;
+    ex = in_ex;
+    sy = in_sy;
+    ey = in_ey;
   }
   
   ~Sprite() {
@@ -180,6 +172,7 @@ public:
 };
 
 void glorp_init(const string &name, int width, int height, int argc, const char **argv) {
+  
   //dprintf("inity");
   // Initialize
   LogToFunction(&log_to_debugstring);
@@ -190,7 +183,13 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
   
   window()->SetTitle(name);
   window()->SetVSync(true);
-  ASSERT(window()->Create(width, height, false));
+  
+  {
+    GlopWindowSettings gws;
+    gws.min_aspect_ratio = (float)width / height;
+    gws.min_inverse_aspect_ratio = (float)height / width;
+    ASSERT(window()->Create(width, height, false, gws));
+  }
   
   lua_State *L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
