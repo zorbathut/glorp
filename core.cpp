@@ -28,6 +28,8 @@
 
 using namespace std;
 
+lua_State *L;
+
 const int virt_width = 750;
 const int virt_height = 1000;
 
@@ -57,8 +59,7 @@ static int debug_print(lua_State *L) {
     acul += s;
     lua_pop(L, 1);  /* pop result */
   }
-  acul += "\n";
-  log_to_debugstring(acul);
+  dprintf("%s", acul.c_str());
   return 0;
 }
 }
@@ -109,6 +110,46 @@ void loadfile(lua_State *L, const char *file) {
 
 
 TableauFrame *world;
+
+#if 0
+class Receiver : public TableauFrame {
+  bool OnKeyEvent(const KeyEvent &event, bool gained_focus) {
+    if(!event.IsPress() && !event.IsRelease())
+      return false;
+    
+    const GlopKey &ki = event.GetMainKey();
+    
+    if(ki.IsMouseMotion())
+      return false;
+    
+    string kiout;
+    
+    if(ki == kMouseLButton) kiout = "lbutton";
+    else if(ki == kKeyLeft) kiout = "arrow_left";
+    else if(ki == kKeyRight) kiout = "arrow_right";
+    else if(ki == kKeyUp) kiout = "arrow_up";
+    else if(ki == kKeyDown) kiout = "arrow_down";
+    else if(ki.IsKeyboardKey()) kiout += (char)ki.index;
+    
+    if(kiout.size()) {
+      lua_getglobal(L, "input");
+      lua_pushlstring(L, kiout.c_str(), kiout.size());
+      if(event.IsPress())
+        lua_pushstring(L, "press");
+      else
+        lua_pushstring(L, "release");
+      int rv = lua_pcall(L, 2, 0, 0);
+      if (rv) {
+        dprintf("%s", lua_tostring(L, -1));
+        CHECK(0, "%s", lua_tostring(L, -1));
+        lua_pop(L, 1);  /* pop error message from the stack */
+      }
+    }
+    
+    return false;
+  }
+};
+#endif
 
 template<typename Sub> class Destroyable : public Sub {
   private:
@@ -171,6 +212,20 @@ public:
   Text(const std::string &x) : Destroyable<FancyTextFrame>(x) { };
 };
 
+bool IsKeyDownFrameAdapter(const string &id) {
+  CHECK(id.size() > 0);
+  
+  GlopKey ki;
+  
+  if(id == "arrow_left") ki = kKeyLeft; else
+  if(id == "arrow_right") ki = kKeyRight; else
+  if(id == "arrow_up") ki = kKeyUp; else
+  if(id == "arrow_down") ki = kKeyDown; else
+    ki = GlopKey(id[0]);
+  
+  return input()->IsKeyDownFrame(ki);
+};
+
 void glorp_init(const string &name, int width, int height, int argc, const char **argv) {
   
   //dprintf("inity");
@@ -191,7 +246,7 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
     ASSERT(window()->Create(width, height, false, gws));
   }
   
-  lua_State *L = lua_open();   /* opens Lua */
+  L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
   lua_register(L, "print", debug_print);
   
@@ -210,7 +265,8 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
         .def(constructor<const std::string &>())
         .def("Move", &Text::Move)
         .def("Hide", &Text::Hide)
-        .def("SetText", &Text::SetText)
+        .def("SetText", &Text::SetText),
+      def("IsKeyDownFrame", &IsKeyDownFrameAdapter)
     ];
   }
   
