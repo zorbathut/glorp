@@ -16,7 +16,7 @@ def Installers(platform):
   
   if platform == "win":
     def MakeDeployables(env, commandstrip):
-      deploy_dlls = Split("fmodex.dll libfreetype-6.dll")
+      deploy_dlls = Split("fmodex.dll libfreetype-6.dll libpng-3.dll")
       
       deployfiles = []
       paths = ["Glop/Glop/cygwin/dll/"]

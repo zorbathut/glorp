@@ -194,14 +194,14 @@ env.Clean("#build", "#build")
 #env.Clean("data_release", "data_release")
 #env.Clean("data_demo", "data_demo")
 
-libcopy = [env.Command("#build/libfreetype-6.dll", "glop/Glop/cygwin/dll/libfreetype-6.dll", Copy("$TARGET", '$SOURCE')), env.Command("#build/fmodex.dll", "glop/Glop/cygwin/dll/fmodex.dll", Copy("$TARGET", '$SOURCE'))]
+libcopy = [env.Command("#build/%s.dll" % ite, "glop/Glop/cygwin/dll/%s.dll" % ite, Copy("$TARGET", '$SOURCE')) for ite in ["libfreetype-6", "fmodex", "libpng-3"]]
 env.Dir("build")
 
 # How we actually do stuff
 def command(env, name, deps, line):
   env.AlwaysBuild(env.Alias(name, deps, line))
 
-fulldata = env.Alias(name + " program and release data", data_dests["release"] + [programs[name]] + [libcopy])
+fulldata = env.Alias(name + " program and release data", data_dests["release"] + [programs[name]] + libcopy)
 if not env.GetOption('clean'):
   env.Default(fulldata) # if we clean, we want to clean everything
 
