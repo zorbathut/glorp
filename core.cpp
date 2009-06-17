@@ -33,6 +33,10 @@ lua_State *L;
 const int virt_width = 750;
 const int virt_height = 1000;
 
+void ods(const string &str) {
+  OutputDebugString(str.c_str());
+}
+
 void log_to_debugstring(const string &str) {
   OutputDebugString(str.c_str());
   dbgrecord().push_back(str);
@@ -171,6 +175,8 @@ template<typename Sub> class Destroyable : public Sub {
     }
 };
 
+map<string, Texture *> images;
+
 class Sprite : public Destroyable<GlopFrame> {
 private:
   friend std::ostream& operator<<(std::ostream &, const Sprite &);
@@ -190,8 +196,12 @@ public:
   }
   
   Sprite(const string &image) {
-    tex = Texture::Load("data/" + image + ".png");
-    dprintf("%s", ("data/" + image + ".png").c_str());
+    if(images.count(image)) {
+      tex = images[image];
+    } else {
+      tex = Texture::Load("data/" + image + ".png");
+      images[image] = tex;
+    }
     CHECK(tex);
   }
   
@@ -200,10 +210,6 @@ public:
     ex = in_ex;
     sy = in_sy;
     ey = in_ey;
-  }
-  
-  ~Sprite() {
-    delete tex;
   }
 };
 
@@ -300,6 +306,9 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
       lua_pop(L, 1);  /* pop error message from the stack */
     }
   }
+  
+  for(map<string, Texture *>::const_iterator itr = images.begin(); itr != images.end(); itr++)
+    delete itr->second;
   
   dprintf("exiting");
 }

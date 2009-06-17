@@ -98,7 +98,7 @@ void CrashHandler(const char *fname, int line) {
     (*cfc[i])();
 };
 
-static bool inthread = false;
+static volatile bool inthread = false;
 
 deque<string> &dbgrecord() {
   static deque<string> dbr;
@@ -153,6 +153,7 @@ int dprintf(const char *bort, ...) {
 
 static bool reentering = false;
 void HandleFailure(const char *file, int line) {
+  dprintf("wut wut");
   if(reentering) {
     dprintf("Error in crash handling somewhere, terminating extremely abruptly");
   } else {

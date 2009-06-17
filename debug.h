@@ -14,7 +14,7 @@
   #include <Glop/Base.h>
 
   #define dprintf LOGF
-  #define CHECK(expression, ...) CHECK_HANDLED(dprintf("lol wut"), HandleFailure(__FILE__, __LINE__), expression, __VA_ARGS__)
+  #define CHECK(expression, ...) CHECK_HANDLED((void)(0), HandleFailure(__FILE__, __LINE__), expression, __VA_ARGS__)
 
 #else
 
