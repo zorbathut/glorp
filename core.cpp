@@ -104,11 +104,11 @@ void stackDump (lua_State *L) {
 }
 
 void loadfile(lua_State *L, const char *file) {
-  int error = luaL_dofile(L, file);
-  if (error) {
-    dprintf("%s", lua_tostring(L, -1));
-    lua_pop(L, 1);  /* pop error message from the stack */
-    CHECK(0);
+  lua_getglobal(L, "core__loadfile");
+  lua_pushstring(L, file);
+  int rv = lua_pcall(L, 1, 0, 0);
+  if (rv) {
+    CHECK(0, "%s", lua_tostring(L, -1));
   }
 }
 
@@ -146,7 +146,6 @@ class Receiver : public TableauFrame {
       if (rv) {
         dprintf("%s", lua_tostring(L, -1));
         CHECK(0, "%s", lua_tostring(L, -1));
-        lua_pop(L, 1);  /* pop error message from the stack */
       }
     }
     
@@ -177,6 +176,13 @@ template<typename Sub> class Destroyable : public Sub {
 
 map<string, Texture *> images;
 
+float cvx(float x) {
+  return x / virt_width * window()->GetWidth();
+}
+float cvy(float y) {
+  return y / virt_height * window()->GetHeight();
+}
+
 class Sprite : public Destroyable<GlopFrame> {
 private:
   friend std::ostream& operator<<(std::ostream &, const Sprite &);
@@ -192,7 +198,7 @@ public:
   
   void Render() const {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    GlUtils2d::RenderTexture((int)(sx / virt_width * window()->GetWidth()), (int)(sy / virt_height * window()->GetHeight()), (int)(ex / virt_width * window()->GetWidth()), (int)(ey / virt_height * window()->GetHeight()), tex);
+    GlUtils2d::RenderTexture((int)cvx(sx), (int)cvy(sy), (int)cvx(ex), (int)cvy(ey), tex);
   }
   
   Sprite(const string &image) {
@@ -216,6 +222,28 @@ public:
 class Text : public Destroyable<FancyTextFrame> {
 public:
   Text(const std::string &x) : Destroyable<FancyTextFrame>(x) { };
+};
+
+class Circle : public Destroyable<GlopFrame> {
+private:
+  float x;
+  float y;
+  float r;
+
+public:
+  void Render() const {
+    glColor3f(1, 1, 1);
+    glBegin(GL_LINES);
+    for(int i = 0; i <= 360; i += 5)
+      glVertex2f(cvx(x + r * sin(i * M_PI / 180)), cvy(y + r * cos(i * M_PI / 180)));
+    glEnd();
+  }
+  
+  void Move(float in_x, float in_y, float in_r) {
+    x = in_x;
+    y = in_y;
+    r = in_r;
+  }
 };
 
 bool IsKeyDownFrameAdapter(const string &id) {
@@ -272,6 +300,9 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
         .def("Move", &Text::Move)
         .def("Hide", &Text::Hide)
         .def("SetText", &Text::SetText),
+      class_<Circle>("Circle_Make")
+        .def(constructor<>())
+        .def("Move", &Circle::Move),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter)
     ];
   }
@@ -285,6 +316,16 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
   world = new TableauFrame();
   FocusFrame *everything = new FocusFrame(world);
   window()->AddFrame(everything);
+  
+  {
+    int error = luaL_dofile(L, "wrap.lua");
+    if(error) {
+      error = luaL_dofile(L, "glorp/wrap.lua");
+    }
+    if(error) {
+      CHECK(0, "%s", lua_tostring(L, -1));
+    }
+  }
   
   loadfile(L, "main.lua");
   
