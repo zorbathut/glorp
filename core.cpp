@@ -172,6 +172,10 @@ template<typename Sub> class Destroyable : public Sub {
     void Move(float x, float y) {
       world->MoveChild(id, x, y);
     }
+    
+    void SetLayer(int layer) {
+      world->MoveChild(id, layer);
+    }
 };
 
 map<string, Texture *> images;
@@ -198,7 +202,14 @@ public:
   
   void Render() const {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    GlUtils2d::RenderTexture((int)cvx(sx), (int)cvy(sy), (int)cvx(ex), (int)cvy(ey), tex);
+    
+    if(sx <= ex) {
+      GlUtils2d::RenderTexture((int)cvx(sx), (int)cvy(sy), (int)cvx(ex), (int)cvy(ey), tex);
+    } else {
+      GlUtils2d::RenderTexture((int)cvx(sx), (int)cvy(sy), (int)cvx(ex), (int)cvy(ey), float(tex->GetWidth()) / tex->GetInternalWidth(), 0, 0,
+                  float(tex->GetHeight()) / tex->GetInternalHeight(),
+                  true, tex);
+    }
   }
   
   Sprite(const string &image) {
@@ -305,6 +316,7 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
       class_<Sprite>("Sprite_Make")
         .def(constructor<const string &>())
         .def("Move", &Sprite::Move)
+        .def("SetLayer", &Sprite::SetLayer)
         .def("Hide", &Sprite::Hide),
       class_<Text>("Text_Make")
         .def(constructor<const std::string &>())
