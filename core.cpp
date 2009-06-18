@@ -221,7 +221,18 @@ public:
 
 class Text : public Destroyable<FancyTextFrame> {
 public:
-  Text(const std::string &x) : Destroyable<FancyTextFrame>(x) { };
+  void ScaledMove(float x, float y) {
+    //dprintf("%f/%f convert to %f/%f", x, y, x / virt_width, y / virt_height);
+    //dprintf("old was %f/%f", world->GetChildRelX(id), world->GetChildRelY(id));
+    Move(x / virt_width, y / virt_height);
+  }
+  void WrappedText(const string &txt) {
+    SetText("\1Cffffffff\1" + txt);
+  }
+  
+  Text(const string &txt) : Destroyable<FancyTextFrame>("hi hi hi hi hi") {
+    WrappedText(txt);
+  };
 };
 
 class Circle : public Destroyable<GlopFrame> {
@@ -297,19 +308,20 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
         .def("Hide", &Sprite::Hide),
       class_<Text>("Text_Make")
         .def(constructor<const std::string &>())
-        .def("Move", &Text::Move)
+        .def("Move", &Text::ScaledMove)
         .def("Hide", &Text::Hide)
-        .def("SetText", &Text::SetText),
+        .def("SetText", &Text::WrappedText),
       class_<Circle>("Circle_Make")
         .def(constructor<>())
-        .def("Move", &Circle::Move),
+        .def("Move", &Circle::Move)
+        .def("Hide", &Circle::Hide),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter)
     ];
   }
   
   {
-    Font *font;
-    CHECK((font = GradientFont::Load("Sansation_Regular.ttf", 1.0f, 0.5f, -0.3f, 1.0f)) != 0);
+    Font *font = GradientFont::Load("Sansation_Regular.ttf", 1.0f, 0.5f, -0.3f, 1.0f);
+    CHECK(font);
     InitDefaultFrameStyle(font);
   }
   
