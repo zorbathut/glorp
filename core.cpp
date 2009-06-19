@@ -291,6 +291,26 @@ bool IsKeyDownFrameAdapter(const string &id) {
   return input()->IsKeyDownFrame(ki);
 };
 
+map<string, SoundSample *> sounds;
+
+vector<SoundSource> ss;
+void DoASound(const string &sname) {
+  for(int i = 0; i < ss.size(); i++) {
+    if(ss[i].IsStopped()) {
+      ss[i].Stop();
+      ss.erase(ss.begin() + i);
+    }
+  }
+  if(!sounds[sname]) {
+    sounds[sname] = SSLoad(sname);
+  }
+  CHECK(sounds[sname]);
+  SoundSource nss = sounds[sname]->Play();
+  //dprintf("%d, %d\n", nss.IsPaused(), nss.IsStopped());
+  //CHECK(!nss.IsPaused() && !nss.IsStopped(), "%d, %d\n", nss.IsPaused(), nss.IsStopped());
+  ss.push_back(nss);
+};
+
 void glorp_init(const string &name, int width, int height, int argc, const char **argv) {
   
   //dprintf("inity");
@@ -347,7 +367,8 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
         .def("Hide", &Fader::Hide)
         .def("Show", &Fader::Show)
         .def("SetLayer", &Fader::SetLayer),
-      def("IsKeyDownFrame", &IsKeyDownFrameAdapter)
+      def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
+      def("PlaySound", &DoASound)
     ];
   }
   
@@ -372,9 +393,6 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
   }
   
   loadfile(L, "main.lua");
-  
-  SoundSample *ss = SSLoad("ping");
-  ss->Play();
   
   int lasttick = system()->GetTime();
   while(window()->IsCreated()) {
