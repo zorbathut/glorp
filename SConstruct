@@ -170,7 +170,7 @@ deployfiles = MakeDeployables(env, commandstrip)
 #deployfiles += env.Command('#build/deploy/license.txt', '#resources/license.txt', Copy("$TARGET", '$SOURCE'))
 deployfiles += [programs_stripped["reporter-release"]]
 
-version = str.strip(exe_rv("BASHHACK (cd .. && git describe)")[0])
+version = str.strip(exe_rv("BASHHACK (cd .. && git describe --match %s-* | sed s/%s-//)" % (name, name))[0])
 
 def MakeInstallerShell(typ, suffix):
   return MakeInstaller(name=name, env=env, type=typ, version=version, binaries=programs_stripped, data=data_dests, deployables=deployfiles, installers=installers, suffix=suffix, longname=longname)
