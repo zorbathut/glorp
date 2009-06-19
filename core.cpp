@@ -162,7 +162,7 @@ template<typename Sub> class Destroyable : public Sub {
     Destroyable<Sub>() {
       id = world->AddChild(this);
     }
-    Destroyable<Sub>(const std::string &x) : Sub(x) {
+    template <typename T> Destroyable<Sub>(const T &x) : Sub(x) {
       id = world->AddChild(this);
     }
     ~Destroyable<Sub>() {
@@ -268,6 +268,15 @@ public:
   }
 };
 
+class Fader : public Destroyable<SolidBoxFrame> {
+public:
+  Fader() : Destroyable<SolidBoxFrame>(Color(0, 0, 0, 0)) { };
+  
+  void SetOpacity(float opacity) {
+    SetColor(Color(0, 0, 0, opacity));
+  }
+};
+
 bool IsKeyDownFrameAdapter(const string &id) {
   CHECK(id.size() > 0);
   
@@ -317,16 +326,27 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
         .def(constructor<const string &>())
         .def("Move", &Sprite::Move)
         .def("SetLayer", &Sprite::SetLayer)
-        .def("Hide", &Sprite::Hide),
+        .def("Hide", &Sprite::Hide)
+        .def("Show", &Sprite::Show),
       class_<Text>("Text_Make")
         .def(constructor<const std::string &>())
         .def("Move", &Text::ScaledMove)
         .def("Hide", &Text::Hide)
+        .def("Show", &Text::Show)
+        .def("SetLayer", &Text::SetLayer)
         .def("SetText", &Text::WrappedText),
       class_<Circle>("Circle_Make")
         .def(constructor<>())
         .def("Move", &Circle::Move)
-        .def("Hide", &Circle::Hide),
+        .def("Hide", &Circle::Hide)
+        .def("Show", &Circle::Show)
+        .def("SetLayer", &Circle::SetLayer),
+      class_<Fader>("Fader_Make")
+        .def(constructor<>())
+        .def("SetOpacity", &Fader::SetOpacity)
+        .def("Hide", &Fader::Hide)
+        .def("Show", &Fader::Show)
+        .def("SetLayer", &Fader::SetLayer),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter)
     ];
   }
