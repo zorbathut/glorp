@@ -152,6 +152,8 @@ def make_data():
     #print(str(item))
     pass
   
+  rv += env.Command("../build/data/wrap.lua", "wrap.lua", "cp $SOURCE $TARGET")
+  
   return rv
 
 data_dests = {}

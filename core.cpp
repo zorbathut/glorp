@@ -383,7 +383,7 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
   window()->AddFrame(everything);
   
   {
-    int error = luaL_dofile(L, "wrap.lua");
+    int error = luaL_dofile(L, "data/wrap.lua");
     if(error) {
       error = luaL_dofile(L, "glorp/wrap.lua");
     }
