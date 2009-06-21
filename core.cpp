@@ -219,7 +219,8 @@ public:
       tex = Texture::Load("data/" + image + ".png");
       images[image] = tex;
     }
-    CHECK(tex);
+    
+    CHECK(tex, "%s\n", image.c_str());
   }
   
   void Move(float in_sx, float in_sy, float in_ex, float in_ey) {
@@ -277,7 +278,7 @@ public:
   }
 };
 
-bool IsKeyDownFrameAdapter(const string &id) {
+GlopKey adapt(const string &id) {
   CHECK(id.size() > 0);
   
   GlopKey ki;
@@ -286,9 +287,18 @@ bool IsKeyDownFrameAdapter(const string &id) {
   if(id == "arrow_right") ki = kKeyRight; else
   if(id == "arrow_up") ki = kKeyUp; else
   if(id == "arrow_down") ki = kKeyDown; else
+  if(id == "enter") ki = kKeyEnter; else
     ki = GlopKey(id[0]);
   
-  return input()->IsKeyDownFrame(ki);
+  return ki;
+}
+
+bool IsKeyDownFrameAdapter(const string &id) {
+  return input()->IsKeyDownFrame(adapt(id));
+};
+
+bool WasKeyPressedAdapter(const string &id) {
+  return input()->WasKeyPressed(adapt(id), false);
 };
 
 map<string, SoundSample *> sounds;
@@ -368,6 +378,7 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
         .def("Show", &Fader::Show)
         .def("SetLayer", &Fader::SetLayer),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
+      def("WasKeyPressed_Frame", &WasKeyPressedAdapter),
       def("PlaySound", &DoASound)
     ];
   }
@@ -399,7 +410,7 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
     system()->Think();
     
     int thistick = system()->GetTime();
-    lua_getglobal(L, "loop");
+    lua_getglobal(L, "loop_wrap");
     lua_pushnumber(L, thistick - lasttick);
     lasttick = thistick;
     int rv = lua_pcall(L, 1, 0, 0);
