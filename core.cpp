@@ -421,6 +421,8 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
     }
   }
   
+  lua_close(L);
+  
   for(map<string, Texture *>::const_iterator itr = images.begin(); itr != images.end(); itr++)
     delete itr->second;
   
