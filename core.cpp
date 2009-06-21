@@ -321,6 +321,10 @@ void DoASound(const string &sname) {
   ss.push_back(nss);
 };
 
+void TriggerExit() {
+  window()->Destroy();
+};
+
 void glorp_init(const string &name, int width, int height, int argc, const char **argv) {
   
   //dprintf("inity");
@@ -379,7 +383,8 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
         .def("SetLayer", &Fader::SetLayer),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
       def("WasKeyPressed_Frame", &WasKeyPressedAdapter),
-      def("PlaySound", &DoASound)
+      def("PlaySound", &DoASound),
+      def("TriggerExit", &TriggerExit)
     ];
   }
   
