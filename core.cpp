@@ -357,26 +357,7 @@ void TriggerExit() {
   window()->Destroy();
 };
 
-void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
-  
-  //dprintf("inity");
-  // Initialize
-  LogToFunction(&log_to_debugstring);
-  System::Init();
-
-  setInitFlagFile("glorp/settings");
-  initProgram(&argc, const_cast<const char ***>(&argv));
-  
-  window()->SetTitle(name);
-  window()->SetVSync(true);
-  
-  {
-    GlopWindowSettings gws;
-    gws.min_aspect_ratio = (float)width / height;
-    gws.min_inverse_aspect_ratio = (float)height / width;
-    ASSERT(window()->Create(width, height, false, gws));
-  }
-  
+void luainit() {
   L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
   luaopen_opengl(L);
@@ -421,6 +402,41 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
       def("RegisterRenderLayer", &RegisterRenderLayer)
     ];
   }
+    
+  int error = luaL_dofile(L, "data/wrap.lua");
+  if(error) {
+    error = luaL_dofile(L, "glorp/wrap.lua");
+  }
+  if(error) {
+    CHECK(0, "%s", lua_tostring(L, -1));
+  }
+    
+  loadfile(L, "main.lua");
+}
+void luashutdown() {
+  lua_close(L);
+  L = NULL;
+}
+
+void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
+  
+  //dprintf("inity");
+  // Initialize
+  LogToFunction(&log_to_debugstring);
+  System::Init();
+
+  setInitFlagFile("glorp/settings");
+  initProgram(&argc, const_cast<const char ***>(&argv));
+  
+  window()->SetTitle(name);
+  window()->SetVSync(true);
+  
+  {
+    GlopWindowSettings gws;
+    gws.min_aspect_ratio = (float)width / height;
+    gws.min_inverse_aspect_ratio = (float)height / width;
+    ASSERT(window()->Create(width, height, false, gws));
+  }
   
   {
     Font *font = GradientFont::Load(fontname.c_str(), 1.0f, 0.5f, -0.3f, 1.0f);
@@ -432,17 +448,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   FocusFrame *everything = new FocusFrame(world);
   window()->AddFrame(everything);
   
-  {
-    int error = luaL_dofile(L, "data/wrap.lua");
-    if(error) {
-      error = luaL_dofile(L, "glorp/wrap.lua");
-    }
-    if(error) {
-      CHECK(0, "%s", lua_tostring(L, -1));
-    }
-  }
-  
-  loadfile(L, "main.lua");
+  luainit();
   
   int lasttick = system()->GetTime();
   while(window()->IsCreated()) {
@@ -459,9 +465,14 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
       CHECK(0, "%s", lua_tostring(L, -1));
       lua_pop(L, 1);  /* pop error message from the stack */
     }
+    
+    if(input()->IsKeyDownFrame(kKeyF12)) {
+      luashutdown();
+      luainit();
+    }
   }
   
-  lua_close(L);
+  luashutdown();
   
   for(map<string, Texture *>::const_iterator itr = images.begin(); itr != images.end(); itr++)
     delete itr->second;
