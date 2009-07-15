@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void glorp_init(const string &name, int x, int y, int argc, const char **argv);
+void glorp_init(const string &name, const string &fontname, int x, int y, int argc, const char **argv);
 
 SoundSample *SSLoad(const string &fname_base);
 

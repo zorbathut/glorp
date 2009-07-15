@@ -31,7 +31,7 @@ SConscript("glop/SConstruct")
 
 # List of buildables
 buildables = [
-  [name, "GAME", Split("core debug debug_911_on os util parse args init") + ["../" + x for x in Split(sources)], [], Split("resource")],
+  [name, "GAME", Split("core debug debug_911_on os util parse args init") + ["../" + x for x in Split(sources)], Split("LuaGL"), Split("resource")],
   ["reporter", "REPORTER", Split("reporter_main debug_911_off os_ui os debug util parse args init")],
 ]
 

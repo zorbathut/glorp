@@ -26,6 +26,8 @@
 #include "args.h"
 #include "init.h"
 
+#include "LuaGL.h"
+
 using namespace std;
 
 lua_State *L;
@@ -178,6 +180,36 @@ template<typename Sub> class Destroyable : public Sub {
     }
 };
 
+class Layer : public Destroyable<GlopFrame> {
+  int layer;
+public:
+  
+  void Render() const {
+    lua_getglobal(L, "generic_wrap");
+    lua_getglobal(L, "render");
+    lua_pushnumber(L, layer);
+    int rv = lua_pcall(L, 2, 0, 0);
+    if (rv) {
+      dprintf("%s", lua_tostring(L, -1));
+      CHECK(0);
+    }
+  }
+  
+  Layer(int lay) : Destroyable<GlopFrame>() {
+    SetLayer(lay);
+    layer = lay;
+  }
+};
+
+map<int, Layer *> layers;
+
+void RegisterRenderLayer(int lay) {
+  if(!layers[lay]) {
+    layers[lay] = new Layer(lay);
+  }
+}
+
+
 map<string, Texture *> images;
 
 float cvx(float x) {
@@ -325,7 +357,7 @@ void TriggerExit() {
   window()->Destroy();
 };
 
-void glorp_init(const string &name, int width, int height, int argc, const char **argv) {
+void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
   
   //dprintf("inity");
   // Initialize
@@ -347,6 +379,7 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
   
   L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
+  luaopen_opengl(L);
   lua_register(L, "print", debug_print);
   
   {
@@ -384,12 +417,13 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
       def("WasKeyPressed_Frame", &WasKeyPressedAdapter),
       def("PlaySound", &DoASound),
-      def("TriggerExit", &TriggerExit)
+      def("TriggerExit", &TriggerExit),
+      def("RegisterRenderLayer", &RegisterRenderLayer)
     ];
   }
   
   {
-    Font *font = GradientFont::Load("Sansation_Regular.ttf", 1.0f, 0.5f, -0.3f, 1.0f);
+    Font *font = GradientFont::Load(fontname.c_str(), 1.0f, 0.5f, -0.3f, 1.0f);
     CHECK(font);
     InitDefaultFrameStyle(font);
   }
@@ -415,10 +449,11 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
     system()->Think();
     
     int thistick = system()->GetTime();
-    lua_getglobal(L, "loop_wrap");
+    lua_getglobal(L, "generic_wrap");
+    lua_getglobal(L, "loop");
     lua_pushnumber(L, thistick - lasttick);
     lasttick = thistick;
-    int rv = lua_pcall(L, 1, 0, 0);
+    int rv = lua_pcall(L, 2, 0, 0);
     if (rv) {
       dprintf("%s", lua_tostring(L, -1));
       CHECK(0, "%s", lua_tostring(L, -1));
