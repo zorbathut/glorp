@@ -39,7 +39,7 @@ SetCompressor bzip2
 ; Reserve files
 !insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
 
-Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
+Name "${PRODUCT_NAME}"
 $$$OUTFILE$$$
 InstallDir "$PROGRAMFILES\$$$LONGNAME$$$"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
