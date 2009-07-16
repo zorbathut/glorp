@@ -461,9 +461,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     lasttick = thistick;
     int rv = lua_pcall(L, 2, 0, 0);
     if (rv) {
-      dprintf("%s", lua_tostring(L, -1));
       CHECK(0, "%s", lua_tostring(L, -1));
-      lua_pop(L, 1);  /* pop error message from the stack */
     }
     
     if(input()->IsKeyDownFrame(kKeyF12)) {

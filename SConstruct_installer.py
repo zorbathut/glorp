@@ -38,13 +38,13 @@ def Installers(platform):
       
       rfiles = []
       for item in files:
-        print("files work", str(item))
+        #print("files work", str(item))
         if str.find(str(item), "cygdrive") != -1:
-          print("complex")
-          rfiles += [re.compile(".*no_such_thing/").sub("", str(item))]
-          print(re.compile(".*no_such_thing/").sub("", str(item)))
+          #print("complex")
+          rfiles += [re.compile(".*%s/" % name).sub("", str(item))]
+          #print(re.compile(".*no_such_thing/").sub("", str(item)))
         else:
-          print("simple")
+          #print("simple")
           rfiles += [item]
       files = rfiles
       
