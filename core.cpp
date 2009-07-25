@@ -32,8 +32,8 @@ using namespace std;
 
 lua_State *L;
 
-const int virt_width = 750;
-const int virt_height = 1000;
+const int virt_width = 640;
+const int virt_height = 480;
 
 void ods(const string &str) {
   OutputDebugString(str.c_str());
@@ -329,6 +329,10 @@ public:
     SetText("\1Cffffffff\1" + txt);
   }
   
+  void Render() const {
+    Destroyable<FancyTextFrame>::Render();
+  }
+  
   Text(const string &txt) : Destroyable<FancyTextFrame>("hi hi hi hi hi") {
     WrappedText(txt);
   };
@@ -479,6 +483,10 @@ void luainit() {
 void luashutdown() {
   lua_close(L);
   L = NULL;
+  
+  for(map<int, Layer*>::iterator itr = layers.begin(); itr != layers.end(); itr++)
+    delete itr->second;
+  layers.clear();
 }
 
 void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
@@ -502,7 +510,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   }
   
   {
-    Font *font = ShadowFont::Load(fontname.c_str());
+    Font *font = ShadowFont::Load(fontname.c_str(), 0.05, 0.05);
     CHECK(font);
     InitDefaultFrameStyle(font);
   }
