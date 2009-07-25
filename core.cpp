@@ -203,14 +203,74 @@ public:
 
 map<int, Layer *> layers;
 
+
+map<string, Texture *> images;
+Texture *getTex(const string &image) {
+  Texture *tex;
+  if(images.count(image)) {
+    tex = images[image];
+  } else {
+    Image *img = Image::Load("data/" + image + ".png");
+    CHECK(img);
+    
+    for(int y = 0; y < img->GetHeight(); y++)
+      for(int x = 0; x < img->GetWidth(); x++)
+        if(*(unsigned long*)img->Get(x, y) == 0xffffffff)
+          *(unsigned long*)img->Get(x, y) = 0;
+    
+    tex = new Texture(img);   // we leak some stuff here
+    images[image] = tex;
+  }
+  
+  return tex;
+}
+
+class WrappedTex {
+private:
+  Texture *tex;
+
+public:
+  WrappedTex(const string &t) {
+    tex = getTex(t);
+    CHECK(tex, "%s", t.c_str());
+  }
+    
+  int GetWidth() const {
+    return tex->GetWidth();
+  }
+  int GetHeight() const {
+    return tex->GetHeight();
+  }
+  int GetInternalWidth() const {
+    return tex->GetInternalWidth();
+  }
+  int GetInternalHeight() const {
+    return tex->GetInternalHeight();
+  }
+  
+  void SetTexture() {
+    GlUtils::SetTexture(tex);
+    
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
+    //glTranslatef(-1 / (float)tex->GetInternalWidth() / 2, -1 / (float)tex->GetInternalHeight() / 2, 0);
+    glMatrixMode(GL_MODELVIEW);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
+};
+
+void SetNoTex() {
+  GlUtils::SetNoTexture();
+  glMatrixMode(GL_TEXTURE);
+  glLoadIdentity();
+  glMatrixMode(GL_MODELVIEW);
+}
+
 void RegisterRenderLayer(int lay) {
   if(!layers[lay]) {
     layers[lay] = new Layer(lay);
   }
 }
-
-
-map<string, Texture *> images;
 
 float cvx(float x) {
   return x / virt_width * window()->GetWidth();
@@ -245,13 +305,8 @@ public:
   }
   
   Sprite(const string &image) {
-    if(images.count(image)) {
-      tex = images[image];
-    } else {
-      tex = Texture::Load("data/" + image + ".png");
-      images[image] = tex;
-    }
-    
+    tex = getTex(image);
+
     CHECK(tex, "%s\n", image.c_str());
   }
   
@@ -395,6 +450,14 @@ void luainit() {
         .def("Hide", &Fader::Hide)
         .def("Show", &Fader::Show)
         .def("SetLayer", &Fader::SetLayer),
+      class_<WrappedTex>("Texture")
+        .def(constructor<const std::string &>())
+        .def("GetWidth", &WrappedTex::GetWidth)
+        .def("GetHeight", &WrappedTex::GetHeight)
+        .def("GetInternalWidth", &WrappedTex::GetInternalWidth)
+        .def("GetInternalHeight", &WrappedTex::GetInternalHeight)
+        .def("SetTexture", &WrappedTex::SetTexture),
+      def("SetNoTexture", &SetNoTex),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
       def("WasKeyPressed_Frame", &WasKeyPressedAdapter),
       def("PlaySound", &DoASound),
@@ -439,7 +502,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   }
   
   {
-    Font *font = GradientFont::Load(fontname.c_str(), 1.0f, 0.5f, -0.3f, 1.0f);
+    Font *font = ShadowFont::Load(fontname.c_str());
     CHECK(font);
     InitDefaultFrameStyle(font);
   }
