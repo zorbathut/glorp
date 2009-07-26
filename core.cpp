@@ -211,7 +211,7 @@ Texture *getTex(const string &image) {
     tex = images[image];
   } else {
     Image *img = Image::Load("data/" + image + ".png");
-    CHECK(img);
+    CHECK(img, image.c_str());
     
     for(int y = 0; y < img->GetHeight(); y++)
       for(int x = 0; x < img->GetWidth(); x++)
@@ -555,5 +555,5 @@ SoundSample *SSLoad(const string &fname_base) {
   if(rv) return rv;
   rv = SoundSample::Load("data/" + fname_base + ".wav");
   if(rv) return rv;
-  CHECK(0);
+  CHECK(0, fname_base.c_str());
 }
