@@ -1,3 +1,6 @@
+package.path = package.path .. ";data\\?.lua;glorp\\resources\\?.lua"
+
+require("jit.opt").start()
 
 local function barf(err)
   local chunkies = {}
