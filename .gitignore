@@ -1,1 +1,3 @@
 *.pyc
+luabuild/*/src/*.o
+luabuild/*/src/*.a

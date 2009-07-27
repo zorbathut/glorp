@@ -481,7 +481,9 @@ void luainit() {
   loadfile(L, "main.lua");
 }
 void luashutdown() {
+  dprintf("lua closing");
   lua_close(L);
+  dprintf("lua closed");
   L = NULL;
   
   for(map<int, Layer*>::iterator itr = layers.begin(); itr != layers.end(); itr++)
