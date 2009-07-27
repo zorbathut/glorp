@@ -336,6 +336,10 @@ public:
   Text(const string &txt) : Destroyable<FancyTextFrame>("hi hi hi hi hi") {
     WrappedText(txt);
   };
+  
+  ~Text() { 
+    dprintf("Obliterating text");
+  }
 };
 
 class Circle : public Destroyable<GlopFrame> {

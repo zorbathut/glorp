@@ -22,7 +22,8 @@ class SconToken:  # man, don't even ask
 def Conf():
 
   # Set up our environment
-  env = Environment(LINKFLAGS = Split("-g -O2 -Wl,--as-needed"), CXXFLAGS=Split("-Wall -Wno-sign-compare -Wno-uninitialized -g -O2"), CPPDEFINES=["DPRINTF_MARKUP"], CXX="nice glorp/ewrap $TARGET g++")
+  #env = Environment(LINKFLAGS = Split("-g -O2 -Wl,--as-needed"), CXXFLAGS=Split("-Wall -Wno-sign-compare -Wno-uninitialized -g -O2"), CPPDEFINES=["DPRINTF_MARKUP"], CXX="nice glorp/ewrap $TARGET g++")
+  env = Environment(LINKFLAGS = Split("-g -Wl,--as-needed"), CXXFLAGS=Split("-Wall -Wno-sign-compare -Wno-uninitialized -g"), CPPDEFINES=["DPRINTF_MARKUP"], CXX="nice glorp/ewrap $TARGET g++")
   
   categories = Split("GAME REPORTER")
   flagtypes = Split("CCFLAGS CPPFLAGS CXXFLAGS LINKFLAGS LIBS CPPPATH LIBPATH CPPDEFINES")
