@@ -1,6 +1,6 @@
 package.path = package.path .. ";data\\?.lua;glorp\\resources\\?.lua"
 
---require("jit.opt").start()
+require("jit.opt").start()
 
 local function barf(err)
   local chunkies = {}
@@ -91,4 +91,56 @@ function coroutine.wrap(cof, ...)
       return rv
     end
   end)
+end
+
+
+
+-- hurrr
+do
+  local shutup = false
+  function testerror(bef)
+    if shutup then return end
+    local err = gl.GetError()
+    assert(err == "NO_ERROR", err ..  "   " .. bef)
+  end
+  for k, v in pairs(gl) do
+    if k ~= "GetError" then
+      gl[k] = function (...)
+        testerror("before")
+        return (function (...)
+          if k == "Begin" then
+            shutup = true
+          elseif k == "End" then
+            shutup = false
+          end
+          testerror("after")
+          return ...
+        end)(v(...))
+      end
+    end
+  end
+end
+
+function coroutine.pause(frames)
+  for i = 1, frames do coroutine.yield() end
+end
+
+
+
+function export_items_rw(tab, items)
+  local lookup = {}
+  for _, v in pairs(items) do
+    lookup[v] = true
+  end
+  
+  return setmetatable({}, {__index = function(_, k) return lookup[k] and tab[k] or nil end, __newindex = function(t, k, a) if lookup[k] then tab[k] = a else t[k] = a end end})
+end
+
+function export_items_ro(tab, items)
+  local lookup = {}
+  for _, v in pairs(items) do
+    lookup[v] = tab[v]
+  end
+  
+  return setmetatable({}, {__index = lookup})
 end
