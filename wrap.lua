@@ -144,3 +144,10 @@ function export_items_ro(tab, items)
   
   return setmetatable({}, {__index = lookup})
 end
+
+
+function perfbar(r, g, b, func, ...)
+  local pb = Perfbar_Init(r, g, b)
+  func(...)
+  pb:Destroy()
+end

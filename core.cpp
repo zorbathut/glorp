@@ -25,6 +25,7 @@
 #include "core.h"
 #include "args.h"
 #include "init.h"
+#include "perfbar.h"
 
 #include "LuaGL.h"
 
@@ -185,6 +186,8 @@ class Layer : public Destroyable<GlopFrame> {
 public:
   
   void Render() const {
+    PerfStack pb(0.5, 0.0, 0.0);
+    
     lua_getglobal(L, "generic_wrap");
     lua_getglobal(L, "render");
     lua_pushnumber(L, layer);
@@ -202,6 +205,16 @@ public:
 };
 
 map<int, Layer *> layers;
+
+
+class Perfbar : public GlopFrame {
+public:
+  
+  void Render() const {
+    drawPerformanceBar();
+    startPerformanceBar();
+  }
+};
 
 
 map<string, Texture *> images;
@@ -298,9 +311,7 @@ public:
     if(sx <= ex) {
       GlUtils2d::RenderTexture((int)cvx(sx), (int)cvy(sy), (int)cvx(ex), (int)cvy(ey), tex);
     } else {
-      GlUtils2d::RenderTexture((int)cvx(sx), (int)cvy(sy), (int)cvx(ex), (int)cvy(ey), float(tex->GetWidth()) / tex->GetInternalWidth(), 0, 0,
-                  float(tex->GetHeight()) / tex->GetInternalHeight(),
-                  true, tex);
+      GlUtils2d::RenderTexture((int)cvx(sx), (int)cvy(sy), (int)cvx(ex), (int)cvy(ey), float(tex->GetWidth()) / tex->GetInternalWidth(), 0, 0, float(tex->GetHeight()) / tex->GetInternalHeight(), true, tex);
     }
   }
   
@@ -339,28 +350,6 @@ public:
   
   ~Text() { 
     dprintf("Obliterating text");
-  }
-};
-
-class Circle : public Destroyable<GlopFrame> {
-private:
-  float x;
-  float y;
-  float r;
-
-public:
-  void Render() const {
-    glColor3f(1, 1, 1);
-    glBegin(GL_LINES);
-    for(int i = 0; i <= 360; i += 5)
-      glVertex2f(cvx(x + r * sin(i * M_PI / 180)), cvy(y + r * cos(i * M_PI / 180)));
-    glEnd();
-  }
-  
-  void Move(float in_x, float in_y, float in_r) {
-    x = in_x;
-    y = in_y;
-    r = in_r;
   }
 };
 
@@ -416,6 +405,20 @@ void DoASound(const string &sname) {
   ss.push_back(nss);
 };
 
+class PerfBarManager {
+  PerfStack *ps;
+  
+public:
+  PerfBarManager(float r, float g, float b) {
+    ps = new PerfStack(r, g, b);
+  }
+  
+  void Destroy() {
+    delete ps;
+    ps = NULL;
+  }
+};
+
 void TriggerExit() {
   window()->Destroy();
 };
@@ -446,12 +449,6 @@ void luainit() {
         .def("Show", &Text::Show)
         .def("SetLayer", &Text::SetLayer)
         .def("SetText", &Text::WrappedText),
-      class_<Circle>("Circle_Make")
-        .def(constructor<>())
-        .def("Move", &Circle::Move)
-        .def("Hide", &Circle::Hide)
-        .def("Show", &Circle::Show)
-        .def("SetLayer", &Circle::SetLayer),
       class_<Fader>("Fader_Make")
         .def(constructor<>())
         .def("SetOpacity", &Fader::SetOpacity)
@@ -465,6 +462,9 @@ void luainit() {
         .def("GetInternalWidth", &WrappedTex::GetInternalWidth)
         .def("GetInternalHeight", &WrappedTex::GetInternalHeight)
         .def("SetTexture", &WrappedTex::SetTexture),
+      class_<PerfBarManager>("Perfbar_Init")
+        .def(constructor<float, float, float>())
+        .def("Destroy", &PerfBarManager::Destroy),
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
       def("WasKeyPressed_Frame", &WasKeyPressedAdapter),
@@ -513,6 +513,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     gws.min_aspect_ratio = (float)width / height;
     gws.min_inverse_aspect_ratio = (float)height / width;
     ASSERT(window()->Create(width, height, false, gws));
+    window()->SetVSync(false);
   }
   
   {
@@ -522,6 +523,10 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   }
   
   world = new TableauFrame();
+  {
+    ListId fid = world->AddChild(new Perfbar);
+    world->MoveChild(fid, 100000);
+  }
   FocusFrame *everything = new FocusFrame(world);
   window()->AddFrame(everything);
   
@@ -531,14 +536,18 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   while(window()->IsCreated()) {
     system()->Think();
     
-    int thistick = system()->GetTime();
-    lua_getglobal(L, "generic_wrap");
-    lua_getglobal(L, "loop");
-    lua_pushnumber(L, thistick - lasttick);
-    lasttick = thistick;
-    int rv = lua_pcall(L, 2, 0, 0);
-    if (rv) {
-      CHECK(0, "%s", lua_tostring(L, -1));
+    {
+      PerfStack pb(0.0, 0.0, 0.5);
+      
+      int thistick = system()->GetTime();
+      lua_getglobal(L, "generic_wrap");
+      lua_getglobal(L, "loop");
+      lua_pushnumber(L, thistick - lasttick);
+      lasttick = thistick;
+      int rv = lua_pcall(L, 2, 0, 0);
+      if (rv) {
+        CHECK(0, "%s", lua_tostring(L, -1));
+      }
     }
     
     if(input()->IsKeyDownFrame(kKeyF12)) {
