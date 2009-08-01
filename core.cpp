@@ -29,6 +29,8 @@
 
 #include "LuaGL.h"
 
+DEFINE_bool(editor, false, "Ingame editor");
+
 using namespace std;
 
 lua_State *L;
@@ -481,8 +483,11 @@ void luainit() {
   if(error) {
     CHECK(0, "%s", lua_tostring(L, -1));
   }
-    
-  loadfile(L, "main.lua");
+  
+  if(FLAGS_editor)
+    loadfile(L, "editor.lua");
+  else
+    loadfile(L, "main.lua");
 }
 void luashutdown() {
   dprintf("lua closing");

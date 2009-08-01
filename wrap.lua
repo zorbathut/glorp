@@ -139,6 +139,7 @@ end
 function export_items_ro(tab, items)
   local lookup = {}
   for _, v in pairs(items) do
+    assert(tab[v])
     lookup[v] = tab[v]
   end
   
@@ -150,4 +151,18 @@ function perfbar(r, g, b, func, ...)
   local pb = Perfbar_Init(r, g, b)
   func(...)
   pb:Destroy()
+end
+
+
+
+function io.dump(filename, contents)
+  t = io.open(filename, "wb")
+  t:write(contents)
+  t:close()
+end
+function io.snatch(filename)
+  t = io.open(filename, "rb")
+  local dat = t:read("*all")
+  t:close()
+  return dat
 end

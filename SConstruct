@@ -214,7 +214,7 @@ localflags = ""
 stdrun = localflags + ""
 
 command(env, "run", fulldata, "%s %s" % (programs[name], stdrun))
-#command(env, "run", fulldata, "%s %s" % ("cygcheck", programs[name]))
+command(env, "editor", fulldata, "%s %s --editor" % (programs[name], stdrun))
 command(env, "runclean", fulldata, "%s %s" % (programs[name], localflags))
 
 for key, value in includeculls.items():
