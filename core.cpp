@@ -118,6 +118,15 @@ void loadfile(lua_State *L, const char *file) {
 }
 
 
+void meltdown() {
+  lua_getglobal(L, "generic_wrap");
+  lua_getglobal(L, "fuckshit");
+  int rv = lua_pcall(L, 1, 0, 0);
+  if (rv) {
+    CHECK(0, "%s", lua_tostring(L, -1));
+  }
+}
+
 TableauFrame *world;
 
 template<typename Sub> class Destroyable : public Sub {
@@ -157,6 +166,7 @@ public:
     int rv = lua_pcall(L, 2, 0, 0);
     if (rv) {
       dprintf("%s", lua_tostring(L, -1));
+      meltdown();
       CHECK(0);
     }
   }
@@ -187,7 +197,10 @@ Texture *getTex(const string &image) {
     tex = images[image];
   } else {
     Image *img = Image::Load("data/" + image + ".png");
-    CHECK(img, image.c_str());
+    if(!img) {
+      meltdown();
+      CHECK(img, image.c_str());
+    }
     
     for(int y = 0; y < img->GetHeight(); y++)
       for(int x = 0; x < img->GetWidth(); x++)
@@ -366,7 +379,11 @@ void DoASound(const string &sname) {
   if(!sounds[sname]) {
     sounds[sname] = SSLoad(sname);
   }
-  CHECK(sounds[sname]);
+  
+  if(!sounds[sname]) {
+    meltdown();
+    CHECK(sounds[sname]);
+  }
   SoundSource nss = sounds[sname]->Play();
   //dprintf("%d, %d\n", nss.IsPaused(), nss.IsStopped());
   //CHECK(!nss.IsPaused() && !nss.IsStopped(), "%d, %d\n", nss.IsPaused(), nss.IsStopped());
@@ -438,6 +455,7 @@ class KeyList : public KeyListener {
       lua_pushstring(L, typ.c_str());
       int rv = lua_pcall(L, 3, 0, 0);
       if (rv) {
+        meltdown();
         CHECK(0, "%s", lua_tostring(L, -1));
       }
     }
@@ -601,16 +619,21 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
       lasttick = thistick;
       int rv = lua_pcall(L, 2, 0, 0);
       if (rv) {
-        CHECK(0, "%s", lua_tostring(L, -1));
+        dprintf("Crash\n");
+        dprintf("%s", lua_tostring(L, -1));
+        meltdown();
+        CHECK(0);
       }
     }
     
     if(input()->IsKeyDownFrame(kKeyF12)) {
+      meltdown();
       luashutdown();
       luainit();
     }
   }
   
+  meltdown();
   luashutdown();
   
   for(map<string, Texture *>::const_iterator itr = images.begin(); itr != images.end(); itr++)

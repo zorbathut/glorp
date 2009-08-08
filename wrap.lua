@@ -184,3 +184,7 @@ end
 
 
 function GetMouse() return GetMouseX(), GetMouseY() end
+
+function fuckshit()
+  if failover then failover() end
+end
