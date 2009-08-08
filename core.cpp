@@ -420,6 +420,8 @@ class KeyList : public KeyListener {
     if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= 'a' && event.GetMainKey().index <= 'z') { keyvent = string(1, event.GetMainKey().index); }
     if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= '0' && event.GetMainKey().index <= '9') { keyvent = string(1, event.GetMainKey().index); }
     
+    if(event.GetMainKey() == kKeyF2) { keyvent = "f2"; }
+    
     unsigned char aski = input()->GetAsciiValue(event.GetMainKey());
     string bleep;
     if(aski) {
