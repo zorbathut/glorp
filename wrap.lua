@@ -1,5 +1,14 @@
 package.path = package.path .. ";data\\?.lua;glorp\\resources\\?.lua"
 
+--[[
+local ass = assert
+function assert(parm, ...)
+  if not parm then
+    print(...)
+    ass(false)
+  end
+end]]
+
 require("jit.opt").start()
 
 local function barf(err)
@@ -32,7 +41,7 @@ end
 
 function core__loadfile(filename)
   local rv, err = xpcall(function () local tv, err = loadfile(filename) if not tv then print(err) error(err) else tv() end end, function (ter) return {ter, debug.traceback()} end)
-  if err then barf(err) else return end
+  if not rv then print("Loadfile failure") barf(err) else return err end
 end
 
 local errorcount = 0
@@ -57,13 +66,15 @@ function strip_traceback(err)
 end
 
 function generic_wrap(target, ...)
+  assert(target)
   local dt = {...}
   local it = select('#', ...)
   local rv, err = xpcall(function () return target(unpack(dt, 1, it)) end, function (ter) return {ter, debug.traceback()} end)
-  if err then
+  if not rv then
+    print("gwrap failure")
     barf(err)
   else
-    return rv
+    return err
   end
 end
 
@@ -85,10 +96,10 @@ function coroutine.wrap(cof, ...)
   
   return crw(function ()
     local rv, err = xpcall(function () return cof(unpack(dt, 1, it)) end, function (ter) return {ter, debug.traceback()} end)
-    if err then
+    if not rv then
       error(err)
     else
-      return rv
+      return err
     end
   end)
 end
@@ -139,7 +150,10 @@ end
 function export_items_ro(tab, items)
   local lookup = {}
   for _, v in pairs(items) do
-    assert(tab[v])
+    if not tab[v] then
+      print("Can't find", v)
+      assert(tab[v], v)
+    end
     lookup[v] = tab[v]
   end
   
@@ -162,7 +176,11 @@ function io.dump(filename, contents)
 end
 function io.snatch(filename)
   t = io.open(filename, "rb")
+  if not t then return end
   local dat = t:read("*all")
   t:close()
   return dat
 end
+
+
+function GetMouse() return GetMouseX(), GetMouseY() end

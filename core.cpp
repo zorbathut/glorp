@@ -120,45 +120,6 @@ void loadfile(lua_State *L, const char *file) {
 
 TableauFrame *world;
 
-#if 0
-class Receiver : public TableauFrame {
-  bool OnKeyEvent(const KeyEvent &event, bool gained_focus) {
-    if(!event.IsPress() && !event.IsRelease())
-      return false;
-    
-    const GlopKey &ki = event.GetMainKey();
-    
-    if(ki.IsMouseMotion())
-      return false;
-    
-    string kiout;
-    
-    if(ki == kMouseLButton) kiout = "lbutton";
-    else if(ki == kKeyLeft) kiout = "arrow_left";
-    else if(ki == kKeyRight) kiout = "arrow_right";
-    else if(ki == kKeyUp) kiout = "arrow_up";
-    else if(ki == kKeyDown) kiout = "arrow_down";
-    else if(ki.IsKeyboardKey()) kiout += (char)ki.index;
-    
-    if(kiout.size()) {
-      lua_getglobal(L, "input");
-      lua_pushlstring(L, kiout.c_str(), kiout.size());
-      if(event.IsPress())
-        lua_pushstring(L, "press");
-      else
-        lua_pushstring(L, "release");
-      int rv = lua_pcall(L, 2, 0, 0);
-      if (rv) {
-        dprintf("%s", lua_tostring(L, -1));
-        CHECK(0, "%s", lua_tostring(L, -1));
-      }
-    }
-    
-    return false;
-  }
-};
-#endif
-
 template<typename Sub> class Destroyable : public Sub {
   private:
     ListId id;
@@ -374,6 +335,11 @@ GlopKey adapt(const string &id) {
   if(id == "arrow_up") ki = kKeyUp; else
   if(id == "arrow_down") ki = kKeyDown; else
   if(id == "enter") ki = kKeyEnter; else
+  if(id == "mouse_left") ki = kMouseLButton; else
+  if(id == "mouse_right") ki = kMouseRButton; else
+  if(id == "mouse_middle") ki = kMouseMButton; else
+  if(id == "mouse_wheel_up") ki = kMouseWheelUp; else
+  if(id == "mouse_wheel_down") ki = kMouseWheelUp; else
     ki = GlopKey(id[0]);
   
   return ki;
@@ -425,6 +391,66 @@ void TriggerExit() {
   window()->Destroy();
 };
 
+class KeyList : public KeyListener {
+  void OnKeyEvent(const KeyEvent &event) {
+    string keyvent;
+    if(event.GetMainKey() == kMouseLButton) { keyvent = "mouse_left"; }
+    if(event.GetMainKey() == kMouseRButton) { keyvent = "mouse_right"; }
+    if(event.GetMainKey() == kMouseMButton) { keyvent = "mouse_middle"; }
+    if(event.GetMainKey() == kMouseWheelUp) { keyvent = "mouse_wheel_up"; }
+    if(event.GetMainKey() == kMouseWheelDown) { keyvent = "mouse_wheel_down"; }
+    
+    if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= 'a' && event.GetMainKey().index <= 'z') { keyvent = string(1, event.GetMainKey().index); }
+    if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= '0' && event.GetMainKey().index <= '9') { keyvent = string(1, event.GetMainKey().index); }
+    
+    unsigned char aski = input()->GetAsciiValue(event.GetMainKey());
+    string bleep;
+    if(aski) {
+      bleep = string(1, aski);
+    }
+    
+    if(keyvent.size() || aski) {
+      string typ;
+      if(event.IsDoublePress()) {
+        typ = "press_double";
+      } else if(event.IsRepeatPress()) {
+        typ = "press_repeat";
+      } else if(event.IsNonRepeatPress()) {
+        typ = "press";
+      } else if(event.IsRelease()) {
+        typ = "release";
+      } else if(event.IsNothing()) {
+        typ = "nothing";
+      }
+      
+      lua_getglobal(L, "generic_wrap");
+      lua_getglobal(L, "UI_Key");
+      if(keyvent.size()) {
+        lua_pushstring(L, keyvent.c_str());
+      } else {
+        lua_pushnil(L);
+      }
+      if(bleep.size()) {
+        lua_pushstring(L, bleep.c_str());
+      } else {
+        lua_pushnil(L);
+      }
+      lua_pushstring(L, typ.c_str());
+      int rv = lua_pcall(L, 3, 0, 0);
+      if (rv) {
+        CHECK(0, "%s", lua_tostring(L, -1));
+      }
+    }
+  }
+};
+
+int gmx() {return input()->GetMouseX();};
+int gmy() {return input()->GetMouseY();};
+
+void tsc(TextFrame *tf, float r, float g, float b, float a) {
+  tf->SetColor(Color(r, g, b, a));
+}
+
 void luainit() {
   L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
@@ -467,12 +493,32 @@ void luainit() {
       class_<PerfBarManager>("Perfbar_Init")
         .def(constructor<float, float, float>())
         .def("Destroy", &PerfBarManager::Destroy),
+      class_<TextFrame>("TextFrame_Make")
+        .def(constructor<const std::string &>())
+        .def("GetX", &TextFrame::GetX)
+        .def("GetY", &TextFrame::GetY)
+        .def("GetClipX1", &TextFrame::GetClipX1)
+        .def("GetClipY1", &TextFrame::GetClipY1)
+        .def("GetClipX2", &TextFrame::GetClipX2)
+        .def("GetClipY2", &TextFrame::GetClipY2)
+        .def("GetWidth", &TextFrame::GetWidth)
+        .def("GetHeight", &TextFrame::GetHeight)
+        .def("SetPosition", &TextFrame::SetPosition)
+        .def("UpdateSize", &TextFrame::UpdateSize)
+        .def("Render", &TextFrame::Render)
+        .def("SetTextSize", &TextFrame::SetTextSize)
+        .def("SetColor", &TextFrame::SetColor)
+        .def("SetText", &TextFrame::SetText)
+        .def("GetText", &TextFrame::GetText),
+      def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
       def("WasKeyPressed_Frame", &WasKeyPressedAdapter),
       def("PlaySound", &DoASound),
       def("TriggerExit", &TriggerExit),
-      def("RegisterRenderLayer", &RegisterRenderLayer)
+      def("RegisterRenderLayer", &RegisterRenderLayer),
+      def("GetMouseX", &gmx),
+      def("GetMouseY", &gmy)
     ];
   }
     
@@ -484,10 +530,12 @@ void luainit() {
     CHECK(0, "%s", lua_tostring(L, -1));
   }
   
-  if(FLAGS_editor)
+  if(FLAGS_editor) {
     loadfile(L, "editor.lua");
-  else
+  } else {
+    input()->ShowMouseCursor(false);
     loadfile(L, "main.lua");
+  }
 }
 void luashutdown() {
   dprintf("lua closing");
@@ -537,6 +585,8 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   
   luainit();
   
+  KeyList listen_to_shit;
+  
   int lasttick = system()->GetTime();
   while(window()->IsCreated()) {
     system()->Think();
@@ -546,7 +596,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
       
       int thistick = system()->GetTime();
       lua_getglobal(L, "generic_wrap");
-      lua_getglobal(L, "loop");
+      lua_getglobal(L, "UI_Loop");
       lua_pushnumber(L, thistick - lasttick);
       lasttick = thistick;
       int rv = lua_pcall(L, 2, 0, 0);
