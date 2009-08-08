@@ -464,6 +464,16 @@ class KeyList : public KeyListener {
   }
 };
 
+void adaptaload(const string &fname) {
+  int error = luaL_dofile(L, ("data/" + fname).c_str());
+  if(error) {
+    error = luaL_dofile(L, ("glorp/" + fname).c_str());
+  }
+  if(error) {
+    CHECK(0, "%s", lua_tostring(L, -1));
+  }
+}
+
 int gmx() {return input()->GetMouseX();};
 int gmy() {return input()->GetMouseY();};
 
@@ -541,14 +551,9 @@ void luainit() {
       def("GetMouseY", &gmy)
     ];
   }
-    
-  int error = luaL_dofile(L, "data/wrap.lua");
-  if(error) {
-    error = luaL_dofile(L, "glorp/wrap.lua");
-  }
-  if(error) {
-    CHECK(0, "%s", lua_tostring(L, -1));
-  }
+  
+  adaptaload("wrap.lua");
+  adaptaload("util.lua");
   
   if(FLAGS_editor) {
     loadfile(L, "editor.lua");
