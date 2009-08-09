@@ -1,4 +1,5 @@
 
+math.randomseed(os.time())
 
 function export_items_rw(tab, items)
   local lookup = {}

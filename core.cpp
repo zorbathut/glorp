@@ -20,6 +20,8 @@
 #include <luabind/operator.hpp>
 #include <luabind/discard_result_policy.hpp>
 
+#include <boost/random.hpp>
+
 #include "debug.h"
 #include "util.h"
 #include "core.h"
@@ -118,13 +120,20 @@ void loadfile(lua_State *L, const char *file) {
 }
 
 
+string last_preserved_token;
+
 void meltdown() {
   lua_getglobal(L, "generic_wrap");
   lua_getglobal(L, "fuckshit");
-  int rv = lua_pcall(L, 1, 0, 0);
+  int rv = lua_pcall(L, 1, 1, 0);
   if (rv) {
     CHECK(0, "%s", lua_tostring(L, -1));
   }
+  
+  if(lua_isstring(L, -1)) {
+    last_preserved_token = lua_tostring(L, -1);
+  }
+  lua_pop(L, 1);
 }
 
 TableauFrame *world;
@@ -455,10 +464,11 @@ class KeyList : public KeyListener {
         lua_pushnil(L);
       }
       lua_pushstring(L, typ.c_str());
-      int rv = lua_pcall(L, 3, 0, 0);
+      int rv = lua_pcall(L, 4, 0, 0);
       if (rv) {
+        dprintf("%s", lua_tostring(L, -1));
         meltdown();
-        CHECK(0, "%s", lua_tostring(L, -1));
+        CHECK(0);
       }
     }
   }
@@ -481,11 +491,49 @@ void tsc(TextFrame *tf, float r, float g, float b, float a) {
   tf->SetColor(Color(r, g, b, a));
 }
 
+// arrrgh
+boost::lagged_fibonacci9689 rngstate(time(NULL));
+static int math_random (lua_State *L) {
+  /* the `%' avoids the (rare) case of r==1, and is needed also because on
+     some systems (SunOS!) `rand()' may return a value larger than RAND_MAX */
+  lua_Number r = rngstate();
+  switch (lua_gettop(L)) {  /* check number of arguments */
+    case 0: {  /* no arguments */
+      lua_pushnumber(L, r);  /* Number between 0 and 1 */
+      break;
+    }
+    case 1: {  /* only upper limit */
+      int u = luaL_checkint(L, 1);
+      luaL_argcheck(L, 1<=u, 1, "interval is empty");
+      lua_pushnumber(L, floor(r*u)+1);  /* int between 1 and `u' */
+      break;
+    }
+    case 2: {  /* lower and upper limits */
+      int l = luaL_checkint(L, 1);
+      int u = luaL_checkint(L, 2);
+      luaL_argcheck(L, l<=u, 2, "interval is empty");
+      lua_pushnumber(L, floor(r*(u-l+1))+l);  /* int between `l' and `u' */
+      break;
+    }
+    default: return luaL_error(L, "wrong number of arguments");
+  }
+  return 1;
+}
+static int math_randomseed (lua_State *L) {
+  rngstate = boost::lagged_fibonacci9689(luaL_checkint(L, 1));
+  return 0;
+}
+
+#define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
+
 void luainit() {
   L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
   luaopen_opengl(L);
   lua_register(L, "print", debug_print);
+  
+  ll_subregister(L, "math", "random", math_random);
+  ll_subregister(L, "math", "randomseed", math_randomseed);
   
   {
     using namespace luabind;
@@ -560,6 +608,16 @@ void luainit() {
   } else {
     input()->ShowMouseCursor(false);
     loadfile(L, "main.lua");
+  }
+  
+  if(last_preserved_token.size()) {
+    lua_getglobal(L, "generic_wrap");
+    lua_getglobal(L, "de_fuckshit");
+    lua_pushstring(L, last_preserved_token.c_str());
+    int rv = lua_pcall(L, 2, 0, 0);
+    if (rv) {
+      CHECK(0, "%s", lua_tostring(L, -1));
+    }
   }
 }
 void luashutdown() {

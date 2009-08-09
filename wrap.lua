@@ -140,5 +140,8 @@ end
 
 
 function fuckshit()
-  if failover then failover() end
+  if failover then return failover() end
+end
+function de_fuckshit(token)
+  if de_failover then return de_failover(token) end
 end
