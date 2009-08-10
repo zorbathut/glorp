@@ -59,3 +59,8 @@ function approach(current, target, delta)
     return current - delta
   end
 end
+function clamp(cur, min, max)
+  if cur < min then return min end
+  if cur > max then return max end
+  return cur
+end
