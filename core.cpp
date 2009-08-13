@@ -211,10 +211,11 @@ Texture *getTex(const string &image) {
       CHECK(img, image.c_str());
     }
     
+    /*
     for(int y = 0; y < img->GetHeight(); y++)
       for(int x = 0; x < img->GetWidth(); x++)
         if(*(unsigned long*)img->Get(x, y) == 0xffffffff)
-          *(unsigned long*)img->Get(x, y) = 0;
+          *(unsigned long*)img->Get(x, y) = 0;*/
     
     tex = new Texture(img);   // we leak some stuff here
     images[image] = tex;
@@ -432,6 +433,7 @@ class KeyList : public KeyListener {
     if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= '0' && event.GetMainKey().index <= '9') { keyvent = string(1, event.GetMainKey().index); }
     
     if(event.GetMainKey() == kKeyF2) { keyvent = "f2"; }
+    if(event.GetMainKey() == kKeyDelete) { keyvent = "delete"; }
     
     unsigned char aski = input()->GetAsciiValue(event.GetMainKey());
     string bleep;
@@ -526,6 +528,10 @@ static int math_randomseed (lua_State *L) {
   return 0;
 }
 
+void sms(bool bol) {
+  input()->ShowMouseCursor(bol);
+}
+
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
 void luainit() {
@@ -590,6 +596,19 @@ void luainit() {
         .def("SetColor", &TextFrame::SetColor)
         .def("SetText", &TextFrame::SetText)
         .def("GetText", &TextFrame::GetText),
+      class_<FancyTextFrame>("FancyTextFrame_Make")
+        .def(constructor<const std::string &>())
+        .def("GetX", &TextFrame::GetX)
+        .def("GetY", &TextFrame::GetY)
+        .def("GetClipX1", &TextFrame::GetClipX1)
+        .def("GetClipY1", &TextFrame::GetClipY1)
+        .def("GetClipX2", &TextFrame::GetClipX2)
+        .def("GetClipY2", &TextFrame::GetClipY2)
+        .def("SetPosition", &FancyTextFrame::SetPosition)
+        .def("UpdateSize", &FancyTextFrame::UpdateSize)
+        .def("Render", &FancyTextFrame::Render)
+        .def("SetText", &FancyTextFrame::SetText)
+        .def("GetText", &FancyTextFrame::GetText),
       def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
@@ -598,7 +617,8 @@ void luainit() {
       def("TriggerExit", &TriggerExit),
       def("RegisterRenderLayer", &RegisterRenderLayer),
       def("GetMouseX", &gmx),
-      def("GetMouseY", &gmy)
+      def("GetMouseY", &gmy),
+      def("ShowMouseCursor", &sms)
     ];
   }
   
@@ -608,7 +628,6 @@ void luainit() {
   if(FLAGS_editor) {
     loadfile(L, "editor.lua");
   } else {
-    input()->ShowMouseCursor(false);
     loadfile(L, "main.lua");
   }
   
@@ -644,7 +663,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   initProgram(&argc, const_cast<const char ***>(&argv));
   
   window()->SetTitle(name);
-  window()->SetVSync(true);
+  //window()->SetVSync(true);
   
   {
     GlopWindowSettings gws;
