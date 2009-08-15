@@ -211,11 +211,13 @@ Texture *getTex(const string &image) {
       CHECK(img, image.c_str());
     }
     
-    /*
-    for(int y = 0; y < img->GetHeight(); y++)
-      for(int x = 0; x < img->GetWidth(); x++)
-        if(*(unsigned long*)img->Get(x, y) == 0xffffffff)
-          *(unsigned long*)img->Get(x, y) = 0;*/
+    for(int y = 0; y < img->GetHeight(); y++) {
+      for(int x = 0; x < img->GetWidth(); x++) {
+        //dprintf("%08x %08x", *(unsigned int*)img->Get(x, y), *(unsigned int*)img->Get(x, y) & 0xffffff);
+        if((*(unsigned long*)img->Get(x, y) & 0xffffff) == 0x7e7ed7)
+          *(unsigned long*)img->Get(x, y) = 0;
+      }
+    }
     
     tex = new Texture(img);   // we leak some stuff here
     images[image] = tex;
@@ -250,11 +252,11 @@ public:
   void SetTexture() {
     GlUtils::SetTexture(tex);
     
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
+    //glMatrixMode(GL_TEXTURE);
+    //glLoadIdentity();
     //glTranslatef(-1 / (float)tex->GetInternalWidth() / 2, -1 / (float)tex->GetInternalHeight() / 2, 0);
-    glMatrixMode(GL_MODELVIEW);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glMatrixMode(GL_MODELVIEW);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   }
 };
 
@@ -670,7 +672,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     gws.min_aspect_ratio = (float)width / height;
     gws.min_inverse_aspect_ratio = (float)height / width;
     ASSERT(window()->Create(width, height, false, gws));
-    window()->SetVSync(false);
+    window()->SetVSync(true);
   }
   
   {
@@ -716,6 +718,19 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
       meltdown();
       luashutdown();
       luainit();
+    }
+    
+    {
+      PerfStack pb(0, 0.5, 0);
+      lua_getglobal(L, "generic_wrap");
+      lua_getglobal(L, "gcstep");
+      int rv = lua_pcall(L, 1, 0, 0);
+      if (rv) {
+        dprintf("Crash\n");
+        dprintf("%s", lua_tostring(L, -1));
+        meltdown();
+        CHECK(0);
+      }
     }
   }
   

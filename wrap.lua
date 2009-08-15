@@ -1,5 +1,7 @@
 package.path = package.path .. ";data\\?.lua;glorp\\resources\\?.lua"
 
+collectgarbage("stop")
+
 --[[
 local ass = assert
 function assert(parm, ...)
@@ -76,6 +78,11 @@ function generic_wrap(target, ...)
   else
     return err
   end
+end
+
+function gcstep()
+  local rv = collectgarbage("step", 1)
+  --if rv then print("cycle") end
 end
 
 --[[
