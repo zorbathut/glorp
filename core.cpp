@@ -252,11 +252,11 @@ public:
   void SetTexture() {
     GlUtils::SetTexture(tex);
     
-    //glMatrixMode(GL_TEXTURE);
-    //glLoadIdentity();
-    //glTranslatef(-1 / (float)tex->GetInternalWidth() / 2, -1 / (float)tex->GetInternalHeight() / 2, 0);
-    //glMatrixMode(GL_MODELVIEW);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
+    glTranslatef(-1 / (float)tex->GetInternalWidth() / 2, -1 / (float)tex->GetInternalHeight() / 2, 0);
+    glMatrixMode(GL_MODELVIEW);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   }
 };
 
