@@ -64,3 +64,7 @@ function clamp(cur, min, max)
   if cur > max then return max end
   return cur
 end
+
+function PlaySound(snd, vol)
+  PlaySound_Core(snd, vol or 1)
+end

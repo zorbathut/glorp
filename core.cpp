@@ -193,7 +193,8 @@ class Perfbar : public GlopFrame {
 public:
   
   void Render() const {
-    drawPerformanceBar();
+    if(FLAGS_editor)
+      drawPerformanceBar();
     startPerformanceBar();
   }
 };
@@ -380,25 +381,26 @@ bool WasKeyPressedAdapter(const string &id) {
   return input()->WasKeyPressed(adapt(id), false);
 };
 
-map<string, SoundSample *> sounds;
+map<pair<string, float>, SoundSample *> sounds;
 
 vector<SoundSource> ss;
-void DoASound(const string &sname) {
+void DoASound(const string &sname, float vol) {
+  vol = ceil(vol * 16) / 16;
   for(int i = 0; i < ss.size(); i++) {
     if(ss[i].IsStopped()) {
       ss[i].Stop();
       ss.erase(ss.begin() + i);
     }
   }
-  if(!sounds[sname]) {
-    sounds[sname] = SSLoad(sname);
+  if(!sounds[make_pair(sname, vol)]) {
+    sounds[make_pair(sname, vol)] = SSLoad(sname, vol);
   }
   
-  if(!sounds[sname]) {
+  if(!sounds[make_pair(sname, vol)]) {
     meltdown();
-    CHECK(sounds[sname]);
+    CHECK(sounds[make_pair(sname, vol)]);
   }
-  SoundSource nss = sounds[sname]->Play();
+  SoundSource nss = sounds[make_pair(sname, vol)]->Play();
   //dprintf("%d, %d\n", nss.IsPaused(), nss.IsStopped());
   //CHECK(!nss.IsPaused() && !nss.IsStopped(), "%d, %d\n", nss.IsPaused(), nss.IsStopped());
   ss.push_back(nss);
@@ -615,7 +617,7 @@ void luainit() {
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
       def("WasKeyPressed_Frame", &WasKeyPressedAdapter),
-      def("PlaySound", &DoASound),
+      def("PlaySound_Core", &DoASound),
       def("TriggerExit", &TriggerExit),
       def("RegisterRenderLayer", &RegisterRenderLayer),
       def("GetMouseX", &gmx),
@@ -743,11 +745,11 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   dprintf("exiting");
 }
 
-SoundSample *SSLoad(const string &fname_base) {
+SoundSample *SSLoad(const string &fname_base, float vol) {
   SoundSample *rv;
-  rv = SoundSample::Load("data/" + fname_base + ".ogg");
+  rv = SoundSample::Load("data/" + fname_base + ".ogg", false, vol);
   if(rv) return rv;
-  rv = SoundSample::Load("data/" + fname_base + ".wav");
+  rv = SoundSample::Load("data/" + fname_base + ".wav", false, vol);
   if(rv) return rv;
   CHECK(0, fname_base.c_str());
 }
