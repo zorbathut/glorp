@@ -183,8 +183,10 @@ def MakeInstallerShell(typ, suffix):
 
 allpackages = []
 
+releasetest = MakeInstallerShell("release", "")
+print("rtest", releasetest, str(releasetest[0]), str(releasetest[1]))
 allpackages += Alias("packagedemo", MakeInstallerShell("demo", "-demo"))
-allpackages += Alias("package", Alias("packagerelease", MakeInstallerShell("release", "")))
+allpackages += Alias("package", Alias("packagerelease", releasetest))
 
 Alias("allpackages", allpackages)
 

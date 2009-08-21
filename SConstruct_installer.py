@@ -32,31 +32,18 @@ def Installers(platform):
 
       return deployfiles
 
-    def generateInstaller(target, source, name, copyprefix, files, deployfiles, finaltarget, mainexe, version, longname):
+    def generateInstaller(target, source, name, copyprefix, files, finaltarget, mainexe, version, longname, env):
 
       directories = {"data" : None}
       
-      rfiles = []
-      for item in files:
-        #print("files work", str(item))
-        if str.find(str(item), "cygdrive") != -1:
-          #print("complex")
-          rfiles += [re.compile(".*%s/" % name).sub("", str(item))]
-          #print(re.compile(".*no_such_thing/").sub("", str(item)))
-        else:
-          #print("simple")
-          rfiles += [item]
-      files = rfiles
-      
-      for item in [x.split('/', 1)[1] for x in files]:
-        for steps in range(len(item.split('/')) - 1):
-          directories[item.rsplit('/', steps + 1)[0]] = None
+      for item in [str(x).split('/', 1)[1] for x in files]:
+        print("titi", item)
+        titem = item.split('/', 2)[2]
+        for steps in range(len(titem.split('/')) - 1):
+          directories[titem.rsplit('/', steps + 1)[0]] = None
       
       directories = [x.replace('/', '\\') for x in directories.iterkeys()]
-      files = [x.replace('/', '\\') for x in files]
-      deployfiles = [x.replace('/', '\\') for x in deployfiles]
-      
-      mainexe = str(mainexe).replace('/', '\\')
+      files = [str(x).replace('/', '\\') for x in files]
       
       install = ""
       uninstall = ""
@@ -66,23 +53,8 @@ def Installers(platform):
         uninstall = 'RMDir "$INSTDIR\\%s"\n' % line + uninstall
 
       for line in files:
-        print(line)
-        if str.find(line, "build\\") != -1:
-          src = line
-        else:
-          src = line.split('\\', 1)[1]
-        install = install + 'File "/oname=%s" "%s"\n' % (line.split('\\', 1)[1], src)
-        uninstall = 'Delete "$INSTDIR\\%s"\n' % line.split('\\', 1)[1] + uninstall
-
-      #install = install + 'File "/oname=settings" "settings.%s"\n' % copyprefix
-      #uninstall = 'Delete "$INSTDIR\\settings"\n' + uninstall;
-
-      for line in deployfiles:
-        install = install + 'File "/oname=%s" "%s"\n' % (line.rsplit('\\', 1)[1], line)
-        uninstall = 'Delete "$INSTDIR\\%s"\n' % line.rsplit('\\', 1)[1] + uninstall
-      
-      install = install + 'File "/oname=%s.exe" "%s"\n' % (name, mainexe)
-      uninstall = 'Delete "$INSTDIR\\%s.exe"\n' % name + uninstall
+        install = install + 'File "/oname=%s" "%s"\n' % (line.split('\\', 3)[3], line)
+        uninstall = 'Delete "$INSTDIR\\%s"\n' % (line.split('\\', 3)[3]) + uninstall
 
       with open(str(source[0])) as inp:
         with open(str(target[0]), "w") as otp:
@@ -97,20 +69,54 @@ def Installers(platform):
             elif line == "$$$TYPE$$$":
               print >> otp, '!define PRODUCT_TYPE "%s"' % copyprefix
             elif line == "$$$OUTFILE$$$":
-              print >> otp, 'OutFile "%s"' % finaltarget
+              print >> otp, 'OutFile "%s"' % (finaltarget.split("/", 1)[1])
             else:
               print >> otp, line.replace("$$$LONGNAME$$$", longname).replace("$$$EXENAME$$$", name + ".exe")
 
     def MakeInstaller(env, type, version, binaries, data, deployables, installers, suffix, name, longname):
       nsipath = '#build/installer_%s.nsi' % (suffix)
       ident = '%s%s' % (version, suffix)
-      finalpath = 'build/%s-%s%s.exe' % (name, version, suffix)
+      finalpath = '../build/%s-%s%s.exe' % (name, version, suffix)
+      finalzip = '../build/%s-%s%s.zip' % (name, version, suffix)
       mainexe = binaries[name + "-" + type]
       
-      deps = data[type] + deployables + [mainexe]
+      files = [str(x) for x in data[type]]
+      deployfiles = [re.search(r"build/deploy/.*", str(x)).group(0) for x in deployables]
+        
+      rfiles = []
+      for item in files:
+        print("files work", str(item))
+        if str.find(str(item), "cygdrive") != -1:
+          #print("complex")
+          rfiles += [re.compile(".*%s/" % name).sub("", str(item))]
+          #print(re.compile(".*no_such_thing/").sub("", str(item)))
+        else:
+          #print("simple")
+          rfiles += [item]
+      files = rfiles
       
-      nsirv = env.Command(nsipath, ['installer.nsi.template', 'SConstruct_installer.py'] + deps, dispatcher(generateInstaller, name=name, longname=longname, copyprefix=type, files=[str(x) for x in data[type]], deployfiles=[re.search(r"build/deploy/.*", str(x)).group(0) for x in deployables], finaltarget=finalpath, mainexe=mainexe, version=ident)) # Technically it only depends on those files existing, not their actual contents.
-      return env.Command(finalpath, nsirv + deps, "%s - < ${SOURCES[0]}" % installers)
+      prebfiles = []
+      for line in files:
+        print("linlin", line)
+        if str.find(line, "build/") != -1:
+          src = "../" + line
+        else:
+          src = line
+        prebfiles += env.Command("../build/deploy_layout_%s/%s/%s" % (suffix, name, line.split('/', 1)[1]), src, Copy("$TARGET", "$SOURCE"))
+      for line in deployfiles:
+        print("depdep", line)
+        prebfiles += env.Command("../build/deploy_layout_%s/%s/%s" % (suffix, name, line.rsplit('/', 1)[1]), "../" + str(line), Copy("$TARGET", "$SOURCE"))
+      print("mexe", str(mainexe))
+      prebfiles += env.Command("../build/deploy_layout_%s/%s/%s.exe" % (suffix, name, name), mainexe, Copy("$TARGET", "$SOURCE"))
+      
+      deps = prebfiles + deployables + [mainexe]
+      
+      nsirv = env.Command(nsipath, ['installer.nsi.template', 'SConstruct_installer.py'] + deps, dispatcher(generateInstaller, env=env, name=name, longname=longname, copyprefix=type, files=prebfiles, finaltarget=finalpath, mainexe=mainexe, version=ident)) # Technically it only depends on those files existing, not their actual contents.
+      
+      installer = env.Command(finalpath, nsirv + deps, "%s - < ${SOURCES[0]}" % installers)
+      zipfile = env.Command(finalzip, deps, "cd build/deploy_layout_%s/%s ; zip -9 -r ../../../$TARGET *" % (suffix, name))
+      
+      return installer + zipfile
     
     return MakeDeployables, MakeInstaller
   elif platform == "linux":
