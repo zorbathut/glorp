@@ -68,3 +68,60 @@ end
 function PlaySound(snd, vol)
   PlaySound_Core(snd, vol or 1)
 end
+
+glutil = {}
+function glutil.SetScreen(sx, sy, ex, ey)
+  gl.MatrixMode("PROJECTION")
+  gl.LoadIdentity()
+  gl.Ortho(sx, ex, ey, sy, -1, 1)
+  
+  gl.MatrixMode("MODELVIEW")
+  gl.LoadIdentity()
+end
+function glutil.SetScreenCentered(x, y, pixelgrid)
+  glutil.SetScreen(x - 512 / pixelgrid, y - 384 / pixelgrid, x + 512 / pixelgrid, y + 384 / pixelgrid)
+end
+
+function glutil.ResetScreen()
+  glutil.SetScreen(0, 0, 1024, 768)
+end
+
+
+function glutil.RenderCenteredSprite(tex, x, y, width, height, r, g, b, a)
+  glutil.RenderBoundedSprite(tex, x - width / 2, y - height / 2, x + width / 2, y + height / 2, r, g, b, a)
+end
+
+function glutil.RenderBoundedSprite(tex, sx, sy, ex, ey, r, g, b, a)
+  local teex = tex:GetWidth() / tex:GetInternalWidth()
+  local teey = tex:GetHeight() / tex:GetInternalHeight()
+  
+  tex:SetTexture()
+  gl.Color(r or 1, g or 1, b or 1, a or 1)
+  gl.Begin("QUADS")
+  gl.TexCoord(0, 0)
+  gl.Vertex(sx, sy)
+  gl.TexCoord(teex, 0)
+  gl.Vertex(ex, sy)
+  gl.TexCoord(teex, teey)
+  gl.Vertex(ex, ey)
+  gl.TexCoord(0, teey)
+  gl.Vertex(sx, ey)
+  gl.End()
+  SetNoTexture()
+end
+
+function glutil.RenderCenteredBox(r, g, b, x, y, width, height)
+  glutil.RenderBoundedBox(r, g, b, x - width / 2, y - height / 2, x + width / 2, y + height / 2)
+end
+
+function glutil.RenderBoundedBox(r, g, b, sx, sy, ex, ey)
+  gl.Color(r, g, b)
+  
+  gl.Begin("QUADS")
+  gl.Vertex(sx, sy)
+  gl.Vertex(ex, sy)
+  gl.Vertex(ex, ey)
+  gl.Vertex(sx, ey)
+  gl.End()
+end
+

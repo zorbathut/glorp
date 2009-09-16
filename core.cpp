@@ -492,6 +492,24 @@ void adaptaload(const string &fname) {
   }
 }
 
+void adaptaload_wrapped(const string &fname) {
+  int error = luaL_dostring(L, ("file_temp, file_err = loadfile(\"data/" + fname + "\"); assert(file_temp, file_err)").c_str());
+  if(error) {
+    error = luaL_dostring(L, ("file_temp, file_err = loadfile(\"glorp/" + fname + "\"); assert(file_temp, file_err)").c_str());
+  }
+  if(error) {
+    error = luaL_dostring(L, ("file_temp, file_err = loadfile(\"" + fname + "\"); assert(file_temp, file_err)").c_str());
+  }
+  
+  if(!error) {
+    error = luaL_dostring(L, "generic_wrap(file_temp); file_temp, file_err = nil, nil");
+  }
+  
+  if(error) {
+    CHECK(0, "%s", lua_tostring(L, -1));
+  }
+}
+
 int gmx() {return input()->GetMouseX();};
 int gmy() {return input()->GetMouseY();};
 
@@ -627,13 +645,13 @@ void luainit() {
   }
   
   adaptaload("wrap.lua");
-  adaptaload("util.lua");
-  adaptaload("ui.lua");
+  adaptaload_wrapped("util.lua");
+  adaptaload_wrapped("ui.lua");
   
   if(FLAGS_editor) {
-    loadfile(L, "editor.lua");
+    adaptaload_wrapped("editor.lua");
   } else {
-    loadfile(L, "main.lua");
+    adaptaload_wrapped("main.lua");
   }
   
   if(last_preserved_token.size()) {
@@ -674,6 +692,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     GlopWindowSettings gws;
     gws.min_aspect_ratio = (float)width / height;
     gws.min_inverse_aspect_ratio = (float)height / width;
+    gws.is_resizable = false;
     ASSERT(window()->Create(width, height, false, gws));
     window()->SetVSync(true);
   }
