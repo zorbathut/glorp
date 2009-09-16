@@ -154,6 +154,7 @@ def make_data():
   
   rv += env.Command("../build/data/wrap.lua", "wrap.lua", "cp $SOURCE $TARGET")
   rv += env.Command("../build/data/util.lua", "util.lua", "cp $SOURCE $TARGET")
+  rv += env.Command("../build/data/ui.lua", "ui.lua", "cp $SOURCE $TARGET")
   
   rv += env.Command('../build/data/jit/opt.lua', 'resources/jit/opt.lua', "cp $SOURCE $TARGET")
   rv += env.Command('../build/data/jit/opt_inline.lua', 'resources/jit/opt_inline.lua', "cp $SOURCE $TARGET")

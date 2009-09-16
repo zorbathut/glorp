@@ -628,6 +628,7 @@ void luainit() {
   
   adaptaload("wrap.lua");
   adaptaload("util.lua");
+  adaptaload("ui.lua");
   
   if(FLAGS_editor) {
     loadfile(L, "editor.lua");
