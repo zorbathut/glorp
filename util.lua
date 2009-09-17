@@ -71,6 +71,8 @@ end
 
 glutil = {}
 function glutil.SetScreen(sx, sy, ex, ey)
+  gl.Disable("CULL_FACE")
+  
   gl.MatrixMode("PROJECTION")
   gl.LoadIdentity()
   gl.Ortho(sx, ex, ey, sy, -1, 1)

@@ -143,10 +143,13 @@ do
     self:Detach()
     
     self.parent = parent
-    if not parent.children then parent.children = {} end
-    table.insert(parent.children, self)
     
-    parent:resort_children()
+    if parent then
+      if not parent.children then parent.children = {} end
+      table.insert(parent.children, self)
+      
+      parent:resort_children()
+    end
   end
   function Region_Type:Detach()
     if self.parent then
@@ -266,48 +269,55 @@ do
     end
   end
   
-  function Region(parent)
+  function Region(parent, suppress)
     local reg = setmetatable({}, Region_Type_mt)
-    if not parent then parent = UIParent end
-    reg:SetParent(parent)
+    if not parent and not suppress then parent = UIParent end
+    if parent then reg:SetParent(parent) end
     return reg
   end
 end
 
 local parents = {}
 
-function UI_CreateParent(width, height, UIParent)
-  if not UIParent then UIParent = {} end
-  UIParent.resort_children = function () end -- siiigh
-  UIParent = Region()
-  UIParent:Detach()
-  function UIParent:GetWidth()
+function UI_CreateParent(width, height)
+  local parent = Region(nil, true)
+  parent:Detach()
+  function parent:GetWidth()
     return width
   end
-  function UIParent:GetHeight()
+  function parent:GetHeight()
     return height
   end
-  function UIParent:GetLeft()
+  function parent:GetLeft()
     return 0
   end
-  function UIParent:GetRight()
+  function parent:GetRight()
     return self:GetWidth()
   end
-  function UIParent:GetTop()
+  function parent:GetTop()
     return 0
   end
-  function UIParent:GetBottom()
+  function parent:GetBottom()
     return self:GetHeight()
   end
-  function UIParent:GetPointOnAxis(axis, pt)
+  function parent:GetPointOnAxis(axis, pt)
     if axis == "x" then return pt * self:GetWidth() end
     if axis == "y" then return pt * self:GetHeight() end
   end
-  UIParent.parent = nil
-  table.insert(parents, {parent = UIParent, width = width, height = height})
-  return UIParent
+  parent.parent = nil
+  table.insert(parents, {parent = parent, width = width, height = height})
+  return parent
 end
-UIParent = UI_CreateParent(1024, 768, UIParent)
+function UI_ReregisterParent(parent, width, height) -- ughhhh
+  table.insert(parents, {parent = parent, width = width, height = height})
+end
+
+function UI_Reset()
+  UIParent = nil
+  parents = {}
+  UIParent = UI_CreateParent(1024, 768)
+end
+UI_Reset()
 
 
 local function Button_Key(self, button, ascii, event)
