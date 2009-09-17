@@ -274,10 +274,13 @@ do
   end
 end
 
+local parents = {}
+
 function UI_CreateParent(width, height, UIParent)
   if not UIParent then UIParent = {} end
   UIParent.resort_children = function () end -- siiigh
   UIParent = Region()
+  UIParent:Detach()
   function UIParent:GetWidth()
     return width
   end
@@ -301,6 +304,7 @@ function UI_CreateParent(width, height, UIParent)
     if axis == "y" then return pt * self:GetHeight() end
   end
   UIParent.parent = nil
+  table.insert(parents, {parent = UIParent, width = width, height = height})
   return UIParent
 end
 UIParent = UI_CreateParent(1024, 768, UIParent)
@@ -389,17 +393,13 @@ function CreateFrame(typ, parent)
   end
 end
 
-
-function TraverseUp(start, x, y)
-  if not start then start = UIParent end
+local function TraverseUpWorker(start, x, y)
   if start.hide then return end
-  
-  if not x then x, y = GetMouse() end
   
   if start.children then
     for tid = #start.children, 1, -1 do
       local k = start.children[tid]
-      local rv = TraverseUp(k, x, y)
+      local rv = TraverseUpWorker(k, x, y)
       if rv then return rv end
     end
   end
@@ -409,6 +409,14 @@ function TraverseUp(start, x, y)
   end
   
   return nil
+end
+
+function TraverseUp(val)
+  local x, y = GetMouse()
+  
+  local rv = TraverseUpWorker(parents[val].parent, x / 1024 * parents[val].width, y / 768 * parents[val].height)
+  
+  return rv
 end
 
 function AccumulateInternals(start, acu, x, y)
@@ -440,15 +448,17 @@ function UI_Key(button, ascii, event)
   end
   if not passdown then return end
   
-  local frame_target = TraverseUp()
-  -- Otherwise, we first figure out what the topmost frame it's on is, with topmost being simply defined as "last in the render order but with the key over it".
-  -- Then we traverse up, looking for something that wants to eat it.
-  while frame_target do
-    if frame_target.Key then
-      passdown = frame_target:Key(button, ascii, event)
-      if not passdown then return end
+  for k in ipairs(parents) do
+    local frame_target = TraverseUp(k)
+    -- Otherwise, we first figure out what the topmost frame it's on is, with topmost being simply defined as "last in the render order but with the key over it".
+    -- Then we traverse up, looking for something that wants to eat it.
+    while frame_target do
+      if frame_target.Key then
+        passdown = frame_target:Key(button, ascii, event)
+        if not passdown then return end
+      end
+      frame_target = frame_target.parent
     end
-    frame_target = frame_target.parent
   end
   
   -- Nobody cares. Send it to the global handler, if one exists.

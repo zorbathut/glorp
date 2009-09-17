@@ -367,6 +367,8 @@ GlopKey adapt(const string &id) {
   if(id == "mouse_wheel_up") ki = kMouseWheelUp; else
   if(id == "mouse_wheel_down") ki = kMouseWheelUp; else
   if(id == "shift") ki = kKeyLeftShift; else
+  if(id == "shift_left") ki = kKeyLeftShift; else
+  if(id == "shift_right") ki = kKeyRightShift; else
   if(id == "ctrl") ki = kKeyLeftControl; else
     ki = GlopKey(id[0]);
   

@@ -125,3 +125,17 @@ function glutil.RenderBoundedBox(r, g, b, sx, sy, ex, ey)
   gl.End()
 end
 
+function glutil.RenderCenteredEmptyBox(r, g, b, x, y, width, height)
+  glutil.RenderEmptyBox(r, g, b, x - width / 2, y - height / 2, x + width / 2, y + height / 2)
+end
+
+function glutil.RenderEmptyBox(r, g, b, sx, sy, ex, ey)
+  gl.Color(r, g, b)
+  
+  gl.Begin("LINE_LOOP")
+  gl.Vertex(sx, sy)
+  gl.Vertex(ex, sy)
+  gl.Vertex(ex, ey)
+  gl.Vertex(sx, ey)
+  gl.End()
+end
