@@ -441,6 +441,9 @@ class KeyList : public KeyListener {
     if(event.GetMainKey() == kKeyF2) { keyvent = "f2"; }
     if(event.GetMainKey() == kKeyDelete) { keyvent = "delete"; }
     
+    if(event.GetMainKey() == kKeyEnter) { keyvent = "enter"; }
+    if(event.GetMainKey() == kKeyEscape) { keyvent = "escape"; }
+    
     unsigned char aski = input()->GetAsciiValue(event.GetMainKey());
     string bleep;
     if(aski) {
