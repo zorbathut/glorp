@@ -370,6 +370,7 @@ GlopKey adapt(const string &id) {
   if(id == "shift_left") ki = kKeyLeftShift; else
   if(id == "shift_right") ki = kKeyRightShift; else
   if(id == "ctrl") ki = kKeyLeftControl; else
+  if(id == "escape") ki = kKeyEscape; else
     ki = GlopKey(id[0]);
   
   return ki;
@@ -437,6 +438,7 @@ class KeyList : public KeyListener {
     
     if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= 'a' && event.GetMainKey().index <= 'z') { keyvent = string(1, event.GetMainKey().index); }
     if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= '0' && event.GetMainKey().index <= '9') { keyvent = string(1, event.GetMainKey().index); }
+    if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index == '`') { keyvent = string(1, event.GetMainKey().index); }
     
     if(event.GetMainKey() == kKeyF2) { keyvent = "f2"; }
     if(event.GetMainKey() == kKeyDelete) { keyvent = "delete"; }
