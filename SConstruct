@@ -138,7 +138,7 @@ def make_data():
   
   list = dircache.listdir("..")
   for item in list:
-    if item.find(".lua") != -1:
+    if item.find(".lua") != -1 and item.find("crashmelt") == -1:
       #print(item)
       rv += ["../" + item]
   
