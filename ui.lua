@@ -169,6 +169,13 @@ do
   function Region_Type:resort_children()
     assert(self.children)
     table.sort(self.children, function (a, b) return (a.layer or 0) < (b.layer or 0) end)
+    
+    if loud then
+    print("layerz")
+    for i = 1, #self.children do
+      print(self.children[i].layer)
+    end
+    end
   end
   
   function Region_Type:Hide()
@@ -341,7 +348,7 @@ function TextOverrides:AssimilateBounds()
   self:SetHeight(self.text:GetHeight())
 end
 function TextOverrides:SetSize(size)
-  self.text:SetTextSize(size)
+  self.text:SetTextSize(size / 1024)
   self:AssimilateBounds()
 end
 function TextOverrides:SetColor(r, g, b, a)

@@ -71,14 +71,23 @@ end
 
 glutil = {}
 function glutil.SetScreen(sx, sy, ex, ey)
+  local ax = (sx + ex) / 2
+  local ay = (sy + ey) / 2
+  
+  local dx = ex - sx
+  local dy = ey - sy
+  
   gl.Disable("CULL_FACE")
   
   gl.MatrixMode("PROJECTION")
   gl.LoadIdentity()
-  gl.Ortho(sx, ex, ey, sy, -1, 1)
+  --gl.Ortho(sx, ex, ey, sy, -1, 1)
+  gl.Ortho(-dx / 2, dx / 2, dy / 2, -dy / 2, -1, 1)
   
   gl.MatrixMode("MODELVIEW")
   gl.LoadIdentity()
+  
+  gl.Translate(-ax, -ay, 0)
 end
 function glutil.SetScreenCentered(x, y, pixelgrid)
   glutil.SetScreen(x - 512 / pixelgrid, y - 384 / pixelgrid, x + 512 / pixelgrid, y + 384 / pixelgrid)
@@ -140,4 +149,9 @@ function glutil.RenderEmptyBox(r, g, b, sx, sy, ex, ey)
   gl.Vertex(ex, ey)
   gl.Vertex(sx, ey)
   gl.End()
+end
+
+
+function coroutine.pause(frames)
+  for i = 1, frames do coroutine.yield() end
 end

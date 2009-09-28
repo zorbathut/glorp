@@ -139,9 +139,6 @@ do
   end
 end
 
-function coroutine.pause(frames)
-  for i = 1, frames do coroutine.yield() end
-end
 
 
 
