@@ -103,8 +103,10 @@ function glutil.RenderCenteredSprite(tex, x, y, width, height, r, g, b, a)
 end
 
 function glutil.RenderBoundedSprite(tex, sx, sy, ex, ey, r, g, b, a)
+  assert(sx and sy and ex and ey)
   local teex = tex:GetWidth() / tex:GetInternalWidth()
   local teey = tex:GetHeight() / tex:GetInternalHeight()
+  assert(teex and teey)
   
   tex:SetTexture()
   gl.Color(r or 1, g or 1, b or 1, a or 1)

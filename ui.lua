@@ -257,9 +257,10 @@ do
     if self.hide then return end
     
     if self.bg_r then
+      local l, u, r, d = self:GetBounds()
+      assert(l and u and r and d)
       gl.Color(self.bg_r, self.bg_g, self.bg_b, self.bg_a)
       gl.Begin("QUADS")
-      local l, u, r, d = self:GetBounds()
       gl.Vertex(l, u)
       gl.Vertex(r, u)
       gl.Vertex(r, d)
