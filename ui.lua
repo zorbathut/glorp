@@ -103,30 +103,37 @@ do
 
   
   function Region_Type:SetWidth(width)
-    reanchor(self, "x", "size", width)
+    reanchor(self, "_anchor_x", "size", width)
   end
   function Region_Type:SetHeight(height)
-    reanchor(self, "y", "size", height)
+    reanchor(self, "_anchor_y", "size", height)
   end
   
   function Region_Type:GetWidth()
-    return getsize(self, "x")
+    return getsize(self, "_anchor_x")
   end
   function Region_Type:GetHeight()
-    return getsize(self, "y")
+    return getsize(self, "_anchor_y")
   end
   
   function Region_Type:GetLeft()
-    return getpoint(self, "x", 0)
+    return getpoint(self, "_anchor_x", 0)
   end
   function Region_Type:GetRight()
-    return getpoint(self, "x", 1)
+    return getpoint(self, "_anchor_x", 1)
   end
   function Region_Type:GetTop()
-    return getpoint(self, "y", 0)
+    return getpoint(self, "_anchor_y", 0)
   end
   function Region_Type:GetBottom()
-    return getpoint(self, "y", 1)
+    return getpoint(self, "_anchor_y", 1)
+  end
+  
+  function Region_Type:GetXCenter()
+    return getpoint(self, "_anchor_x", 0.5)
+  end
+  function Region_Type:GetYCenter()
+    return getpoint(self, "_anchor_y", 0.5)
   end
   
   function Region_Type:GetBounds()
@@ -136,7 +143,13 @@ do
   --[[function Region_Type:GetPoint()
   end]]
   function Region_Type:GetPointOnAxis(axis, pt)
-    return getpoint(self, axis, pt)
+    if axis == "x" or axis == "_anchor_x" then
+      return getpoint(self, "_anchor_x", pt)
+    elseif axis == "y" or axis == "_anchor_y" then
+      return getpoint(self, "_anchor_y", pt)
+    else
+      assert(false)
+    end
   end
   
   function Region_Type:SetParent(parent)
@@ -194,10 +207,10 @@ do
   
   function Region_Type:SetAllPoints()
     assert(self.parent)
-    reanchor(self, "x", 0, self.parent, 0, 0)
-    reanchor(self, "x", 1, self.parent, 1, 0)
-    reanchor(self, "y", 0, self.parent, 0, 0)
-    reanchor(self, "y", 1, self.parent, 1, 0)
+    reanchor(self, "_anchor_x", 0, self.parent, 0, 0)
+    reanchor(self, "_anchor_x", 1, self.parent, 1, 0)
+    reanchor(self, "_anchor_y", 0, self.parent, 0, 0)
+    reanchor(self, "_anchor_y", 1, self.parent, 1, 0)
     -- grunch
   end
   function Region_Type:ClearAllPoints()
@@ -207,8 +220,9 @@ do
   local function set_axis(self, x, y, target, tx, ty, ofsx, ofsy)
     assert(target)
     assert(target ~= self)
-    if x and tx then reanchor(self, "x", x, target, tx, ofsx or 0) end
-    if y and ty then reanchor(self, "y", y, target, ty, ofsy or 0) end
+    --print(self, x, y, target, tx, ty, ofsx, ofsy)
+    if x and tx then reanchor(self, "_anchor_x", x, target, tx, ofsx or 0) end
+    if y and ty then reanchor(self, "_anchor_y", y, target, ty, ofsy or 0) end
   end
   
   local strconv = {
@@ -309,8 +323,8 @@ function UI_CreateParent(width, height)
     return self:GetHeight()
   end
   function parent:GetPointOnAxis(axis, pt)
-    if axis == "x" then return pt * self:GetWidth() end
-    if axis == "y" then return pt * self:GetHeight() end
+    if axis == "x" or axis == "_anchor_x" then return pt * self:GetWidth() end
+    if axis == "y" or axis == "_anchor_y" then return pt * self:GetHeight() end
   end
   parent.parent = nil
   table.insert(parents, {parent = parent, width = width, height = height})
@@ -384,6 +398,17 @@ function TextMultilineOverrides:Draw()
   self.text:Render()
 end
 
+local SpriteOverrides = {}
+function SpriteOverrides:SetTexture(tex)
+  if type(tex) == "string" then tex = Texture(tex) end
+  self.tex = tex
+  self:SetWidth(tex:GetWidth())
+  self:SetHeight(tex:GetHeight())
+end
+function SpriteOverrides:Draw()
+  glutil.RenderBoundedSprite(self.tex, self:GetBounds())
+end
+
 function CreateFrame(typ, parent)
   if typ == "Frame" then
     return Region(parent)
@@ -406,9 +431,16 @@ function CreateFrame(typ, parent)
     end
     rg.text = FancyTextFrame_Make("")
     return rg
+  elseif typ == "Sprite" then
+    local rg = Region(parent)
+    for k, v in pairs(SpriteOverrides) do
+      rg[k] = v
+    end
+    return rg
   else
     assert(false)
   end
+  assert(false)
 end
 
 local function TraverseUpWorker(start, x, y)

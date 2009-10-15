@@ -103,6 +103,10 @@ function glutil.RenderCenteredSprite(tex, x, y, width, height, r, g, b, a)
 end
 
 function glutil.RenderBoundedSprite(tex, sx, sy, ex, ey, r, g, b, a)
+  if type(sx) == "table" then
+    return glutil.RenderBoundedSprite(tex, sx[1], sx[2], sx[3], sx[4], sy, ex, ey, r)
+  end
+  
   assert(sx and sy and ex and ey)
   local teex = tex:GetWidth() / tex:GetInternalWidth()
   local teey = tex:GetHeight() / tex:GetInternalHeight()
@@ -112,13 +116,13 @@ function glutil.RenderBoundedSprite(tex, sx, sy, ex, ey, r, g, b, a)
   gl.Color(r or 1, g or 1, b or 1, a or 1)
   gl.Begin("QUADS")
   gl.TexCoord(0, 0)
-  gl.Vertex(sx, sy)
+  gl.Vertex(sx + 0.5, sy + 0.5)
   gl.TexCoord(teex, 0)
-  gl.Vertex(ex, sy)
+  gl.Vertex(ex + 0.5, sy + 0.5)
   gl.TexCoord(teex, teey)
-  gl.Vertex(ex, ey)
+  gl.Vertex(ex + 0.5, ey + 0.5)
   gl.TexCoord(0, teey)
-  gl.Vertex(sx, ey)
+  gl.Vertex(sx + 0.5, ey + 0.5)
   gl.End()
   SetNoTexture()
 end
