@@ -85,6 +85,8 @@ def Installers(platform):
         
       rfiles = []
       for item in files:
+        if str.find(str(item), "/cygdrive/c/werk/weekly/number+/") != -1:
+          item = str.replace(str(item), "/cygdrive/c/werk/weekly/number+/", "")
         print("files work", str(item))
         if str.find(str(item), "cygdrive") != -1:
           #print("complex")

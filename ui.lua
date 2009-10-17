@@ -143,6 +143,7 @@ do
   --[[function Region_Type:GetPoint()
   end]]
   function Region_Type:GetPointOnAxis(axis, pt)
+    if verbositude then print(self, axis, pt) end
     if axis == "x" or axis == "_anchor_x" then
       return getpoint(self, "_anchor_x", pt)
     elseif axis == "y" or axis == "_anchor_y" then
@@ -213,8 +214,14 @@ do
     reanchor(self, "_anchor_y", 1, self.parent, 1, 0)
     -- grunch
   end
-  function Region_Type:ClearAllPoints()
-    self.x, self.y = nil, nil
+  function Region_Type:ClearAllPoints(not_sizes, not_points)
+    assert(not not_points)
+    if not_sizes then
+      self["_anchor_x"] = {size = self["_anchor_x"].size}
+      self["_anchor_y"] = {size = self["_anchor_y"].size}
+    else
+      self["_anchor_x"], self["_anchor_y"] = nil, nil
+    end
   end
   
   local function set_axis(self, x, y, target, tx, ty, ofsx, ofsy)
@@ -406,7 +413,10 @@ function SpriteOverrides:SetTexture(tex)
   self:SetHeight(tex:GetHeight())
 end
 function SpriteOverrides:Draw()
-  glutil.RenderBoundedSprite(self.tex, self:GetBounds())
+  if self.tex then glutil.RenderBoundedSprite(self.tex, {self:GetBounds()}, self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a) end
+end
+function SpriteOverrides:SetColor(r, g, b, a)
+  self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a = r, g, b, a
 end
 
 function CreateFrame(typ, parent)
