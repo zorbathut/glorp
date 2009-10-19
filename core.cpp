@@ -387,7 +387,7 @@ bool WasKeyPressedAdapter(const string &id) {
 map<pair<string, float>, SoundSample *> sounds;
 
 vector<SoundSource> ss;
-void DoASound(const string &sname, float vol) {
+SoundSource SoundCore(const string &sname, float vol) {
   vol = ceil(vol * 16) / 16;
   for(int i = 0; i < ss.size(); i++) {
     if(ss[i].IsStopped()) {
@@ -403,11 +403,19 @@ void DoASound(const string &sname, float vol) {
     meltdown();
     CHECK(sounds[make_pair(sname, vol)]);
   }
-  SoundSource nss = sounds[make_pair(sname, vol)]->Play();
+  
+  return sounds[make_pair(sname, vol)]->Play();
   //dprintf("%d, %d\n", nss.IsPaused(), nss.IsStopped());
   //CHECK(!nss.IsPaused() && !nss.IsStopped(), "%d, %d\n", nss.IsPaused(), nss.IsStopped());
-  ss.push_back(nss);
 };
+
+void DoASound(const string &sname, float vol) {
+  ss.push_back(SoundCore(sname, vol));
+}
+
+SoundSource ControllableSound(const string &sname, float vol) {
+  return SoundCore(sname, vol);
+}
 
 class PerfBarManager {
   PerfStack *ps;
@@ -638,11 +646,14 @@ void luainit() {
         .def("Render", &FancyTextFrame::Render)
         .def("SetText", &FancyTextFrame::SetText)
         .def("GetText", &FancyTextFrame::GetText),
+      class_<SoundSource>("SourceSource_Make")
+        .def("Stop", &SoundSource::Stop),
       def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
       def("WasKeyPressed_Frame", &WasKeyPressedAdapter),
       def("PlaySound_Core", &DoASound),
+      def("ControlSound_Core", &ControllableSound),
       def("TriggerExit", &TriggerExit),
       def("RegisterRenderLayer", &RegisterRenderLayer),
       def("GetMouseX", &gmx),

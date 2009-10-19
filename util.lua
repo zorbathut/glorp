@@ -68,6 +68,9 @@ end
 function PlaySound(snd, vol)
   PlaySound_Core(snd, vol or 1)
 end
+function ControlSound(snd, vol)
+  return ControlSound_Core(snd, vol or 1)
+end
 
 glutil = {}
 function glutil.SetScreen(sx, sy, ex, ey)
@@ -122,6 +125,27 @@ function glutil.RenderBoundedSprite(tex, sx, sy, ex, ey, r, g, b, a)
   gl.TexCoord(teex, teey)
   gl.Vertex(ex, ey)
   gl.TexCoord(0, teey)
+  gl.Vertex(sx, ey)
+  gl.End()
+  SetNoTexture()
+end
+
+function glutil.RenderBoundedSpriteSegment(tex, sx, sy, ex, ey, ttsx, ttsy, ttex, ttey)
+  assert(sx and sy and ex and ey)
+  local teex = tex:GetWidth() / tex:GetInternalWidth()
+  local teey = tex:GetHeight() / tex:GetInternalHeight()
+  assert(teex and teey)
+  
+  tex:SetTexture()
+  gl.Color(1, 1, 1)
+  gl.Begin("QUADS")
+  gl.TexCoord(teex * ttsx, teey * ttsy)
+  gl.Vertex(sx, sy)
+  gl.TexCoord(teex * ttex, teey * ttsy)
+  gl.Vertex(ex, sy)
+  gl.TexCoord(teex * ttex, teey * ttey)
+  gl.Vertex(ex, ey)
+  gl.TexCoord(teex * ttsx, teey * ttey)
   gl.Vertex(sx, ey)
   gl.End()
   SetNoTexture()
