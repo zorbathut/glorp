@@ -98,6 +98,7 @@ end]]
 
 local crw = coroutine.wrap
 function coroutine.wrap(cof, ...)
+  assert(cof)
   local dt = {...}
   local it = select('#', ...)
   
