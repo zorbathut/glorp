@@ -131,7 +131,8 @@ for build in buildables:
 data_source = traverse("../data")
 
 data_oggize = [x for x in data_source if x.split('.')[-1] == "wav"]
-data_copy = [x for x in data_source if not (x in data_oggize)]
+data_crush = [x for x in data_source if x.split('.')[-1] == "png"]
+data_copy = [x for x in data_source if not (x in data_oggize) and not (x in data_crush)]
 
 def make_data():
   rv = ["../" + x for x in data]
@@ -144,6 +145,9 @@ def make_data():
   
   for item in data_oggize:
     rv += env.Command("../build/data/" + item.rsplit('.', 1)[0] + ".ogg", "../data/" + item, "%s -q 6 -o $TARGET $SOURCE" % oggpath)
+  
+  for item in data_crush:
+    rv += env.Command("../build/data/" + item, "../data/" + item, "pngcrush -brute -rem alla $SOURCE $TARGET && touch $TARGET")
   
   for item in data_copy:
     rv += ["../data/" + item]
@@ -217,9 +221,9 @@ if not env.GetOption('clean'):
 localflags = ""
 stdrun = localflags + ""
 
-command(env, "run", fulldata, "%s %s" % (programs[name], stdrun))
-command(env, "editor", fulldata, "%s %s --editor" % (programs[name], stdrun))
-command(env, "runclean", fulldata, "%s %s" % (programs[name], localflags))
+command(env, "run", [programs[name]] + libcopy, "%s %s" % (programs[name], stdrun))
+command(env, "editor", [programs[name]] + libcopy, "%s %s --editor" % (programs[name], stdrun))
+command(env, "runclean", [programs[name]] + libcopy, "%s %s" % (programs[name], localflags))
 
 for key, value in includeculls.items():
   command(env, "includecull." + key, value, "")

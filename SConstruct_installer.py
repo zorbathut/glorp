@@ -99,14 +99,15 @@ def Installers(platform):
       
       prebfiles = []
       for line in files:
-        print("linlin", line)
+        
         if str.find(line, "build/") != -1:
           src = "../" + line
         else:
           src = line
+        print("linlin", line, "../build/deploy_layout_%s/%s/%s" % (suffix, name, line.split('/', 1)[1]), src)
         prebfiles += env.Command("../build/deploy_layout_%s/%s/%s" % (suffix, name, line.split('/', 1)[1]), src, Copy("$TARGET", "$SOURCE"))
       for line in deployfiles:
-        print("depdep", line)
+        print("depdep")
         prebfiles += env.Command("../build/deploy_layout_%s/%s/%s" % (suffix, name, line.rsplit('/', 1)[1]), "../" + str(line), Copy("$TARGET", "$SOURCE"))
       print("mexe", str(mainexe))
       prebfiles += env.Command("../build/deploy_layout_%s/%s/%s.exe" % (suffix, name, name), mainexe, Copy("$TARGET", "$SOURCE"))
