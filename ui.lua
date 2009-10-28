@@ -44,7 +44,7 @@ do
       end
     end
     
-    return 20 -- everything is 20
+    return self.bg_r and 20 -- everything is 20, unless it actually fails to exist
   end
   local function getpoint(self, axis, point)
     --print("gp", self, axis, point)
@@ -97,10 +97,13 @@ do
       self[axis][token] = {...}
     end
     
-    getpoint(self, axis, 3.14159) -- check for circular dependencies
+    --getpoint(self, axis, token) -- check for circular dependencies
   end
   
 
+  function Region_Type:Exists()
+    return self:GetWidth() and self:GetHeight()
+  end
   
   function Region_Type:SetWidth(width)
     reanchor(self, "_anchor_x", "size", width)
@@ -464,7 +467,7 @@ local function TraverseUpWorker(start, x, y)
     end
   end
   
-  if x >= start:GetLeft() and x < start:GetRight() and y >= start:GetTop() and y < start:GetBottom() then
+  if start:Exists() and x >= start:GetLeft() and x < start:GetRight() and y >= start:GetTop() and y < start:GetBottom() then
     return start
   end
   
@@ -491,7 +494,7 @@ function AccumulateInternals(start, acu, x, y)
     end
   end
   
-  if x >= start:GetLeft() and x < start:GetRight() and y >= start:GetTop() and y < start:GetBottom() then
+  if start:Exists() and x >= start:GetLeft() and x < start:GetRight() and y >= start:GetTop() and y < start:GetBottom() then
     acu[start] = true
   end
   
@@ -812,5 +815,3 @@ function TextEntryDialog(title_tex)
   
   return rva, rvb
 end
-
-RegisterRenderLayer(0)

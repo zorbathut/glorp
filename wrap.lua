@@ -41,11 +41,6 @@ local function barf(err)
   error(rv .. "\n")
 end
 
-function core__loadfile(filename)
-  local rv, err = xpcall(function () local tv, err = loadfile(filename) if not tv then print(err) error(err) else tv() end end, function (ter) return {ter, debug.traceback()} end)
-  if not rv then print("Loadfile failure") barf(err) else return err end
-end
-
 local errorcount = 0
 function strip_traceback(err)
   local linz = {}

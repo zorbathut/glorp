@@ -163,7 +163,6 @@ template<typename Sub> class Destroyable : public Sub {
 };
 
 class Layer : public Destroyable<GlopFrame> {
-  int layer;
 public:
   
   void Render() const {
@@ -171,18 +170,12 @@ public:
     
     lua_getglobal(L, "generic_wrap");
     lua_getglobal(L, "render");
-    lua_pushnumber(L, layer);
-    int rv = lua_pcall(L, 2, 0, 0);
+    int rv = lua_pcall(L, 1, 0, 0);
     if (rv) {
       dprintf("%s", lua_tostring(L, -1));
       meltdown();
       CHECK(0);
     }
-  }
-  
-  Layer(int lay) : Destroyable<GlopFrame>() {
-    SetLayer(lay);
-    layer = lay;
   }
 };
 
@@ -198,6 +191,7 @@ public:
     startPerformanceBar();
   }
 };
+Layer *uilayer = NULL;
 
 
 map<string, Texture *> images;
@@ -266,12 +260,6 @@ void SetNoTex() {
   glMatrixMode(GL_TEXTURE);
   glLoadIdentity();
   glMatrixMode(GL_MODELVIEW);
-}
-
-void RegisterRenderLayer(int lay) {
-  if(!layers[lay]) {
-    layers[lay] = new Layer(lay);
-  }
 }
 
 float cvx(float x) {
@@ -655,7 +643,6 @@ void luainit() {
       def("PlaySound_Core", &DoASound),
       def("ControlSound_Core", &ControllableSound),
       def("TriggerExit", &TriggerExit),
-      def("RegisterRenderLayer", &RegisterRenderLayer),
       def("GetMouseX", &gmx),
       def("GetMouseY", &gmy),
       def("ShowMouseCursor", &sms)
@@ -663,14 +650,15 @@ void luainit() {
   }
   
   adaptaload("wrap.lua");
-  adaptaload_wrapped("util.lua");
-  adaptaload_wrapped("ui.lua");
+  adaptaload_wrapped("stage.lua");
+  
+  /*adaptaload_wrapped("ui.lua");
   
   if(FLAGS_editor) {
     adaptaload_wrapped("editor.lua");
   } else {
     adaptaload_wrapped("main.lua");
-  }
+  }*/
   
   if(last_preserved_token.size()) {
     lua_getglobal(L, "generic_wrap");
@@ -681,6 +669,8 @@ void luainit() {
       CHECK(0, "%s", lua_tostring(L, -1));
     }
   }
+  
+  uilayer = new Layer();
 }
 void luashutdown() {
   dprintf("lua closing");
@@ -688,9 +678,7 @@ void luashutdown() {
   dprintf("lua closed");
   L = NULL;
   
-  for(map<int, Layer*>::iterator itr = layers.begin(); itr != layers.end(); itr++)
-    delete itr->second;
-  layers.clear();
+  delete uilayer;
 }
 
 void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
