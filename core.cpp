@@ -419,8 +419,9 @@ public:
   }
 };
 
+bool exiting = false;
 void TriggerExit() {
-  window()->Destroy();
+  exiting = true;
 };
 
 class KeyList : public KeyListener {
@@ -759,6 +760,10 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
         meltdown();
         CHECK(0);
       }
+    }
+    
+    if(exiting) {
+      window()->Destroy();
     }
   }
   
