@@ -456,18 +456,18 @@ function CreateFrame(typ, parent)
   assert(false)
 end
 
-local function TraverseUpWorker(start, x, y)
+local function TraverseUpWorker(start, x, y, keyed)
   if start.hide then return end
   
   if start.children then
     for tid = #start.children, 1, -1 do
       local k = start.children[tid]
-      local rv = TraverseUpWorker(k, x, y)
+      local rv = TraverseUpWorker(k, x, y, keyed or start.Key)
       if rv then return rv end
     end
   end
   
-  if start:Exists() and x >= start:GetLeft() and x < start:GetRight() and y >= start:GetTop() and y < start:GetBottom() then
+  if start:Exists() and (keyed or start.Key) and x >= start:GetLeft() and x < start:GetRight() and y >= start:GetTop() and y < start:GetBottom() then
     return start
   end
   
@@ -477,7 +477,7 @@ end
 function TraverseUp(val)
   local x, y = GetMouse()
   
-  local rv = TraverseUpWorker(parents[val].parent, x / 1024 * parents[val].width, y / 768 * parents[val].height)
+  local rv = TraverseUpWorker(parents[val].parent, x / 1024 * parents[val].width, y / 768 * parents[val].height, false)
   
   return rv
 end

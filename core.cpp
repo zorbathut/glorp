@@ -433,6 +433,11 @@ class KeyList : public KeyListener {
     if(event.GetMainKey() == kMouseWheelUp) { keyvent = "mouse_wheel_up"; }
     if(event.GetMainKey() == kMouseWheelDown) { keyvent = "mouse_wheel_down"; }
     
+    if(event.GetMainKey() == kKeyLeft) { keyvent = "arrow_left"; }
+    if(event.GetMainKey() == kKeyRight) { keyvent = "arrow_right"; }
+    if(event.GetMainKey() == kKeyUp) { keyvent = "arrow_up"; }
+    if(event.GetMainKey() == kKeyDown) { keyvent = "arrow_down"; }
+    
     if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= 'a' && event.GetMainKey().index <= 'z') { keyvent = string(1, event.GetMainKey().index); }
     if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= '0' && event.GetMainKey().index <= '9') { keyvent = string(1, event.GetMainKey().index); }
     if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index == '`') { keyvent = string(1, event.GetMainKey().index); }
