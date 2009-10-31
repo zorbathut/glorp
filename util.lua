@@ -110,22 +110,28 @@ function glutil.RenderBoundedSprite(tex, sx, sy, ex, ey, r, g, b, a)
     return glutil.RenderBoundedSprite(tex, sx[1], sx[2], sx[3], sx[4], sy, ex, ey, r)
   end
   
+  --sx, sy, ex, ey = math.floor(sx + 0.5) + 0.375, math.floor(sy + 0.5) + 0.375, math.floor(ex + 0.5) + 0.375, math.floor(ey + 0.5) + 0.375
+  
   assert(sx and sy and ex and ey)
   local teex = tex:GetWidth() / tex:GetInternalWidth()
   local teey = tex:GetHeight() / tex:GetInternalHeight()
   assert(teex and teey)
-  sx, sy, ex, ey = sx - 0.5, sy - 0.5, ex - 0.5, ey - 0.5
+
+  
+  
+  local xadj = 1 / tex:GetInternalWidth() / 2
+  local yadj = 1 / tex:GetInternalHeight() / 2
   
   tex:SetTexture()
   gl.Color(r or 1, g or 1, b or 1, a or 1)
   gl.Begin("QUADS")
-  gl.TexCoord(0, 0)
+  gl.TexCoord(0 + xadj, 0 + yadj)
   gl.Vertex(sx, sy)
-  gl.TexCoord(teex, 0)
+  gl.TexCoord(teex + xadj, 0 + yadj)
   gl.Vertex(ex, sy)
-  gl.TexCoord(teex, teey)
+  gl.TexCoord(teex + xadj, teey + yadj)
   gl.Vertex(ex, ey)
-  gl.TexCoord(0, teey)
+  gl.TexCoord(0 + xadj, teey + yadj)
   gl.Vertex(sx, ey)
   gl.End()
   SetNoTexture()
@@ -136,6 +142,9 @@ function glutil.RenderBoundedSpriteSegment(tex, sx, sy, ex, ey, ttsx, ttsy, ttex
   local teex = tex:GetWidth() / tex:GetInternalWidth()
   local teey = tex:GetHeight() / tex:GetInternalHeight()
   assert(teex and teey)
+  
+  local xadj = 1 / tex:GetInternalWidth() / 2
+  local yadj = 1 / tex:GetInternalHeight() / 2
   
   tex:SetTexture()
   gl.Color(1, 1, 1)
@@ -185,4 +194,20 @@ end
 
 function coroutine.pause(frames)
   for i = 1, frames do coroutine.yield() end
+end
+
+
+local Tex = Texture
+local texcache = {}
+function Texture(...)
+  for i = 1, select('#', ...) do
+    local texname = select(i, ...)
+    if texcache[texname] then return texcache[texname] end
+    
+    texcache[texname] = Tex(texname)
+    if texcache[texname] then return texcache[texname] end
+  end
+  
+  print("No such texture list", ...)
+  assert(false)
 end

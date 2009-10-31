@@ -194,41 +194,17 @@ public:
 Layer *uilayer = NULL;
 
 
-map<string, Texture *> images;
-Texture *getTex(const string &image) {
-  Texture *tex;
-  if(images.count(image)) {
-    tex = images[image];
-  } else {
-    Image *img = Image::Load("data/" + image + ".png");
-    if(!img) {
-      meltdown();
-      CHECK(img, image.c_str());
-    }
-    
-    for(int y = 0; y < img->GetHeight(); y++) {
-      for(int x = 0; x < img->GetWidth(); x++) {
-        //dprintf("%08x %08x", *(unsigned int*)img->Get(x, y), *(unsigned int*)img->Get(x, y) & 0xffffff);
-        if((*(unsigned long*)img->Get(x, y) & 0xffffff) == 0x7e7ed7)
-          *(unsigned long*)img->Get(x, y) = 0;
-      }
-    }
-    
-    tex = new Texture(img);   // we leak some stuff here
-    images[image] = tex;
-  }
-  
-  return tex;
-}
-
 class WrappedTex {
 private:
   Texture *tex;
+  Image *img;
+  string fname;
 
 public:
-  WrappedTex(const string &t) {
-    tex = getTex(t);
-    CHECK(tex, "%s", t.c_str());
+  WrappedTex(Image *intex, const string &inf) {
+    img = intex;
+    tex = new Texture(img);
+    fname = inf;
   }
     
   int GetWidth() const {
@@ -253,7 +229,28 @@ public:
     glMatrixMode(GL_MODELVIEW);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   }
+  
+  const string &getfname() const {
+    return fname;
+  }
+  
+  ~WrappedTex() {
+    delete tex;
+    delete img;
+  };
 };
+std::ostream& operator<<(std::ostream&ostr, WrappedTex const&ite) {
+  ostr << "<texture \"" << ite.getfname() << ">";
+  return ostr;
+}
+
+
+WrappedTex *GetTex(const string &image) {
+  Image *tex = Image::Load("data/" + image + ".png");
+  if(!tex) return NULL;
+  
+  return new WrappedTex(tex, image);
+}
 
 void SetNoTex() {
   GlUtils::SetNoTexture();
@@ -268,43 +265,6 @@ float cvx(float x) {
 float cvy(float y) {
   return y / virt_height * window()->GetHeight();
 }
-
-class Sprite : public Destroyable<GlopFrame> {
-private:
-  friend std::ostream& operator<<(std::ostream &, const Sprite &);
-  string icon;
-
-  float sx;
-  float sy;
-  float ex;
-  float ey;
-  Texture *tex;
-
-public:
-  
-  void Render() const {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    
-    if(sx <= ex) {
-      GlUtils2d::RenderTexture((int)cvx(sx), (int)cvy(sy), (int)cvx(ex), (int)cvy(ey), tex);
-    } else {
-      GlUtils2d::RenderTexture((int)cvx(sx), (int)cvy(sy), (int)cvx(ex), (int)cvy(ey), float(tex->GetWidth()) / tex->GetInternalWidth(), 0, 0, float(tex->GetHeight()) / tex->GetInternalHeight(), true, tex);
-    }
-  }
-  
-  Sprite(const string &image) {
-    tex = getTex(image);
-
-    CHECK(tex, "%s\n", image.c_str());
-  }
-  
-  void Move(float in_sx, float in_sy, float in_ex, float in_ey) {
-    sx = in_sx;
-    ex = in_ex;
-    sy = in_sy;
-    ey = in_ey;
-  }
-};
 
 class Text : public Destroyable<FancyTextFrame> {
 public:
@@ -581,12 +541,6 @@ void luainit() {
     
     module(L)
     [
-      class_<Sprite>("Sprite_Make")
-        .def(constructor<const string &>())
-        .def("Move", &Sprite::Move)
-        .def("SetLayer", &Sprite::SetLayer)
-        .def("Hide", &Sprite::Hide)
-        .def("Show", &Sprite::Show),
       class_<Text>("Text_Make")
         .def(constructor<const std::string &>())
         .def("Move", &Text::ScaledMove)
@@ -600,13 +554,14 @@ void luainit() {
         .def("Hide", &Fader::Hide)
         .def("Show", &Fader::Show)
         .def("SetLayer", &Fader::SetLayer),
-      class_<WrappedTex>("Texture")
-        .def(constructor<const std::string &>())
+      class_<WrappedTex>("WrappedTex_Internal")
+        //.def(constructor<const std::string &>())
         .def("GetWidth", &WrappedTex::GetWidth)
         .def("GetHeight", &WrappedTex::GetHeight)
         .def("GetInternalWidth", &WrappedTex::GetInternalWidth)
         .def("GetInternalHeight", &WrappedTex::GetInternalHeight)
-        .def("SetTexture", &WrappedTex::SetTexture),
+        .def("SetTexture", &WrappedTex::SetTexture)
+        .def(tostring(self)),
       class_<PerfBarManager>("Perfbar_Init")
         .def(constructor<float, float, float>())
         .def("Destroy", &PerfBarManager::Destroy),
@@ -642,6 +597,7 @@ void luainit() {
         .def("GetText", &FancyTextFrame::GetText),
       class_<SoundSource>("SourceSource_Make")
         .def("Stop", &SoundSource::Stop),
+      def("Texture", &GetTex),
       def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
@@ -774,9 +730,6 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   
   meltdown();
   luashutdown();
-  
-  for(map<string, Texture *>::const_iterator itr = images.begin(); itr != images.end(); itr++)
-    delete itr->second;
   
   dprintf("exiting");
 }

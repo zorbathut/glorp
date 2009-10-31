@@ -159,6 +159,7 @@ def make_data():
   rv += env.Command("../build/data/wrap.lua", "wrap.lua", "cp $SOURCE $TARGET")
   rv += env.Command("../build/data/util.lua", "util.lua", "cp $SOURCE $TARGET")
   rv += env.Command("../build/data/ui.lua", "ui.lua", "cp $SOURCE $TARGET")
+  rv += env.Command("../build/data/mandible_games.png", "resources/mandible_games.png", "cp $SOURCE $TARGET")
   
   rv += env.Command("../build/licenses.txt", "resources/licenses.txt", "cp $SOURCE $TARGET")
   

@@ -180,17 +180,80 @@ end
 
 mainmenu = runuifile("menu_core.lua")
 
+local bgbg = CreateFrame("Frame")
+bgbg:SetBackgroundColor(mainmenu.bg_r or 0, mainmenu.bg_g or 0, mainmenu.bg_b or 0)
+bgbg:SetAllPoints()
+local lojo = CreateFrame("Sprite", bgbg)
+lojo:SetTexture(Texture("mandible_games", "../glorp/resources/mandible_games"))
+lojo:SetPoint("CENTER", bgbg, "CENTER")
+lojo:SetColor(1, 1, 1, 0)
+local lojo_l = CreateFrame("Frame", bgbg)
+lojo_l:SetPoint("TOPLEFT", bgbg, "TOPLEFT")
+lojo_l:SetPoint("BOTTOM", bgbg, "BOTTOM")
+lojo_l:SetPoint("RIGHT", lojo, "LEFT")
+local lojo_r = CreateFrame("Frame", bgbg)
+lojo_r:SetPoint("TOPRIGHT", bgbg, "TOPRIGHT")
+lojo_r:SetPoint("BOTTOM", bgbg, "BOTTOM")
+lojo_r:SetPoint("LEFT", lojo, "RIGHT")
+local lojo_u = CreateFrame("Frame", bgbg)
+lojo_u:SetPoint("TOP", bgbg, "TOP")
+lojo_u:SetPoint("BOTTOM", lojo, "TOP")
+lojo_u:SetPoint("LEFT", lojo, "LEFT")
+lojo_u:SetPoint("RIGHT", lojo, "RIGHT")
+local lojo_d = CreateFrame("Frame", bgbg)
+lojo_d:SetPoint("TOP", lojo, "BOTTOM")
+lojo_d:SetPoint("BOTTOM", bgbg, "BOTTOM")
+lojo_d:SetPoint("LEFT", lojo, "LEFT")
+lojo_d:SetPoint("RIGHT", lojo, "RIGHT")
+
+local function fadedafucker(st, nd, len)
+  for i = 1, len do
+    local diff = i / len
+    local amt = nd * diff + st * (1 - diff)
+    lojo:SetColor(1, 1, 1, amt)
+    lojo_l:SetBackgroundColor(1, 1, 1, amt)
+    lojo_r:SetBackgroundColor(1, 1, 1, amt)
+    lojo_u:SetBackgroundColor(1, 1, 1, amt)
+    lojo_d:SetBackgroundColor(1, 1, 1, amt)
+    coroutine.yield()
+  end
+end
+
+local somethingpressed
+local wedothisfirst
+wedothisfirst = coroutine.wrap(function()
+  coroutine.pause(10)
+  fadedafucker(0, 1, 10)
+  for i = 1, 120 do
+    if somethingpressed then break end
+    coroutine.yield()
+  end
+  fadedafucker(1, 0, 20)
+  coroutine.pause(10)
+  
+  bgbg:Hide()
+  wedothisfirst = nil
+end)
+
 function tick_loop(...)
-  if not inminimenu then
-    stdwrap("tick_loop", ...)
+  if wedothisfirst then
+    wedothisfirst()
+  else
+    if not inminimenu then
+      stdwrap("tick_loop", ...)
+    end
   end
 end
 function loop(...)
+  if wedothisfirst then return end
+  
   if not inminimenu then
     stdwrap("loop", ...)
   end
 end
 function render(...)
+  if wedothisfirst then bgbg:Render() return end
+  
   stdwrap("render", ...)
   local context = runninggame or mainmenu
   context.UIParent:Render()
@@ -200,6 +263,13 @@ function render(...)
   end
 end
 function key(button, ascii, event)
+  if wedothisfirst then
+    if event == "press" then
+      somethingpressed = true
+    end
+    return
+  end
+  
   print(button, ascii, event)
   if runninggame and button == "escape" and event == "press" then
     print("preep")
