@@ -1,4 +1,6 @@
 
+local _, mode = ...
+
 function runfile(file, global)
   local dat, rv = loadfile(file)
   
@@ -40,7 +42,11 @@ local function Handle(param)
   
   if param == "start_game" then
     destroy_game()
-    runninggame = runuifile("main.lua")
+    if mode == "editor" then
+      runninggame = runuifile("editor.lua")
+    else
+      runninggame = runuifile("main.lua")
+    end
     mainmenu.UIParent:Hide()
   elseif param == "exit_game" then
     destroy_game()
@@ -287,4 +293,13 @@ function key(button, ascii, event)
     print("wut")
     stdwrap("key", button, ascii, event)
   end
+end
+
+if mode == "debug" then
+  wedothisfirst = nil
+  Handle("start_game")
+end
+if mode == "editor" then
+  wedothisfirst = nil
+  Handle("start_game")
 end

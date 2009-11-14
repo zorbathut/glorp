@@ -118,9 +118,9 @@ map< string, string > getFlagDescriptions() {
   return rv;
 }
 
-void initFlags(int *argcp, const char *argv[], int ignoreargs, const string &settings) {
+void initFlags(int *argcp, const char ***argvp, int ignoreargs, const string &settings) {
   int argc = *argcp;
-  *argcp = min(*argcp, ignoreargs);
+  const char **argv = *argvp;
   
   map<string, LinkageData> &links = getLinkageSingleton();
   for(map<string, LinkageData>::iterator itr = links.begin(); itr != links.end(); itr++) {
@@ -160,10 +160,17 @@ void initFlags(int *argcp, const char *argv[], int ignoreargs, const string &set
       lines.push_back(make_pair(dt, FS_FILE));
   }
   
-  for(int i = ignoreargs + 1; i < argc; i++) {
-    CHECK(argv[i][0] == '-' && argv[i][1] == '-');
-    lines.push_back(make_pair(argv[i] + 2, FS_CLI));
+  int consumed_end = ignoreargs + 1;
+  int eaten = 0;
+  for(; consumed_end < argc; consumed_end++) {
+    if(argv[consumed_end][0] != '-' || argv[consumed_end][1] != '-') break;
+    lines.push_back(make_pair(argv[consumed_end] + 2, FS_CLI));
+    eaten = eaten + 1; // oh shazbot
   }
+  
+  std::copy(argv + ignoreargs + 1, argv + consumed_end, argv + argc);
+  *argcp = *argcp - eaten;
+  argv[*argcp] = NULL;
   
   for(int i = 0; i < lines.size(); i++) {
     const char *arg = lines[i].first.c_str();
@@ -247,6 +254,6 @@ void setInitFlagIgnore(int args) {
 }
 
 void initFlagSpawner(int *argc, const char ***argv) {
-  initFlags(argc, *argv, fignore, ffile);
+  initFlags(argc, argv, fignore, ffile);
 }
 ADD_INITTER(initFlagSpawner, 0);

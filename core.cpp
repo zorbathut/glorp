@@ -31,8 +31,6 @@
 
 #include "LuaGL.h"
 
-DEFINE_bool(editor, false, "Ingame editor");
-
 using namespace std;
 
 lua_State *L;
@@ -186,8 +184,7 @@ class Perfbar : public GlopFrame {
 public:
   
   void Render() const {
-    if(FLAGS_editor)
-      drawPerformanceBar();
+    drawPerformanceBar();
     startPerformanceBar();
   }
 };
@@ -461,7 +458,7 @@ void adaptaload(const string &fname) {
   }
 }
 
-void adaptaload_wrapped(const string &fname) {
+void adaptaload_wrapped(const string &fname, int argc, const char **argv) {
   int error = luaL_dostring(L, ("file_temp, file_err = loadfile(\"data/" + fname + "\"); assert(file_temp, file_err)").c_str());
   if(error) {
     error = luaL_dostring(L, ("file_temp, file_err = loadfile(\"glorp/" + fname + "\"); assert(file_temp, file_err)").c_str());
@@ -471,7 +468,15 @@ void adaptaload_wrapped(const string &fname) {
   }
   
   if(!error) {
-    error = luaL_dostring(L, "generic_wrap(file_temp); file_temp, file_err = nil, nil");
+    lua_getglobal(L, "generic_wrap");
+    lua_getglobal(L, "file_temp");
+    for(int i = 0; i < argc; i++) {
+      lua_pushstring(L, argv[i]);
+    }
+    error = lua_pcall(L, 1 + argc, 0, 0);
+    if(!error) {
+      error = luaL_dostring(L, "file_temp, file_err = nil, nil");
+    }
   }
   
   if(error) {
@@ -525,7 +530,7 @@ void sms(bool bol) {
 
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
-void luainit() {
+void luainit(int argc, const char **argv) {
   L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
   luaopen_opengl(L);
@@ -612,7 +617,7 @@ void luainit() {
   }
   
   adaptaload("wrap.lua");
-  adaptaload_wrapped("stage.lua");
+  adaptaload_wrapped("stage.lua", argc, argv);
   
   /*adaptaload_wrapped("ui.lua");
   
@@ -679,7 +684,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   FocusFrame *everything = new FocusFrame(world);
   window()->AddFrame(everything);
   
-  luainit();
+  luainit(argc, argv);
   
   KeyList listen_to_shit;
   
@@ -707,7 +712,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     if(input()->IsKeyDownFrame(kKeyF12)) {
       meltdown();
       luashutdown();
-      luainit();
+      luainit(argc, argv);
     }
     
     {

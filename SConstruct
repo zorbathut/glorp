@@ -224,8 +224,9 @@ if not env.GetOption('clean'):
 localflags = ""
 stdrun = localflags + ""
 
-command(env, "run", [programs[name]] + libcopy, "%s %s" % (programs[name], stdrun))
-command(env, "editor", [programs[name]] + libcopy, "%s %s --editor" % (programs[name], stdrun))
+command(env, "run", [programs[name]] + libcopy, "%s %s debug" % (programs[name], stdrun))
+command(env, "editor", [programs[name]] + libcopy, "%s %s editor" % (programs[name], stdrun))
+command(env, "standard", [programs[name]] + libcopy, "%s %s" % (programs[name], stdrun))
 command(env, "runclean", [programs[name]] + libcopy, "%s %s" % (programs[name], localflags))
 
 for key, value in includeculls.items():
