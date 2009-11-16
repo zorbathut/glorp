@@ -166,7 +166,7 @@ function runuifile(file)
     return dat, rv
   end
   
-  env.loop_tick = nil
+  env.tick_loop = nil
   env.loop = nil
   env.render = nil
   env.key = nil
