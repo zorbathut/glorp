@@ -507,8 +507,18 @@ function AccumulateInternals(start, acu, x, y)
   return acu
 end
 
+local focus
+
+function GetFocus() return focus end
+function SetFocus(nfocus) focus = nfocus end
+
+local kiiz = {}
+
 function UI_Key(button, ascii, event)
+  kiiz[button] = ascii or true
   local passdown = true
+  
+  if focus and not focus:IsShown() then focus = nil end -- shoo
   
   -- If we have focus, and it was a useful key, then we send it to focus to see if the focus wants to eat its face
   -- eat. its face. eat.
@@ -594,6 +604,16 @@ function UI_Loop(tix, ...)
     KeyPressed_Update()
     while tickaccum > frame do
       tickaccum = tickaccum - frame
+      
+      for k, v in pairs(kiiz) do
+        if IsKeyDownFrame(k) then
+          if v == true then
+            UI_Key(k, nil, "frame")
+          else
+            UI_Key(k, v, "frame")
+          end
+        end
+      end
       
       tick_loop()
       

@@ -276,21 +276,15 @@ function key(button, ascii, event)
     return
   end
   
-  print(button, ascii, event)
   if runninggame and button == "escape" and event == "press" then
-    print("preep")
     if inminimenu then
-      print("imme")
       imm_end()
     else
-      print("imms")
       imm_start()
     end
   elseif inminimenu then
-    print("eem")
     imm_key(button, ascii, event)
   else
-    print("wut")
     stdwrap("key", button, ascii, event)
   end
 end
