@@ -69,6 +69,7 @@ do
       if ptx then
         local ptxp = ptxl[1]:GetPointOnAxis(axis, ptxl[2]) + ptxl[3]
         local wid = getsize(self, axis)
+        assert(wid)
         return ptxp + (point - ptx) * wid
       end -- zero points falls back to no constraints
     end
@@ -439,6 +440,7 @@ function CreateFrame(typ, parent, name)
       rg[k] = v
     end
     rg.text = TextFrame_Make("")
+    rg:SetText("")
     return rg
   elseif typ == "Text_Multiline" then
     local rg = Region(parent, name)
@@ -446,6 +448,7 @@ function CreateFrame(typ, parent, name)
       rg[k] = v
     end
     rg.text = FancyTextFrame_Make("")
+    rg:SetText("")
     return rg
   elseif typ == "Sprite" then
     local rg = Region(parent, name)
