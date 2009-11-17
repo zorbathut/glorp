@@ -528,6 +528,95 @@ void sms(bool bol) {
   input()->ShowMouseCursor(bol);
 }
 
+void get_stack_entry(lua_State *L, int level) {
+  lua_pushliteral(L, "");
+  
+  lua_Debug ar;
+  CHECK(lua_getstack(L, level, &ar));
+  
+  lua_getinfo(L, "Snl", &ar);
+  
+  lua_pushfstring(L, "%s:", ar.short_src);
+  if (ar.currentline > 0)
+    lua_pushfstring(L, "%d:", ar.currentline);
+
+  if (*ar.namewhat != '\0')  /* is there a name? */
+      lua_pushfstring(L, " in function " LUA_QS, ar.name);
+  else {
+    if (*ar.what == 'm')  /* main? */
+      lua_pushfstring(L, " in main chunk");
+    else if (*ar.what == 'C' || *ar.what == 't')
+      lua_pushliteral(L, " ?");  /* C function or tail call */
+    else
+      lua_pushfstring(L, " in function <%s:%d>",
+                         ar.short_src, ar.linedefined);
+  }
+  lua_concat(L, lua_gettop(L) - 1);
+}
+
+#define LEVELS1	12	/* size of the first part of the stack */
+#define LEVELS2	10	/* size of the second part of the stack */
+
+void debugstack_annotated(lua_State *L) {
+  int level = 1;
+  
+  lua_pushliteral(L, "stack traceback:");
+  
+  lua_Debug ar;
+  int firstpart = 1;  /* still before eventual `...' */
+  while (lua_getstack(L, level++, &ar)) {
+    if (level > LEVELS1 && firstpart) {
+      /* no more than `LEVELS2' more levels? */
+      if (!lua_getstack(L, level+LEVELS2, &ar))
+        level--;  /* keep going */
+      else {
+        lua_pushliteral(L, "\n\t...");  /* too many levels */
+        while (lua_getstack(L, level+LEVELS2, &ar))  /* find last levels */
+          level++;
+      }
+      firstpart = 0;
+      continue;
+    }
+    lua_pushliteral(L, "\n\t");
+    lua_getinfo(L, "Snl", &ar);
+    lua_pushfstring(L, "%s:", ar.short_src);
+    if (ar.currentline > 0)
+      lua_pushfstring(L, "%d:", ar.currentline);
+    if (*ar.namewhat != '\0')  /* is there a name? */
+        lua_pushfstring(L, " in function " LUA_QS, ar.name);
+    else {
+      if (*ar.what == 'm')  /* main? */
+        lua_pushfstring(L, " in main chunk");
+      else if (*ar.what == 'C' || *ar.what == 't')
+        lua_pushliteral(L, " ?");  /* C function or tail call */
+      else
+        lua_pushfstring(L, " in function <%s:%d>",
+                           ar.short_src, ar.linedefined);
+    }
+    
+    lua_getlocal(L, &ar, 1);
+    if(lua_istable(L, -1)) {
+      lua_pushliteral(L, "__name");
+      lua_gettable(L, -2);
+      if(lua_isstring(L, -1)) {
+        lua_pushliteral(L, " in frame (");
+        lua_insert(L, -2);
+        lua_pushliteral(L, ")");
+        lua_concat(L, 3);
+        
+        lua_insert(L, -2);
+      } else {
+        lua_pop(L, 1);
+      }
+    }
+    lua_pop(L, 1);
+    
+    lua_concat(L, lua_gettop(L));
+  }
+  lua_concat(L, lua_gettop(L));
+}
+
+
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
 void luainit(int argc, const char **argv) {
@@ -612,7 +701,9 @@ void luainit(int argc, const char **argv) {
       def("TriggerExit", &TriggerExit),
       def("GetMouseX", &gmx),
       def("GetMouseY", &gmy),
-      def("ShowMouseCursor", &sms)
+      def("ShowMouseCursor", &sms),
+      def("get_stack_entry", &get_stack_entry, raw(_1)),
+      def("debugstack_annotated", &debugstack_annotated, raw(_1))
     ];
   }
   

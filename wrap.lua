@@ -66,7 +66,7 @@ function generic_wrap(target, ...)
   assert(target)
   local dt = {...}
   local it = select('#', ...)
-  local rv, err = xpcall(function () return target(unpack(dt, 1, it)) end, function (ter) return {ter, debug.traceback()} end)
+  local rv, err = xpcall(function () return target(unpack(dt, 1, it)) end, function (ter) return {ter, debugstack_annotated()} end)
   if not rv then
     print("gwrap failure")
     barf(err)
@@ -86,7 +86,7 @@ function coroutine.create(cof, ...)
   local dt = {...}
   local it = select('#', ...)
   return crc(function ()
-    local rv, err = xpcall(function () return cof(unpack(dt, 1, it)) end, function (ter) return ter .. "\n" .. debug.traceback() end)
+    local rv, err = xpcall(function () return cof(unpack(dt, 1, it)) end, function (ter) return ter .. "\n" .. debugstack_annotated() end)
     if err then error(err) else return rv end
   end)
 end]]
@@ -98,7 +98,7 @@ function coroutine.wrap(cof, ...)
   local it = select('#', ...)
   
   return crw(function ()
-    local rv, err = xpcall(function () return cof(unpack(dt, 1, it)) end, function (ter) return {ter, debug.traceback()} end)
+    local rv, err = xpcall(function () return cof(unpack(dt, 1, it)) end, function (ter) return {ter, debugstack_annotated()} end)
     if not rv then
       error(err)
     else

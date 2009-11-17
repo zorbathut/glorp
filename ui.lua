@@ -301,10 +301,11 @@ do
     end
   end
   
-  function Region(parent, suppress)
+  function Region(parent, name, suppress)
     local reg = setmetatable({}, Region_Type_mt)
     if not parent and not suppress then parent = UIParent end
     if parent then reg:SetParent(parent) end
+    reg.__name = name
     return reg
   end
 end
@@ -312,7 +313,7 @@ end
 local parents = {}
 
 function UI_CreateParent(width, height)
-  local parent = Region(nil, true)
+  local parent = Region(nil, get_stack_entry(2), true)
   parent:Detach()
   function parent:GetWidth()
     return width
@@ -422,30 +423,32 @@ function SpriteOverrides:SetColor(r, g, b, a)
   self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a = r, g, b, a
 end
 
-function CreateFrame(typ, parent)
+function CreateFrame(typ, parent, name)
+  if not name then name = get_stack_entry(2) end
+  
   if typ == "Frame" then
-    return Region(parent)
+    return Region(parent, name)
   elseif typ == "Button" then
-    local rg = Region(parent)
+    local rg = Region(parent, name)
     rg.Key = Button_Key
     rg.MouseOut = Button_MouseOut
     return rg
   elseif typ == "Text" then
-    local rg = Region(parent)
+    local rg = Region(parent, name)
     for k, v in pairs(TextOverrides) do
       rg[k] = v
     end
     rg.text = TextFrame_Make("")
     return rg
   elseif typ == "Text_Multiline" then
-    local rg = Region(parent)
+    local rg = Region(parent, name)
     for k, v in pairs(TextMultilineOverrides) do
       rg[k] = v
     end
     rg.text = FancyTextFrame_Make("")
     return rg
   elseif typ == "Sprite" then
-    local rg = Region(parent)
+    local rg = Region(parent, name)
     for k, v in pairs(SpriteOverrides) do
       rg[k] = v
     end
@@ -594,224 +597,4 @@ function UI_Loop(tix, ...)
       KeyPressed_Cycle()
     end
   end
-end
-
-do
-  MainMenu = CreateFrame("Frame")
-  MainMenu:Hide()
-  local tbar = MainMenu
-  tbar:SetPoint("TOPLEFT", UIParent, "TOPLEFT")
-  tbar:SetPoint("RIGHT", UIParent, "RIGHT")
-  tbar:SetBackgroundColor(0, 0, 0.5, 0.8)
-  tbar:SetLayer(1000000)
-  
-  local tbar_active = CreateFrame("Frame", tbar)
-  tbar_active:SetPoint("TOPLEFT", tbar, "TOPLEFT", 0, 4)
-  tbar_active:SetPoint("RIGHT", tbar, "RIGHT")
-  tbar_active:SetBackgroundColor(0, 0, 0.7, 0.8)
-  
-  tbar:SetPoint("BOTTOM", tbar_active, "BOTTOM", 0, 4)
-  
-  local last_menuitem = CreateFrame("Frame", tbar_active)
-  last_menuitem:SetPoint("TOPLEFT", tbar_active, "TOPLEFT", 0, 0)
-  last_menuitem:SetPoint("BOTTOM", tbar_active, "BOTTOM", 0, 0)
-  last_menuitem:SetWidth(30)
-  
-  
-  local menus = {}
-  local menubuttons = {}
-  
-  function CloseAllMenus()
-    for _, v in ipairs(menus) do
-      v:Hide()
-    end
-    for _, v in ipairs(menubuttons) do
-      v:SetBackgroundColor()
-    end
-  end
-
-  function MainMenu:AddSubmenu(name, menu)
-    local menubutton_bg = CreateFrame("Frame", tbar_active)
-    menubutton_bg:SetPoint("LEFT", last_menuitem, "RIGHT", 8)
-    menubutton_bg:SetPoint("TOP", tbar_active, "TOP")
-    tbar_active:SetPoint("BOTTOM", menubutton_bg, "BOTTOM")
-    last_menuitem = menubutton_bg
-    
-    function menubutton_bg:Key(button, ascii, event)
-      if button ~= "mouse_left" or event ~= "press" then return true end
-      
-      local isshown = menu:GetFrame():IsShown()
-
-      CloseAllMenus()
-      
-      print(isshown)
-      if not isshown then
-        menubutton_bg:SetBackgroundColor(0, 0, 0.5, 1.0)
-        menu:GetFrame():Show()
-      end
-    end
-    
-    local menubutton_text = CreateFrame("Text", menubutton_bg)
-    menubutton_text:SetText(name)
-    menubutton_text:SetColor(1, 1, 1)
-    menubutton_text:SetPoint("TOPLEFT", menubutton_bg, "TOPLEFT", 4, 4)
-    menubutton_bg:SetPoint("BOTTOMRIGHT", menubutton_text, "BOTTOMRIGHT", 4, 4)
-    
-    menu:GetFrame():SetPoint("LEFT", menubutton_bg, "LEFT")
-    menu:GetFrame():SetPoint("TOP", tbar, "BOTTOM")
-    
-    table.insert(menubuttons, menubutton_bg)
-    table.insert(menus, menu:GetFrame())
-    CloseAllMenus()
-  end
-  
-  function CreateMenu()
-    local menubg = CreateFrame("Frame")
-    menubg:SetBackgroundColor(0.8, 0.8, 0.8, 0.8)
-    
-    local menufg = CreateFrame("Frame", menubg)
-    menufg:SetBackgroundColor(0.3, 0.3, 0.3, 0.8)
-    
-    menubg:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0) -- This is just temporary, but prevents circular dependencies
-    -- Menufg TOPLEFT attached to Menubg
-    -- Menubg BOTTOMRIGHT attached to Menufg
-    -- Menubg tries to get menufg's position, menufg assumes it's meant to be sized statically via default and tries to get menubg's position, menubg assumes it's meant to be sized statically via default and tries to get menufg's position, all hell breaks loose
-    
-    menufg:SetPoint("TOPLEFT", menubg, "TOPLEFT", 4, 4)
-    menubg:SetPoint("BOTTOMRIGHT", menufg, "BOTTOMRIGHT", 4, 4)
-    
-    local lastoption = nil
-    
-    local menu = {}
-    
-    function menu:AddCommand(name, func)
-      local optbg = CreateFrame("Frame", menufg)
-      if lastoption then
-        optbg:SetPoint("TOPLEFT", lastoption, "BOTTOMLEFT")
-      else
-        optbg:SetPoint("TOPLEFT", menufg, "TOPLEFT")
-      end
-      optbg:SetPoint("RIGHT", menufg, "RIGHT")
-      
-      lastoption = optbg
-      
-      menufg:SetPoint("BOTTOM", lastoption, "BOTTOM")
-      
-      local text = CreateFrame("Text", optbg)
-      text:SetText(name)
-      text:SetPoint("TOPLEFT", optbg, "TOPLEFT", 4, 4)
-      optbg:SetPoint("BOTTOM", text, "BOTTOM", 0, 4)
-      
-      if text:GetWidth() + 8 > menufg:GetWidth() then
-        menufg:SetWidth(text:GetWidth() + 8)
-      end
-      
-      function optbg:MouseIn()
-        optbg:SetBackgroundColor(1.0, 1.0, 1.0, 0.4)
-      end
-      function optbg:MouseOut()
-        optbg:SetBackgroundColor()
-      end
-      function optbg:Key(button, ascii, event)
-        if button ~= "mouse_left" or event ~= "press" then return true end
-        
-        CloseAllMenus()
-        optbg:SetBackgroundColor()
-        
-        func()
-      end
-    end
-    
-    function menu:GetFrame()
-      return menubg
-    end
-    
-    return menu
-  end
-end
-
-
-function StdButton(name, parent)
-  local fram = CreateFrame("Button", parent)
-  local but = CreateFrame("Text", fram)
-  
-  but:SetText(name)
-  but:SetColor(1, 1, 1)
-  
-  fram:SetHeight(but:GetHeight())
-  but:SetPoint("CENTER", fram, "CENTER")
-  fram:SetWidth(80)
-  
-  return fram
-end
-
-
-function TextEntryDialog(title_tex)
-  local outtext = ""
-  
-  local holder = CreateFrame("Frame")
-  
-  local OK = StdButton("OK", holder)
-  local Cancel = StdButton("Cancel", holder)
-  local border = CreateFrame("Frame", holder)
-  local tex = CreateFrame("Text", border)
-  focus = tex
-  local title = CreateFrame("Text", holder)
-  title:SetColor(1, 1, 1)
-  title:SetText(title_tex)
-  
-  border:SetPoint(0.5, nil, UIParent, 0.5, nil)
-  border:SetWidth(250)
-  tex:SetPoint("LEFT", border, "LEFT", 4)
-  tex:SetPoint(nil, 0.5, UIParent, nil, 0.5)
-  tex:SetColor(1, 1, 1)
-  border:SetPoint("TOP", tex, "TOP", -4)
-  border:SetPoint("BOTTOM", tex, "BOTTOM", -4)
-  
-  holder:SetPoint("TOPLEFT", border, "TOPLEFT", -30, -30)
-  holder:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 30, 30)
-  
-  OK:SetPoint(1, 0.5, holder, "BOTTOMRIGHT", -20, 0)
-  Cancel:SetPoint("BOTTOMRIGHT", OK, "BOTTOMLEFT", -20, 0)
-  title:SetPoint(0, 0.5, holder, "TOPLEFT", 20, 0)
-  
-  holder:SetBackgroundColor(0, 0, 0.4, 0.8)
-  border:SetBackgroundColor(0, 0, 0.2, 0.8)
-  OK:SetBackgroundColor(0, 0, 0.6, 0.8)
-  Cancel:SetBackgroundColor(0, 0, 0.6, 0.8)
-  
-  local done, rva, rvb
-  
-  function tex:Key(button, ascii, event)
-    if ascii and (event == "press" or event == "press_repeat" or event == "press_double") then
-      if string.byte(ascii, 1) == 13 then
-        OK:Click()
-      elseif string.byte(ascii, 1) == 8 then
-        outtext = outtext:sub(1, #outtext - 1)
-      else
-        print(ascii, #ascii, string.byte(ascii, 1))
-        outtext = outtext .. ascii
-      end
-    end
-    tex:SetText(outtext)
-  end
-  function OK:Click()
-    done = true
-    rva = "OK"
-    rvb = outtext
-  end
-  function Cancel:Click()
-    done = true
-    rva = "Cancel"
-    rvb = outtext
-  end
-  
-  while not done do coroutine.yield() end
-  
-  holder:Hide()
-  holder:Detach() -- garbage collection?
-  
-  focus = nil
-  
-  return rva, rvb
 end
