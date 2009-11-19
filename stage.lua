@@ -170,6 +170,7 @@ function runuifile(file)
   env.loop = nil
   env.render = nil
   env.key = nil
+  env.failover = nil
   
   runfile(file, env)
   
@@ -287,6 +288,9 @@ function key(button, ascii, event)
   else
     stdwrap("key", button, ascii, event)
   end
+end
+function failover()
+  stdwrap("failover")
 end
 
 if mode == "debug" then

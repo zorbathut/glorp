@@ -1,4 +1,7 @@
 
+print("MAX_PROJECTION_STACK_DEPTH is", gl.Get("MAX_PROJECTION_STACK_DEPTH"))
+assert(gl.Get("MAX_PROJECTION_STACK_DEPTH") >= 4)
+
 UIParent = {} -- faaaake
 
 -- Width and height: unless set, they're the default size (currently 5).
@@ -144,8 +147,6 @@ do
     return self:GetLeft(), self:GetTop(), self:GetRight(), self:GetBottom()
   end
   
-  --[[function Region_Type:GetPoint()
-  end]]
   function Region_Type:GetPointOnAxis(axis, pt)
     if verbositude then print(self, axis, pt) end
     if axis == "x" or axis == "_anchor_x" then
@@ -265,6 +266,21 @@ do
     end
   end
   
+    
+  -- let's think about the set-coordinate-scale function for a bit
+  -- I want to be able to do things like
+  -- SetCoordinateScale(x, y, scale)
+  -- I want this to mean "move the center to x, y and set the scale to q". I think.
+  -- Questions: What does "center" mean?
+  -- I think "center" is relative to the frame center from the last coordinate system. At least I can't think of anything better for it to mean.
+  -- "scale", similar deal.
+  
+  function Region_Type:SetCoordinateScale(x, y, scale)
+    assert((x and y and scale) or not (x or y or scale))
+    self.cs_x, self.cs_y, self.cs_scale = x, y, scale
+  end
+  
+  
   function Region_Type:SetBackgroundColor(r, g, b, a)
     if not r and not g and not b and not a then a = 0 end
     if a == 0 then
@@ -293,12 +309,29 @@ do
       gl.End()
     end
     
+    if self.cs_x then
+      gl.MatrixMode("PROJECTION")
+      gl.PushMatrix()
+      
+      local sx, sy, ex, ey = self:GetBounds()
+      local cx, cy = (sx + ex) / 2, (sy + ey) / 2
+      gl.Translate(cx - self.cs_x, cy - self.cs_y, 0)
+      
+      local scalefact = (ex - sx) / self.cs_scale
+      gl.Scale(scalefact, scalefact, 1)
+    end
+    
     if self.Draw then self:Draw() end
     
     if self.children then
       for _, k in ipairs(self.children) do
         k:Render()
       end
+    end
+    
+    if self.cs_x then
+      gl.MatrixMode("PROJECTION")
+      gl.PopMatrix()
     end
   end
   
