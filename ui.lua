@@ -117,10 +117,12 @@ do
   end
   
   function Region_Type:GetWidth()
-    return getsize(self, "_anchor_x")
+    local gs = getsize(self, "_anchor_x")
+    if type(gs) == "number" then return math.abs(gs) else return gs end
   end
   function Region_Type:GetHeight()
-    return getsize(self, "_anchor_y")
+    local gs = getsize(self, "_anchor_y")
+    if type(gs) == "number" then return math.abs(gs) else return gs end
   end
   
   function Region_Type:GetLeft()
@@ -315,10 +317,10 @@ do
       
       local sx, sy, ex, ey = self:GetBounds()
       local cx, cy = (sx + ex) / 2, (sy + ey) / 2
-      gl.Translate(cx - self.cs_x, cy - self.cs_y, 0)
-      
       local scalefact = (ex - sx) / self.cs_scale
+      gl.Translate(cx, cy, 0)
       gl.Scale(scalefact, scalefact, 1)
+      gl.Translate(-self.cs_x, -self.cs_y, 0)
     end
     
     if self.Draw then self:Draw() end
@@ -548,7 +550,9 @@ function SetFocus(nfocus) focus = nfocus end
 local kiiz = {}
 
 function UI_Key(button, ascii, event)
-  kiiz[button] = ascii or true
+  if button and ascii then
+    kiiz[button] = ascii or true
+  end
   local passdown = true
   
   if focus and not focus:IsShown() then focus = nil end -- shoo

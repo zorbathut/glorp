@@ -259,6 +259,8 @@ function loop(...)
   end
 end
 function render(...)
+  gl.Disable("CULL_FACE") -- ffffffff
+  
   if wedothisfirst then bgbg:Render() return end
   
   stdwrap("render", ...)
