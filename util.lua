@@ -211,3 +211,10 @@ function Texture(...)
   print("No such texture list", ...)
   assert(false)
 end
+
+function sign(x)
+  if x == 0 then return 0 end
+  if x < 0 then return -1 end
+  if x > 0 then return 1 end
+  assert(false)
+end

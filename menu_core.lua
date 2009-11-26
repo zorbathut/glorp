@@ -13,6 +13,19 @@ menu.exit_text:SetColor(1, 1, 1)
 menu.exit_text:SetSize(40)
 menu.exit_text:SetText("Exit")
 
+local ptr = CreateFrame("Text")
+ptr:SetSize(40)
+ptr:SetColor(1, 1, 1)
+ptr:SetText(">")
+
+local anchor = menu.ok_text
+
+local function spt()
+  ptr:SetPoint(1, 0.5, anchor, 0, 0.5, -10, 0)
+end
+spt()
+
+
 function menu.ok_button:Click()
   GlorpController("start_game")
 end
@@ -25,8 +38,21 @@ function key(button, ascii, event)
     GlorpController("exit")
   end
   
-  if button == "enter" and event == "press" then
-    GlorpController("start_game")
+  if (button == "enter" or button == "z" or button == "x" or button == "c") and event == "press" then
+    if anchor == menu.ok_text then
+      GlorpController("start_game")
+    else
+      GlorpController("exit")
+    end
+  end
+  
+  if (button == "arrow_up" or button == "arrow_down") and event == "press" then
+    if anchor == menu.ok_text then
+      anchor = menu.exit_text
+    else
+      anchor = menu.ok_text
+    end
+    spt()
   end
 end
 
