@@ -29,6 +29,33 @@ MakeDeployables, MakeInstaller = Installers(platform)
 
 SConscript("glop/SConstruct")
 
+
+# around the corner, lua is made
+luamodules = "lapi.o lcode.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o lundump.o lvm.o lzio.o lcoco.o ljit_core.o ljit_mem.o ljit_dasm.o ljit_backend.o lauxlib.o lbaselib.o ldblib.o liolib.o lmathlib.o loslib.o ltablib.o lstrlib.o loadlib.o ljitlib.o linit.o"
+luaobjs = env.Command(["luabuild/LuaJIT-1.1.5/src/%s" % item for item in Split(luamodules)], [], "cd glorp/luabuild/LuaJIT-1.1.5/src && make -j5 mingw")
+luareqs = env.Command("#build/lua/lib/liblua.a", luaobjs, "ar rcs $TARGET $SOURCES")
+for item in Split(luamodules):
+  env.Clean("luabuild/LuaJIT-1.1.5/src/%s" % item, "luabuild/LuaJIT-1.1.5/src/%s" % item)
+for item in Split("lua.h lauxlib.h lualib.h luaconf.h"):
+  luareqs += env.Command("#build/lua/include/%s" % item, "luabuild/LuaJIT-1.1.5/src/%s" % item, Copy("$TARGET", "$SOURCE"))
+luareqs += env.Command("#build/lua/include/lua.hpp", "luabuild/LuaJIT-1.1.5/etc/lua.hpp", Copy("$TARGET", "$SOURCE")) # in etc, not src
+
+luabindroot = "luabuild/luabind-0.9ish/"
+luabindpath = luabindroot + "src/"
+
+luabindobj = []
+luabindlist = dircache.listdir(luabindpath)
+dircache.annotate(luabindpath, luabindlist)
+for item in luabindlist:
+  if re.search(".cpp$", item) != None:
+    luabindobj += env.Command("#build/luabind/%s" % item.replace(".cpp", ".o"), [luabindpath + item] + luareqs, "nice g++ -o $TARGET -c $SOURCE -Iglorp/%s -I/usr/mingw/local/include -Ibuild/lua/include -I/usr/mingw/local/include/boost-1_38_0 -mno-cygwin -mwindows -g -O2" % luabindroot)
+libluabind = env.Command("#build/lua/lib/libluabind.a", luabindobj, "ar rcs $TARGET $SOURCES")
+for item in traverse(luabindroot + "luabind/"):
+  libluabind += env.Command("#build/lua/include/luabind/%s" % item, luabindroot + "luabind/" + item, Copy("$TARGET", "$SOURCE"))
+
+
+
+
 # List of buildables
 buildables = [
   [name, "GAME", Split("core debug debug_911_on os util parse args init perfbar") + ["../" + x for x in Split(sources)], Split("LuaGL"), Split("resource")],
@@ -103,6 +130,7 @@ for build in buildables:
   for item in build[2]:
     if not (build[1], item) in built:
       built[(build[1], item)] = env.Object("#build/glorp/%s.%s.o" % (item, abbreviation), "%s.cpp" % item, **params)
+      Depends(built[(build[1], item)], libluabind)
       
       # enable the somewhat-slow includecull structures
       if provideincludecull:

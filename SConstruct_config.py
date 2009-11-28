@@ -90,7 +90,7 @@ def Conf():
 
     if platform == "win": # Cygwin
       env.Append(CCFLAGS=Split("-mno-cygwin"), CPPFLAGS=Split("-mno-cygwin"), CXXFLAGS=Split("-mno-cygwin"), LINKFLAGS=Split("-mwindows -mno-cygwin"))
-      env.Append(CPPPATH=["lua/include", "/usr/mingw/local/include"], LIBPATH=["/lib/mingw", "/usr/mingw/local/lib", "lua/lib"])
+      env.Append(CPPPATH=["#build/lua/include", "/usr/mingw/local/include"], LIBPATH=["/lib/mingw", "/usr/mingw/local/lib", "#build/lua/lib"])
       env.Append(CPPPATH_GAME = ["glop/build-dbg-Glop"], LIBPATH_GAME = ["glop/Glop/cygwin/lib"])
       env.Append(CPPDEFINES = "WIN32")
       
@@ -194,14 +194,6 @@ def Conf():
       if not conf.CheckLib(lib, autoadd=0):
         env.Exit(1)
     
-    if not conf.CheckLibWithHeader("lua", "lua.hpp", "c++", "lua_open();", autoadd=0):
-      env.Exit(1)
-    env.Append(LIBS="lua")
-    
-    env.Prepend(LIBS="luabind")
-    if not conf.CheckLibWithHeader(None, "luabind/luabind.hpp", "c++", "luabind::open(NULL);", autoadd=0):
-      env.Exit(1)
-    
     # Check for oggenc
     oggpath = conf.CheckFile(["/cygdrive/c/windows/util", "/usr/bin"], "oggenc")
     if not oggpath:
@@ -232,7 +224,12 @@ def Conf():
     if not conf.CheckLib("png", "png_create_read_struct", autoadd=0):
       env.Exit(1)
     env.Append(LIBS_GAME="png")
-      
+    
+    # these aren't actually built yet, but they will be once we need 'em
+    # this will probably bite me
+    env.Append(LIBS="lua")
+    env.Prepend(LIBS="luabind")
+    
     if False:
       # xerces
       if not conf.CheckLib("xerces-c", autoadd=0):
