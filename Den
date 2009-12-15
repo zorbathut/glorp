@@ -1,0 +1,122 @@
+#!/usr/local/bin/lua
+local params = select(1, ...)
+
+require "luarocks.loader"
+require "ursa"
+
+clean_dirs = {}
+
+ursa.embed{"glorp/Glop", "Den"}
+
+-- first we build the lua
+local lua
+local lua_headers = {}
+do
+  ursa.token.rule{"lua_source_files", nil, function() return ursa.util.system{"cd glorp/luabuild/LuaJIT-1.1.5/src && ls *.c *.h Makefile"} end}
+  local luasource = {}
+  for k in ursa.token{"lua_source_files"}:gmatch("([^\n]+)") do
+    table.insert(luasource, "glorp/luabuild/LuaJIT-1.1.5/src/" .. k)
+  end
+  
+  local luaobjects = {}
+  for k in ("lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lvm lzio lcoco ljit_core ljit_mem ljit_dasm ljit_backend lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib ljitlib linit"):gmatch("([^ ]+)") do  -- yes okay hardcoded shut up
+    table.insert(luaobjects, ("glorp/luabuild/LuaJIT-1.1.5/src/%s.o"):format(k))
+  end
+
+  ursa.rule{luaobjects, {luasource, "#lua_source_files"}, "cd glorp/luabuild/LuaJIT-1.1.5/src && nice make -j5 mingw"}
+  ursa.rule{"build/lua/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}}
+
+  local luabuilds = {"build/lua/lib/liblua.a"}
+  
+  for k in ("lua.h lauxlib.h lualib.h luaconf.h"):gmatch("([^ ]+)") do
+    local dst = "build/lua/include/" .. k
+    ursa.rule{dst, "glorp/luabuild/LuaJIT-1.1.5/src/" .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}}
+    table.insert(luabuilds, dst)
+  end
+  
+  local luabindobj = {}
+  local luabindroot = "glorp/luabuild/luabind-0.9ish"
+  local luabindpath = luabindroot .. "/src/"
+  ursa.token.rule{"luabind_source_files", nil, function () return ursa.util.system{("cd %s && ls *.cpp"):format(luabindpath)} end}
+  for k in ursa.token{"luabind_source_files"}:gmatch("([^\n]+)") do
+    local dst = "build/luabind/" .. k:gsub(".cpp", ".o")
+    ursa.rule{dst, {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice g++ -o $TARGET -c %s -Iglorp/%s -I/usr/mingw/local/include -Ibuild/lua/include -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/luabuild/luabind-0.9ish -mno-cygwin -mwindows -g -O2"):format(luabindpath .. k, luabindroot)}}
+    table.insert(luabindobj, dst)
+  end
+  
+  lua = "build/lua/lib/libluabind.a"
+  ursa.rule{lua, luabindobj, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}}
+  
+  ursa.token.rule{"luabind_headers", nil, function () return ursa.util.system{("cd %s/luabind && find -type f | sed s*\\\\./**"):format(luabindroot)} end}
+  for item in ursa.token{"luabind_headers"}:gmatch("([^\n]+)") do
+    local dest = "build/lua/include/luabind/" .. item
+    ursa.rule{dest, luabindroot .. "/luabind/" .. item, ursa.util.system_template{"cp $SOURCE $TARGET"}}
+    table.insert(lua_headers, dest)
+  end
+end
+
+ursa.token.rule{"curl_link", nil, "curl-config --libs"}
+
+ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
+
+ursa.rule{"version.cpp", "#version", function () ursa.util.system{([[echo 'extern const char game_version[] = "%s";  extern const char game_fullname[] = "%s";  extern const char game_slug[] = "%s";' > version.cpp]]):format(ursa.token{"version"}, params.longname, params.name)} end}
+
+
+
+local buildables = {
+  [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar", cfiles = "glorp/LuaGL", resources = "resource"},
+  ["reporter"] = {corefiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init"},
+}
+
+local function build_object(src, prefix, compiler)
+  local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o")
+  ursa.rule{dst, {src, lua_headers}, ursa.util.system_template{("nice glorp/ewrap $TARGET %s -o $TARGET -c -Wall -Wno-sign-compare -Wno-uninitialized -g -mno-cygwin -DDPRINTF_MARKUP -DWIN32 -DCURL_STATICLIB -Ibuild/lua/include -I/usr/mingw/local/include -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/glop/build-dbg-Glop -Iglorp/glop/Glop %s"):format(compiler or "g++", src)}}
+  return dst
+end
+
+local function build_program(name)
+  local item = buildables[name]
+  assert(item)
+  
+  local prefix = "build/" .. name
+  
+  local objs = {}
+  
+  for k in (item.corefiles or ""):gmatch("([^%s]+)") do
+    table.insert(objs, build_object(k .. ".cpp", prefix))
+  end
+  for k in (item.glorpfiles or ""):gmatch("([^%s]+)") do
+    table.insert(objs, build_object("glorp/" .. k .. ".cpp", prefix))
+  end
+  for k in (item.cfiles or ""):gmatch("([^%s]+)") do
+    table.insert(objs, build_object(k .. ".c", prefix, "gcc"))
+  end
+  for k in (item.resources or ""):gmatch("([^%s]+)") do
+    local dst = ("build/glorp/%s.res"):format(k)
+    ursa.rule{dst, "glorp/" .. k .. ".rc", ursa.util.system_template{"nice windres $SOURCE -O coff -o $TARGET"}}
+    table.insert(objs, dst)
+  end
+  
+  table.insert(objs, lua[1])
+  
+  local dst = "build/" .. name .. ".exe"
+  ursa.rule{dst, {objs, "glorp/Glop/build/libGlop.a", "#curl_link"}, ursa.util.system_template{"nice glorp/ewrap $TARGET g++ -o $TARGET -g -Wl,--as-needed -mwindows -mno-cygwin $SOURCES glorp/Glop/build/libGlop.a -L/lib/mingw -L/usr/mingw/local/lib -Lbuild/lua/lib -Lglorp/glop/Glop/cygwin/lib -lluabind -lm -llua -lopengl32 -lfreetype -ljpeg -ldinput -ldxguid -lmingw32 -lpthread -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -lopengl32 -lfreetype -ljpeg -lglu32 -ldinput -ldxguid -lfmodex -lwinmm -lz -lpng #curl_link -lws2_32"}}
+  return dst
+end
+
+local mainprog = build_program(params.name)
+local reporter = build_program("reporter")
+
+
+ursa.command{ursa.command.default, {mainprog, reporter}}
+
+ursa.command{"run", {mainprog, reporter}, mainprog}
+
+ursa.command{"clean", function ()
+  ursa.util.clean()
+  for _, v in ipairs(clean_dirs) do
+    os.remove(v)
+  end
+end}
+
+ursa.build{unpack(params.targets)}
