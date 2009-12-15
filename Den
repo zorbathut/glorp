@@ -6,7 +6,7 @@ require "ursa"
 
 clean_dirs = {}
 
-ursa.embed{"glorp/Glop", "Den"}
+local glop = ursa.embed{"glorp/Glop", "Den"}
 
 -- first we build the lua
 local lua
@@ -29,19 +29,16 @@ do
   local luabuilds = {"build/lua/lib/liblua.a"}
   
   for k in ("lua.h lauxlib.h lualib.h luaconf.h"):gmatch("([^ ]+)") do
-    local dst = "build/lua/include/" .. k
-    ursa.rule{dst, "glorp/luabuild/LuaJIT-1.1.5/src/" .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}}
-    table.insert(luabuilds, dst)
+    table.insert(lua_headers, ursa.rule{"build/lua/include/" .. k, "glorp/luabuild/LuaJIT-1.1.5/src/" .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   end
+  table.insert(lua_headers, ursa.rule{"build/lua/include/lua.hpp", "glorp/luabuild/LuaJIT-1.1.5/etc/lua.hpp", ursa.util.system_template{"cp $SOURCE $TARGET"}})
   
   local luabindobj = {}
   local luabindroot = "glorp/luabuild/luabind-0.9ish"
   local luabindpath = luabindroot .. "/src/"
   ursa.token.rule{"luabind_source_files", nil, function () return ursa.util.system{("cd %s && ls *.cpp"):format(luabindpath)} end}
   for k in ursa.token{"luabind_source_files"}:gmatch("([^\n]+)") do
-    local dst = "build/luabind/" .. k:gsub(".cpp", ".o")
-    ursa.rule{dst, {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice g++ -o $TARGET -c %s -Iglorp/%s -I/usr/mingw/local/include -Ibuild/lua/include -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/luabuild/luabind-0.9ish -mno-cygwin -mwindows -g -O2"):format(luabindpath .. k, luabindroot)}}
-    table.insert(luabindobj, dst)
+    table.insert(luabindobj, ursa.rule{"build/luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice g++ -o $TARGET -c %s -Iglorp/%s -I/usr/mingw/local/include -Ibuild/lua/include -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/luabuild/luabind-0.9ish -mno-cygwin -mwindows -g -O2"):format(luabindpath .. k, luabindroot)}})
   end
   
   lua = "build/lua/lib/libluabind.a"
@@ -70,7 +67,7 @@ local buildables = {
 
 local function build_object(src, prefix, compiler)
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o")
-  ursa.rule{dst, {src, lua_headers}, ursa.util.system_template{("nice glorp/ewrap $TARGET %s -o $TARGET -c -Wall -Wno-sign-compare -Wno-uninitialized -g -mno-cygwin -DDPRINTF_MARKUP -DWIN32 -DCURL_STATICLIB -Ibuild/lua/include -I/usr/mingw/local/include -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/glop/build-dbg-Glop -Iglorp/glop/Glop %s"):format(compiler or "g++", src)}}
+  ursa.rule{dst, {src, lua_headers, glop.package}, ursa.util.system_template{("nice glorp/ewrap $TARGET %s -o $TARGET -c -Wall -Wno-sign-compare -Wno-uninitialized -g -mno-cygwin -DDPRINTF_MARKUP -DWIN32 -DCURL_STATICLIB -Ibuild/lua/include -I/usr/mingw/local/include -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/glop/build/Glop/include %s"):format(compiler or "g++", src)}}
   return dst
 end
 
@@ -100,7 +97,7 @@ local function build_program(name)
   table.insert(objs, lua[1])
   
   local dst = "build/" .. name .. ".exe"
-  ursa.rule{dst, {objs, "glorp/Glop/build/libGlop.a", "#curl_link"}, ursa.util.system_template{"nice glorp/ewrap $TARGET g++ -o $TARGET -g -Wl,--as-needed -mwindows -mno-cygwin $SOURCES glorp/Glop/build/libGlop.a -L/lib/mingw -L/usr/mingw/local/lib -Lbuild/lua/lib -Lglorp/glop/Glop/cygwin/lib -lluabind -lm -llua -lopengl32 -lfreetype -ljpeg -ldinput -ldxguid -lmingw32 -lpthread -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -lopengl32 -lfreetype -ljpeg -lglu32 -ldinput -ldxguid -lfmodex -lwinmm -lz -lpng #curl_link -lws2_32"}}
+  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link"}, ursa.util.system_template{"nice glorp/ewrap $TARGET g++ -o $TARGET -g -Wl,--as-needed -mwindows -mno-cygwin $SOURCES glorp/Glop/build/Glop/lib/libGlop.a -L/lib/mingw -L/usr/mingw/local/lib -Lbuild/lua/lib -Lglorp/glop/Glop/cygwin/lib -lluabind -lm -llua -lopengl32 -lfreetype -ljpeg -ldinput -ldxguid -lmingw32 -lpthread -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -lopengl32 -lfreetype -ljpeg -lglu32 -ldinput -ldxguid -lfmodex -lwinmm -lz -lpng #curl_link -lws2_32"}}
   return dst
 end
 
@@ -110,7 +107,11 @@ local reporter = build_program("reporter")
 
 ursa.command{ursa.command.default, {mainprog, reporter}}
 
-ursa.command{"run", {mainprog, reporter}, mainprog}
+local dlls = {}
+for libname in ("libfreetype-6 fmodex libpng-3"):gmatch("[^%s]+") do
+  table.insert(dlls, ursa.rule{("build/%s.dll"):format(libname), ("glorp/Glop/Glop/cygwin/dll/%s.dll"):format(libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
+end
+ursa.command{"run", {mainprog, dlls}, mainprog}
 
 ursa.command{"clean", function ()
   ursa.util.clean()
