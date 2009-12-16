@@ -44,6 +44,6 @@ void Prepare911(const char *crashfname, int crashline) {
     
     vector<string> params;
     boost::assign::push_back(params)(game_slug)(fname)(string(game_slug) + "-" + game_version)(crashfname)(StringPrintf("%d", crashline))(StringPrintf("%d", exesize()));
-    SpawnProcess("reporter-release", params);
+    SpawnProcess("reporter", params);
   }
 };

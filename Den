@@ -104,14 +104,15 @@ end
 local mainprog = build_program(params.name)
 local reporter = build_program("reporter")
 
-
-ursa.command{ursa.command.default, {mainprog, reporter}}
-
 local dlls = {}
 for libname in ("libfreetype-6 fmodex libpng-3"):gmatch("[^%s]+") do
   table.insert(dlls, ursa.rule{("build/%s.dll"):format(libname), ("glorp/Glop/Glop/cygwin/dll/%s.dll"):format(libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
 end
+ursa.command{ursa.command.default, {mainprog}}
 ursa.command{"run", {mainprog, dlls}, mainprog}
+
+local installers = assert(loadfile("glorp/Den_installer.lua")){name = params.name, longname = params.longname}
+ursa.command{"package", installers}
 
 ursa.command{"clean", function ()
   ursa.util.clean()
