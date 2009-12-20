@@ -218,3 +218,28 @@ function sign(x)
   if x > 0 then return 1 end
   assert(false)
 end
+
+
+
+do
+  local List_params = {}
+  
+  function List_params:Create()
+    gl.NewList(self.listid, "COMPILE")
+  end
+  function List_params:End()
+    gl.EndList()
+  end
+  
+  function List_params:Call()
+    gl.CallList(self.listid)
+  end
+  -- we don't yet support deleting
+  
+  function List()
+    local ite = setmetatable({}, {__index = List_params})
+    ite.listid = gl.GenLists(1)
+    
+    return ite
+  end
+end

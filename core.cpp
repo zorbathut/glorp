@@ -762,7 +762,8 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   }
   
   {
-    Font *font = ShadowFont::Load(fontname.c_str(), 0.05, 0.05);
+    //Font *font = ShadowFont::Load(fontname.c_str(), 0.05, 0.05);
+    Font *font = Font::Load(fontname.c_str());
     CHECK(font);
     InitDefaultFrameStyle(font);
   }

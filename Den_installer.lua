@@ -15,10 +15,21 @@ table.insert(data, ursa.rule{"build/deploy/licenses.txt", "glorp/resources/licen
 -- generic copy-a-lot framework
 local function copy_a_lot(token, destprefix, sourceprefix)
   ursa.token.rule{token .. "_copy", "#" .. token .. "_files", function ()
-      print("CAL", token)
       local data_items = {}
       for k in ursa.token{token .. "_files"}:gmatch("[^%s]+") do
-        table.insert(data_items, ursa.rule{"build/deploy/" .. destprefix .. k, sourceprefix .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+        local ext = k:match("^.*%.([^%.]+)$")
+        
+        local dst = "build/deploy/" .. destprefix .. k
+        local src = sourceprefix .. k
+        
+        if ext == "png" then
+          table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"pngcrush -brute -rem alla $SOURCE $TARGET"}})
+        elseif ext == "wav" then
+          dst = dst:replace("%.wav", ".ogg")
+          table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"oggenc --downmix -q 6 -o $TARGET $SOURCE || oggenc -q 6 -o $TARGET $SOURCE"}})
+        else
+          table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+        end
       end
       return data_items
     end, always_rebuild = true}
