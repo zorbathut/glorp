@@ -225,20 +225,20 @@ do
   local List_params = {}
   
   function List_params:Create()
-    gl.NewList(self.listid, "COMPILE")
+    gl.NewList(self.listid:get(), "COMPILE")
   end
   function List_params:End()
     gl.EndList()
   end
   
   function List_params:Call()
-    gl.CallList(self.listid)
+    gl.CallList(self.listid:get())
   end
   -- we don't yet support deleting
   
   function List()
     local ite = setmetatable({}, {__index = List_params})
-    ite.listid = gl.GenLists(1)
+    ite.listid = GlListID()
     
     return ite
   end

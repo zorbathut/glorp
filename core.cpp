@@ -381,6 +381,22 @@ void TriggerExit() {
   exiting = true;
 };
 
+class GlListID {
+  int id;
+  
+public:
+  GlListID() {
+    id = glGenLists(1);
+  }
+  ~GlListID() {
+    glDeleteLists(id, 1);
+  }
+  
+  int get() const {
+    return id;
+  }
+};
+
 class KeyList : public KeyListener {
   void OnKeyEvent(const KeyEvent &event) {
     string keyvent;
@@ -691,6 +707,9 @@ void luainit(int argc, const char **argv) {
         .def("GetText", &FancyTextFrame::GetText),
       class_<SoundSource>("SourceSource_Make")
         .def("Stop", &SoundSource::Stop),
+      class_<GlListID>("GlListID")
+        .def(constructor<>())
+        .def("get", &GlListID::get),
       def("Texture", &GetTex),
       def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),

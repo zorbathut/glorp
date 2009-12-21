@@ -23,7 +23,7 @@ local function copy_a_lot(token, destprefix, sourceprefix)
         local src = sourceprefix .. k
         
         if ext == "png" then
-          table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"pngcrush -brute -rem alla $SOURCE $TARGET"}})
+          table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"pngcrush -brute -rem alla -cc $SOURCE $TARGET"}})
         elseif ext == "wav" then
           dst = dst:replace("%.wav", ".ogg")
           table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"oggenc --downmix -q 6 -o $TARGET $SOURCE || oggenc -q 6 -o $TARGET $SOURCE"}})
@@ -40,6 +40,9 @@ end
 ursa.token.rule{"data_files", nil, "cd data && find -type f | sed s*\\\\./**", always_rebuild = true}
 table.insert(data, copy_a_lot("data", "data/", "data/"))
 
+ursa.token.rule{"stock_files", nil, "cd glorp/resources && ls mandible_games.png", always_rebuild = true}
+table.insert(data, copy_a_lot("stock", "data/", "glorp/resources/"))
+
 -- JIT lua files
 ursa.token.rule{"jit_files", nil, "cd glorp/resources/jit && ls"}
 table.insert(data, copy_a_lot("jit", "data/jit/", "glorp/resources/jit/"))
@@ -51,6 +54,7 @@ table.insert(data, copy_a_lot("luaglorp", "data/", "glorp/"))
 -- Lua files and font files in our core
 ursa.token.rule{"core_files", nil, "ls *.lua *.ttf"}
 table.insert(data, copy_a_lot("core", "", ""))
+
   
 ursa.token.rule{"data", data, ""}
 

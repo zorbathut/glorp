@@ -277,9 +277,9 @@ do
   -- I think "center" is relative to the frame center from the last coordinate system. At least I can't think of anything better for it to mean.
   -- "scale", similar deal.
   
-  function Region_Type:SetCoordinateScale(x, y, scale)
+  function Region_Type:SetCoordinateScale(x, y, scale, rotate)
     assert((x and y and scale) or not (x or y or scale))
-    self.cs_x, self.cs_y, self.cs_scale = x, y, scale
+    self.cs_x, self.cs_y, self.cs_scale, self.cs_rotate = x, y, scale, rotate
   end
   
   
@@ -321,6 +321,7 @@ do
       gl.Translate(cx, cy, 0)
       gl.Scale(scalefact, scalefact, 1)
       gl.Translate(-self.cs_x, -self.cs_y, 0)
+      gl.Rotate(self.cs_rotate, 0, 0, 1)
     end
     
     if self.Draw then self:Draw() end
