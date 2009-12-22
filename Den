@@ -67,7 +67,7 @@ local buildables = {
 
 local function build_object(src, prefix, compiler)
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o")
-  ursa.rule{dst, {src, lua_headers, glop.package}, ursa.util.system_template{("nice glorp/ewrap $TARGET %s -o $TARGET -c -Wall -Wno-sign-compare -Wno-uninitialized -g -mno-cygwin -DDPRINTF_MARKUP -DWIN32 -DCURL_STATICLIB -Ibuild/lua/include -I/usr/mingw/local/include -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/glop/build/Glop/include %s"):format(compiler or "g++", src)}}
+  ursa.rule{dst, {src, lua_headers, glop.headers}, ursa.util.system_template{("nice glorp/ewrap $TARGET %s -o $TARGET -c -Wall -Wno-sign-compare -Wno-uninitialized -g -mno-cygwin -DDPRINTF_MARKUP -DWIN32 -DCURL_STATICLIB -Ibuild/lua/include -I/usr/mingw/local/include -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/glop/build/Glop/include %s"):format(compiler or "g++", src)}}
   return dst
 end
 
@@ -110,6 +110,7 @@ for libname in ("libfreetype-6 fmodex libpng-3"):gmatch("[^%s]+") do
 end
 ursa.command{ursa.command.default, {mainprog}}
 ursa.command{"run", {mainprog, dlls}, mainprog .. " debug"}
+ursa.command{"runclean", {mainprog, dlls}, mainprog}
 
 local installers = assert(loadfile("glorp/Den_installer.lua")){name = params.name, longname = params.longname}
 ursa.command{"package", installers}

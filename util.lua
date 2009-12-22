@@ -68,8 +68,8 @@ end
 function PlaySound(snd, vol)
   PlaySound_Core(snd, vol or 1)
 end
-function ControlSound(snd, vol)
-  return ControlSound_Core(snd, vol or 1)
+function ControlSound(snd, vol, loop)
+  return ControlSound_Core(snd, vol or 1, loop or false)
 end
 
 glutil = {}

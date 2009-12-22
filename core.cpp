@@ -334,7 +334,7 @@ bool WasKeyPressedAdapter(const string &id) {
 map<pair<string, float>, SoundSample *> sounds;
 
 vector<SoundSource> ss;
-SoundSource SoundCore(const string &sname, float vol) {
+SoundSource SoundCore(const string &sname, float vol, bool loop) {
   vol = ceil(vol * 16) / 16;
   for(int i = 0; i < ss.size(); i++) {
     if(ss[i].IsStopped()) {
@@ -351,17 +351,18 @@ SoundSource SoundCore(const string &sname, float vol) {
     CHECK(sounds[make_pair(sname, vol)]);
   }
   
-  return sounds[make_pair(sname, vol)]->Play();
+  dprintf("Looping: %d\n", loop);
+  return sounds[make_pair(sname, vol)]->Play(loop);
   //dprintf("%d, %d\n", nss.IsPaused(), nss.IsStopped());
   //CHECK(!nss.IsPaused() && !nss.IsStopped(), "%d, %d\n", nss.IsPaused(), nss.IsStopped());
 };
 
 void DoASound(const string &sname, float vol) {
-  ss.push_back(SoundCore(sname, vol));
+  ss.push_back(SoundCore(sname, vol, false));
 }
 
-SoundSource ControllableSound(const string &sname, float vol) {
-  return SoundCore(sname, vol);
+SoundSource ControllableSound(const string &sname, float vol, bool loop) {
+  return SoundCore(sname, vol, loop);
 }
 
 class PerfBarManager {
