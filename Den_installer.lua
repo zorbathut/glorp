@@ -102,7 +102,7 @@ ursa.token.rule{"installers", {data, "#version"}, function ()
       elseif line == "$$$OUTFILE$$$" then
         outwrite(('OutFile %s'):format(exesuffix))
       else
-        outwrite(line:gsub("$$$LONGNAME$$%$", params.longname):gsub("$$$EXENAME$$%$", params.name))
+        outwrite(line:gsub("$$$LONGNAME$$%$", params.longname):gsub("$$$EXENAME$$%$", params.name .. ".exe"))
       end
     end
     

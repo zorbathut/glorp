@@ -179,12 +179,14 @@ public:
 
 map<int, Layer *> layers;
 
-
+bool perfbar_enabled = false;
+void set_perfbar(bool x) {perfbar_enabled = x;}
 class Perfbar : public GlopFrame {
 public:
   
   void Render() const {
-    drawPerformanceBar();
+    if(perfbar_enabled)
+      drawPerformanceBar();
     startPerformanceBar();
   }
 };
@@ -721,6 +723,7 @@ void luainit(int argc, const char **argv) {
       def("GetMouseX", &gmx),
       def("GetMouseY", &gmy),
       def("ShowMouseCursor", &sms),
+      def("Perfbar_Set", &set_perfbar),
       def("get_stack_entry", &get_stack_entry, raw(_1)),
       def("debugstack_annotated", &debugstack_annotated, raw(_1))
     ];

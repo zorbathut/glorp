@@ -296,6 +296,7 @@ function failover()
 end
 
 if mode == "debug" then
+  Perfbar_Set(true)
   wedothisfirst = nil
   Handle("start_game")
 end
