@@ -25,8 +25,8 @@ local function copy_a_lot(token, destprefix, sourceprefix)
         if ext == "png" then
           table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"pngcrush -brute -rem alla -cc $SOURCE $TARGET"}})
         elseif ext == "wav" then
-          dst = dst:replace("%.wav", ".ogg")
-          table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"oggenc --downmix -q 6 -o $TARGET $SOURCE || oggenc -q 6 -o $TARGET $SOURCE"}})
+          dst = dst:gsub("%.wav", ".ogg")
+          table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"oggenc --downmix -q 5 -o $TARGET $SOURCE || oggenc -q 6 -o $TARGET $SOURCE"}})
         else
           table.insert(data_items, ursa.rule{dst, src, ursa.util.system_template{"cp $SOURCE $TARGET"}})
         end
