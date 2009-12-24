@@ -48,7 +48,7 @@ int exesize() {
   return lulz.st_size;
 }
 
-#ifndef NO_WINDOWS
+#ifdef WIN32
 
 #include <windows.h>
 #include <shlobj.h>

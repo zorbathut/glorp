@@ -38,16 +38,39 @@ lua_State *L;
 const int virt_width = 640;
 const int virt_height = 480;
 
-void ods(const string &str) {
-  OutputDebugString(str.c_str());
-}
+#ifdef WIN32
+  void ods(const string &str) {
+    OutputDebugString(str.c_str());
+  }
 
-void log_to_debugstring(const string &str) {
-  OutputDebugString(str.c_str());
-  dbgrecord().push_back(str);
-  if(dbgrecord().size() > 10000)
-    dbgrecord().pop_front();
-}
+  void log_to_debugstring(const string &str) {
+    OutputDebugString(str.c_str());
+    dbgrecord().push_back(str);
+    if(dbgrecord().size() > 10000)
+      dbgrecord().pop_front();
+  }
+#endif
+
+#ifdef MACOSX
+  #undef printf
+  void ods(const string &str) {
+    if(str.size() && str[str.size() - 1] == '\n')
+      printf("%s", str.c_str());
+    else
+      printf("%s\n", str.c_str());
+  }
+
+  void log_to_debugstring(const string &str) {
+    if(str.size() && str[str.size() - 1] == '\n')
+      printf("%s", str.c_str());
+    else
+      printf("%s\n", str.c_str());
+    dbgrecord().push_back(str);
+    if(dbgrecord().size() > 10000)
+      dbgrecord().pop_front();
+  }
+  #define printf FAILURE
+#endif
 
 extern "C" {
 static int debug_print(lua_State *L) {
@@ -468,6 +491,8 @@ class KeyList : public KeyListener {
 };
 
 void adaptaload(const string &fname) {
+  char beef[2048];
+  dprintf("path %s\n", getcwd(beef, 2048));
   int error = luaL_dofile(L, ("data/" + fname).c_str());
   if(error) {
     error = luaL_dofile(L, ("glorp/" + fname).c_str());

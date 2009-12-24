@@ -1,4 +1,4 @@
-package.path = package.path .. ";data\\?.lua;glorp\\resources\\?.lua"
+package.path = package.path .. ";data/?.lua;glorp/resources/?.lua"
 
 collectgarbage("stop")
 

@@ -13,7 +13,7 @@
 *************************************************/
 
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include <lauxlib.h>
 
