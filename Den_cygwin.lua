@@ -2,8 +2,8 @@ local params = ...
 
 local rv = {}
 
-rv.cxx_flags = "-mno-cygwin -mwindows -DWIN32 -DCURL_STATICLIB -I/usr/mingw/local/include/boost-1_38_0"
-rv.ld_flags = "-L/lib/mingw -L/usr/mingw/local/lib -Lglorp/glop/Glop/cygwin/lib -mno-cygwin -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -ljpeg -lfreetype"
+rv.cxx_flags = "-mno-cygwin -mwindows -DWIN32 -DCURL_STATICLIB -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/glop/build/Glop/local/include"
+rv.ld_flags = "-L/lib/mingw -L/usr/mingw/local/lib -Lglorp/glop/Glop/cygwin/lib -mno-cygwin -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -ljpeg -lfreetype -lz"
 rv.extension = ".exe"
 
 -- runnable
@@ -17,11 +17,12 @@ rv.create_runnable = function(dat)
     table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, libname), ("%s/%s"):format(libpath, libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
   end
   
+  return {deps = {dlls, dat.mainprog}, cli = ("build/%s.exe"):format(params.name)}
   -- more to come
 end
 
 -- installers
-do
+function rv.installers()
   -- first we have to build the entire path layout
   local data = {}
 
@@ -46,7 +47,7 @@ do
   ursa.token.rule{"installers", {data, ursa.util.token_deferred{"built_data"}, "#version"}, function ()
     local v = ursa.token{"version"}
     
-    local exesuffix = ("%s-%s.exe"):format(params.name, v)
+    local exesuffix = ("%s-%s.exe"):format(params.midname, v)
     local exedest = "build/" .. exesuffix
     print("ED:", exedest)
     ursa.rule{"build/installer.nsi", {data, "glorp/installer.nsi.template"}, function(dst, src)
@@ -95,12 +96,12 @@ do
     end}
     
     return {
-      ursa.rule{("build/%s-%s.zip"):format(params.name, v), data, ursa.util.system_template{"cd build/deploy ; zip -9 -r ../../$TARGET *"}},
+      ursa.rule{("build/%s-%s.zip"):format(params.midname, v), data, ursa.util.system_template{"cd build/deploy ; zip -9 -r ../../$TARGET *"}},
       ursa.rule{exedest, "build/installer.nsi", "cd build && /cygdrive/c/Program\\ Files\\ \\(x86\\)/NSIS/makensis.exe installer.nsi"},
     }
   end, always_rebuild = true}
+  
+  return ursa.util.token_deferred{"installers"}
 end
-
-rv.installers = function () return ursa.util.token_deferred{"installers"} end
 
 return rv

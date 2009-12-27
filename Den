@@ -75,7 +75,7 @@ local buildables = {
 
 local function build_object(src, prefix, compiler)
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o")
-  ursa.rule{dst, {src, lua_headers, glop.headers}, ursa.util.system_template{("nice glorp/ewrap $TARGET %s -o $TARGET -c -Wall -Wno-sign-compare -Wno-uninitialized -g %s -DDPRINTF_MARKUP -Ibuild/lua/include -I/usr/mingw/local/include -Iglorp/glop/build/Glop/include %s"):format(compiler or "g++", osd.cxx_flags, src)}}
+  ursa.rule{dst, {src, lua_headers, glop.headers}, ursa.util.system_template{("nice glorp/ewrap $TARGET %s -o $TARGET -c -Wall -Wno-sign-compare -Wno-uninitialized -g %s -DDPRINTF_MARKUP -Ibuild/lua/include -I/usr/mingw/local/include %s"):format(compiler or "g++", osd.cxx_flags, src)}}
   return dst
 end
 
@@ -108,7 +108,7 @@ local function build_program(name)
   table.insert(objs, lua[1])
   
   local dst = "build/" .. name .. osd.extension
-  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link"}, ursa.util.system_template{("nice glorp/ewrap $TARGET g++ -o $TARGET -g %s $SOURCES -Lbuild/lua/lib -lluabind -lm -llua -lpthread -lz -lpng #curl_link"):format(osd.ld_flags)}}
+  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link"}, ursa.util.system_template{("nice glorp/ewrap $TARGET g++ -o $TARGET -g $SOURCES -Lbuild/lua/lib -lluabind -lm -llua -lpthread -lz -lpng #curl_link %s"):format(osd.ld_flags)}}
   return dst
 end
 

@@ -491,8 +491,6 @@ class KeyList : public KeyListener {
 };
 
 void adaptaload(const string &fname) {
-  char beef[2048];
-  dprintf("path %s\n", getcwd(beef, 2048));
   int error = luaL_dofile(L, ("data/" + fname).c_str());
   if(error) {
     error = luaL_dofile(L, ("glorp/" + fname).c_str());
