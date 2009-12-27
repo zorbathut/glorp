@@ -63,8 +63,9 @@ function rv.installers()
     for _, v in pairs(ursa.token{"datafiles"}) do
       table.insert(items, ursa.rule{app_prefix .. "Contents/Resources/" .. v.dst, v.src, ursa.util.system_template{v.cli}})
     end
+    --assert(false)
     return items
-  end, always_build = true}
+  end, always_rebuild = true}
   
   local icon = ursa.rule{app_prefix .. "Contents/Resources/mandible.icns", "glorp/resources/mandicon.png", ursa.util.system_template{("makeicns -in $SOURCE -out $TARGET")}}
   
