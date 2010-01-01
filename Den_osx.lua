@@ -47,13 +47,11 @@ function rv.installers()
   local binaries = {}
   
   -- first we mirror our run structure over, plus stripping (oh baby oh baby)
-  -- hackery: pulling out filenames from literals
-  -- this will be removed once we have a better system for it
-  for k, v in pairs(ursa.relative_from(runnable_deps)) do
+  for k, v in pairs(ursa.relative_from{runnable_deps}) do
     local sufix = v:match(("build/%s.app/(.*)"):format(params.longname))
     assert(sufix)
     
-    table.insert(binaries, ursa.rule{app_prefix .. sufix, v[1], ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
+    table.insert(binaries, ursa.rule{app_prefix .. sufix, v, ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
   end
   
   -- second we generate our actual data copies
