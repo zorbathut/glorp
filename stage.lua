@@ -226,6 +226,8 @@ local function fadedafucker(st, nd, len)
   end
 end
 
+local ssmessage = nil
+
 local somethingpressed
 local wedothisfirst
 wedothisfirst = coroutine.wrap(function()
@@ -243,6 +245,7 @@ wedothisfirst = coroutine.wrap(function()
 end)
 
 function tick_loop(...)
+  if ssmessage then ssmessage:tix() end
   if wedothisfirst then
     wedothisfirst()
   else
@@ -270,8 +273,41 @@ function render(...)
   if inminimenu then
     imm_render()
   end
+  
+  if ssmessage then
+    ssmessage:Render()
+  end
 end
 function key(button, ascii, event)
+  if button == "printscreen" and event == "press" then
+    print("printscr")
+    
+    local fname = string.format("%s_%d.png", GetMidName(), os.time())
+    
+    local path = GetDesktopDirectory() .. "/" .. fname
+    assert(ScreenshotTo(path))
+    
+    if ssmessage then ssmessage:Detach() ssmessage = nil end
+    
+    ssmessage = CreateFrame("Text_Multiline")
+    ssmessage:SetAllPoints()
+    ssmessage.tixleft = 240
+    ssmessage.tixfade = 60
+    ssmessage:SetLayer(100000000)
+    local txt = "Screenshot saved to " .. GetDesktopDirectory() .. "\\" .. fname
+    function ssmessage:tix()
+      print("tixtix", self.tixleft)
+      self.tixleft = self.tixleft - 1
+      if self.tixleft == 0 then self:Detach() ssmessage = nil end
+      if self.tixleft > self.tixfade then
+        self:SetText("\1C000000ff\1" .. txt)
+      else
+        self:SetText(("\1C000000%02x\1"):format(self.tixleft / self.tixfade * 255) .. txt)
+      end
+    end
+    ssmessage:tix()
+  end
+  
   if wedothisfirst then
     if event == "press" then
       somethingpressed = true

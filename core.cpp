@@ -28,8 +28,16 @@
 #include "args.h"
 #include "init.h"
 #include "perfbar.h"
+#include "version.h"
 
 #include "LuaGL.h"
+
+#include "GL/glext.h"
+
+#include <png.h>
+
+#define _WIN32_IE 0x0500 // ffff
+#include <shlobj.h>
 
 using namespace std;
 
@@ -340,6 +348,7 @@ GlopKey adapt(const string &id) {
   if(id == "shift_left") ki = kKeyLeftShift; else
   if(id == "shift_right") ki = kKeyRightShift; else
   if(id == "ctrl") ki = kKeyLeftControl; else
+  if(id == "printscreen") ki = kKeyPrintScreen; else
   if(id == "escape") ki = kKeyEscape; else
     ki = GlopKey(id[0]);
   
@@ -352,6 +361,74 @@ bool IsKeyDownFrameAdapter(const string &id) {
 
 bool WasKeyPressedAdapter(const string &id) {
   return input()->WasKeyPressed(adapt(id), false);
+};
+
+class KeyList : public KeyListener {
+  void OnKeyEvent(const KeyEvent &event) {
+    string keyvent;
+    if(event.GetMainKey() == kMouseLButton) { keyvent = "mouse_left"; }
+    if(event.GetMainKey() == kMouseRButton) { keyvent = "mouse_right"; }
+    if(event.GetMainKey() == kMouseMButton) { keyvent = "mouse_middle"; }
+    if(event.GetMainKey() == kMouseWheelUp) { keyvent = "mouse_wheel_up"; }
+    if(event.GetMainKey() == kMouseWheelDown) { keyvent = "mouse_wheel_down"; }
+    
+    if(event.GetMainKey() == kKeyLeft) { keyvent = "arrow_left"; }
+    if(event.GetMainKey() == kKeyRight) { keyvent = "arrow_right"; }
+    if(event.GetMainKey() == kKeyUp) { keyvent = "arrow_up"; }
+    if(event.GetMainKey() == kKeyDown) { keyvent = "arrow_down"; }
+    
+    if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= 'a' && event.GetMainKey().index <= 'z') { keyvent = string(1, event.GetMainKey().index); }
+    if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= '0' && event.GetMainKey().index <= '9') { keyvent = string(1, event.GetMainKey().index); }
+    if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index == '`') { keyvent = string(1, event.GetMainKey().index); }
+    
+    if(event.GetMainKey() == kKeyF2) { keyvent = "f2"; }
+    if(event.GetMainKey() == kKeyDelete) { keyvent = "delete"; }
+    if(event.GetMainKey() == kKeyPrintScreen) { keyvent = "printscreen"; }
+    
+    if(event.GetMainKey() == kKeyEnter) { keyvent = "enter"; }
+    if(event.GetMainKey() == kKeyEscape) { keyvent = "escape"; }
+    
+    unsigned char aski = input()->GetAsciiValue(event.GetMainKey());
+    string bleep;
+    if(aski) {
+      bleep = string(1, aski);
+    }
+    
+    if(keyvent.size() || aski) {
+      string typ;
+      if(event.IsDoublePress()) {
+        typ = "press_double";
+      } else if(event.IsRepeatPress()) {
+        typ = "press_repeat";
+      } else if(event.IsNonRepeatPress()) {
+        typ = "press";
+      } else if(event.IsRelease()) {
+        typ = "release";
+      } else if(event.IsNothing()) {
+        typ = "nothing";
+      }
+      
+      lua_getglobal(L, "generic_wrap");
+      lua_getglobal(L, "UI_Key");
+      if(keyvent.size()) {
+        lua_pushstring(L, keyvent.c_str());
+      } else {
+        lua_pushnil(L);
+      }
+      if(bleep.size()) {
+        lua_pushstring(L, bleep.c_str());
+      } else {
+        lua_pushnil(L);
+      }
+      lua_pushstring(L, typ.c_str());
+      int rv = lua_pcall(L, 4, 0, 0);
+      if (rv) {
+        dprintf("%s", lua_tostring(L, -1));
+        meltdown();
+        CHECK(0);
+      }
+    }
+  }
 };
 
 map<pair<string, float>, SoundSample *> sounds;
@@ -374,7 +451,7 @@ SoundSource SoundCore(const string &sname, float vol, bool loop) {
     CHECK(sounds[make_pair(sname, vol)]);
   }
   
-  dprintf("Looping: %d\n", loop);
+  //dprintf("Looping: %d\n", loop);
   return sounds[make_pair(sname, vol)]->Play(loop);
   //dprintf("%d, %d\n", nss.IsPaused(), nss.IsStopped());
   //CHECK(!nss.IsPaused() && !nss.IsStopped(), "%d, %d\n", nss.IsPaused(), nss.IsStopped());
@@ -420,73 +497,6 @@ public:
   
   int get() const {
     return id;
-  }
-};
-
-class KeyList : public KeyListener {
-  void OnKeyEvent(const KeyEvent &event) {
-    string keyvent;
-    if(event.GetMainKey() == kMouseLButton) { keyvent = "mouse_left"; }
-    if(event.GetMainKey() == kMouseRButton) { keyvent = "mouse_right"; }
-    if(event.GetMainKey() == kMouseMButton) { keyvent = "mouse_middle"; }
-    if(event.GetMainKey() == kMouseWheelUp) { keyvent = "mouse_wheel_up"; }
-    if(event.GetMainKey() == kMouseWheelDown) { keyvent = "mouse_wheel_down"; }
-    
-    if(event.GetMainKey() == kKeyLeft) { keyvent = "arrow_left"; }
-    if(event.GetMainKey() == kKeyRight) { keyvent = "arrow_right"; }
-    if(event.GetMainKey() == kKeyUp) { keyvent = "arrow_up"; }
-    if(event.GetMainKey() == kKeyDown) { keyvent = "arrow_down"; }
-    
-    if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= 'a' && event.GetMainKey().index <= 'z') { keyvent = string(1, event.GetMainKey().index); }
-    if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index >= '0' && event.GetMainKey().index <= '9') { keyvent = string(1, event.GetMainKey().index); }
-    if(event.GetMainKey().IsKeyboardKey() && event.GetMainKey().index == '`') { keyvent = string(1, event.GetMainKey().index); }
-    
-    if(event.GetMainKey() == kKeyF2) { keyvent = "f2"; }
-    if(event.GetMainKey() == kKeyDelete) { keyvent = "delete"; }
-    
-    if(event.GetMainKey() == kKeyEnter) { keyvent = "enter"; }
-    if(event.GetMainKey() == kKeyEscape) { keyvent = "escape"; }
-    
-    unsigned char aski = input()->GetAsciiValue(event.GetMainKey());
-    string bleep;
-    if(aski) {
-      bleep = string(1, aski);
-    }
-    
-    if(keyvent.size() || aski) {
-      string typ;
-      if(event.IsDoublePress()) {
-        typ = "press_double";
-      } else if(event.IsRepeatPress()) {
-        typ = "press_repeat";
-      } else if(event.IsNonRepeatPress()) {
-        typ = "press";
-      } else if(event.IsRelease()) {
-        typ = "release";
-      } else if(event.IsNothing()) {
-        typ = "nothing";
-      }
-      
-      lua_getglobal(L, "generic_wrap");
-      lua_getglobal(L, "UI_Key");
-      if(keyvent.size()) {
-        lua_pushstring(L, keyvent.c_str());
-      } else {
-        lua_pushnil(L);
-      }
-      if(bleep.size()) {
-        lua_pushstring(L, bleep.c_str());
-      } else {
-        lua_pushnil(L);
-      }
-      lua_pushstring(L, typ.c_str());
-      int rv = lua_pcall(L, 4, 0, 0);
-      if (rv) {
-        dprintf("%s", lua_tostring(L, -1));
-        meltdown();
-        CHECK(0);
-      }
-    }
   }
 };
 
@@ -594,6 +604,47 @@ void get_stack_entry(lua_State *L, int level) {
                          ar.short_src, ar.linedefined);
   }
   lua_concat(L, lua_gettop(L) - 1);
+}
+
+bool screenshot_to(const string &fname) {
+  FILE *fil = fopen(fname.c_str(), "wb");
+  if(!fil) return false;
+  
+  // alright let's get this shit done
+  glReadBuffer(GL_FRONT);
+  vector<char> dat;
+  int x = window()->GetWidth();
+  int y = window()->GetHeight();
+  dprintf("screeny %dx%d\n", x, y);
+  dat.resize(x * y * 4);
+  vector<char*> ptrs;
+  for(int i = 0; i < y; i++)
+    ptrs.push_back(&dat[(y - i - 1) * x * 4]);
+  glReadPixels(0, 0, x, y, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, &dat[0]);
+  
+  png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+  png_infop info_ptr = png_create_info_struct(png_ptr);
+  assert(!setjmp(png_jmpbuf(png_ptr)));
+  png_init_io(png_ptr, fil);
+  
+  png_set_IHDR(png_ptr, info_ptr, x, y, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+  png_write_info(png_ptr, info_ptr);
+  png_write_image(png_ptr, (png_byte**)&ptrs[0]); // yaaaaaay
+  png_write_end(png_ptr, NULL);
+  
+  png_destroy_write_struct(&png_ptr, &info_ptr);
+  
+  fclose(fil);
+  return true;
+}
+
+string get_mid_name() {
+  return game_midname;
+}
+string get_desktop_directory() {
+  char meep[MAX_PATH + 1] = {0};
+  SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, meep);
+  return meep;
 }
 
 #define LEVELS1	12	/* size of the first part of the stack */
@@ -747,6 +798,9 @@ void luainit(int argc, const char **argv) {
       def("GetMouseX", &gmx),
       def("GetMouseY", &gmy),
       def("ShowMouseCursor", &sms),
+      def("ScreenshotTo", &screenshot_to),
+      def("GetMidName", &get_mid_name),
+      def("GetDesktopDirectory", &get_desktop_directory),
       def("Perfbar_Set", &set_perfbar),
       def("get_stack_entry", &get_stack_entry, raw(_1)),
       def("debugstack_annotated", &debugstack_annotated, raw(_1))
