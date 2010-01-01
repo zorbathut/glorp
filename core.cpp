@@ -465,6 +465,16 @@ SoundSource ControllableSound(const string &sname, float vol, bool loop) {
   return SoundCore(sname, vol, loop);
 }
 
+void clean_up_sounds() {
+  for(int i = 0; i < ss.size(); i++)
+    ss[i].Stop();
+  ss.clear();
+  
+  for(map<pair<string, float>, SoundSample *>::iterator itr = sounds.begin(); itr != sounds.end(); itr++)
+    delete itr->second;
+  sounds.clear();
+}
+
 class PerfBarManager {
   PerfStack *ps;
   
@@ -878,55 +888,60 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   
   luainit(argc, argv);
   
-  KeyList listen_to_shit;
-  
-  int lasttick = system()->GetTime();
-  while(window()->IsCreated()) {
-    system()->Think();
+  {
+    KeyList listen_to_shit;
     
-    {
-      PerfStack pb(0.0, 0.0, 0.5);
+    int lasttick = system()->GetTime();
+    while(window()->IsCreated()) {
+      system()->Think();
       
-      int thistick = system()->GetTime();
-      lua_getglobal(L, "generic_wrap");
-      lua_getglobal(L, "UI_Loop");
-      lua_pushnumber(L, thistick - lasttick);
-      lasttick = thistick;
-      int rv = lua_pcall(L, 2, 0, 0);
-      if (rv) {
-        dprintf("Crash\n");
-        dprintf("%s", lua_tostring(L, -1));
-        meltdown();
-        CHECK(0);
+      {
+        PerfStack pb(0.0, 0.0, 0.5);
+        
+        int thistick = system()->GetTime();
+        lua_getglobal(L, "generic_wrap");
+        lua_getglobal(L, "UI_Loop");
+        lua_pushnumber(L, thistick - lasttick);
+        lasttick = thistick;
+        int rv = lua_pcall(L, 2, 0, 0);
+        if (rv) {
+          dprintf("Crash\n");
+          dprintf("%s", lua_tostring(L, -1));
+          meltdown();
+          CHECK(0);
+        }
       }
-    }
-    
-    if(input()->IsKeyDownFrame(kKeyF12)) {
-      meltdown();
-      luashutdown();
-      luainit(argc, argv);
-    }
-    
-    {
-      PerfStack pb(0, 0.5, 0);
-      lua_getglobal(L, "generic_wrap");
-      lua_getglobal(L, "gcstep");
-      int rv = lua_pcall(L, 1, 0, 0);
-      if (rv) {
-        dprintf("Crash\n");
-        dprintf("%s", lua_tostring(L, -1));
+      
+      if(input()->IsKeyDownFrame(kKeyF12)) {
         meltdown();
-        CHECK(0);
+        luashutdown();
+        luainit(argc, argv);
       }
-    }
-    
-    if(exiting) {
-      window()->Destroy();
+      
+      {
+        PerfStack pb(0, 0.5, 0);
+        lua_getglobal(L, "generic_wrap");
+        lua_getglobal(L, "gcstep");
+        int rv = lua_pcall(L, 1, 0, 0);
+        if (rv) {
+          dprintf("Crash\n");
+          dprintf("%s", lua_tostring(L, -1));
+          meltdown();
+          CHECK(0);
+        }
+      }
+      
+      if(exiting) {
+        window()->Destroy();
+      }
     }
   }
   
   meltdown();
   luashutdown();
+  
+  clean_up_sounds();
+  System::ShutDown();
   
   dprintf("exiting");
 }
