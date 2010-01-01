@@ -65,7 +65,7 @@ ursa.token.rule{"curl_link", nil, function () return "-lcurl" end} --"curl-confi
 
 ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
 
-ursa.rule{"version.cpp", "#version", function () ursa.util.system{([[echo 'extern const char game_version[] = "%s";  extern const char game_fullname[] = "%s";  extern const char game_slug[] = "%s";' > version.cpp]]):format(ursa.token{"version"}, params.longname, params.name)} end}
+ursa.rule{"version.cpp", "#version", function () ursa.util.system{([[echo 'extern const char game_version[] = "%s";  extern const char game_fullname[] = "%s";  extern const char game_midname[] = "%s";  extern const char game_slug[] = "%s";' > version.cpp]]):format(ursa.token{"version"}, params.longname, params.midname, params.name)} end}
 
 
 local buildables = {
@@ -73,9 +73,33 @@ local buildables = {
   ["reporter"] = {corefiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init"},
 }
 
+local depsed = {}
+
 local function build_object(src, prefix, compiler)
+  local cli = (" %s -Wall -Wno-sign-compare -Wno-uninitialized -g %s -DDPRINTF_MARKUP -Ibuild/lua/include -I/usr/mingw/local/include %s "):format(compiler or "g++", osd.cxx_flags, src)
+  if not depsed[src] then
+    local function make_dependencies(srcfile)
+      local deps = ursa.util.system{cli .. "-MM"}
+      deps = deps:match("^.*: (.*)$")
+      
+      local dependencies = {}
+      for file in deps:gmatch("([^ \n\t]+)") do
+        if file ~= "\\" then
+          table.insert(dependencies, file)
+        end
+      end
+      
+      return dependencies
+    end
+    
+    local depend = src .. " dependencies"
+    
+    ursa.token.rule{depend, ursa.util.token_deferred{depend, default = src}, function () return make_dependencies(cpp) end}
+    depsed[src] = ursa.util.token_deferred{depend}
+  end
+  
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o")
-  ursa.rule{dst, {src, lua_headers, glop.headers}, ursa.util.system_template{("nice glorp/ewrap $TARGET %s -o $TARGET -c -Wall -Wno-sign-compare -Wno-uninitialized -g %s -DDPRINTF_MARKUP -Ibuild/lua/include -I/usr/mingw/local/include %s"):format(compiler or "g++", osd.cxx_flags, src)}}
+  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src]}, ursa.util.system_template{"nice glorp/ewrap $TARGET" .. cli .. "-o $TARGET -c"}}
   return dst
 end
 

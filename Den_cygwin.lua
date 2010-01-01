@@ -49,7 +49,6 @@ function rv.installers()
     
     local exesuffix = ("%s-%s.exe"):format(params.midname, v)
     local exedest = "build/" .. exesuffix
-    print("ED:", exedest)
     ursa.rule{"build/installer.nsi", {data, "glorp/installer.nsi.template"}, function(dst, src)
       local files = ursa.util.system{"cd build/deploy && find . -type f | sed s*\\\\./**"}
       local dir = ursa.util.system{"cd build/deploy && find . -type d | sed s*\\\\./**"}
@@ -57,7 +56,6 @@ function rv.installers()
       local inp = io.open("glorp/installer.nsi.template", "rb")
       local otp = io.open("build/installer.nsi", "w")
       local function outwrite(txt)
-        print(txt)
         otp:write(txt .. "\n")
       end
       

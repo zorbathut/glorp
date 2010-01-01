@@ -22,7 +22,6 @@ rv.create_runnable = function(dat)
   local function tweak_glop(cli)
     current_glop_iteration = current_glop_iteration + 1
     current_glop = ursa.rule{"build/glop_lib_" .. current_glop_iteration, current_glop, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool %s $TARGET"):format(cli)}}
-    print("TWEAKING TO", current_glop[1])
     --assert(false)
   end
   
@@ -50,8 +49,8 @@ function rv.installers()
   -- first we mirror our run structure over, plus stripping (oh baby oh baby)
   -- hackery: pulling out filenames from literals
   -- this will be removed once we have a better system for it
-  for k, v in pairs(runnable_deps) do
-    local sufix = v[1]:match(("@build/%s.app/(.*)"):format(params.longname))
+  for k, v in pairs(ursa.relative_from(runnable_deps)) do
+    local sufix = v:match(("build/%s.app/(.*)"):format(params.longname))
     assert(sufix)
     
     table.insert(binaries, ursa.rule{app_prefix .. sufix, v[1], ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
