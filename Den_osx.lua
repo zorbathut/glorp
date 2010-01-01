@@ -1,3 +1,5 @@
+require "glorp/Den_util"
+
 local params = ...
 
 local rv = {}
@@ -98,7 +100,9 @@ function rv.installers()
     
   end}
   
-  return ursa.rule{("build/%s.dmg"):format(ursa.token{"outputprefix"}), {binaries, ursa.util.token_deferred{"built_data"}, infoplist, icon}, ursa.util.system_template{('hdiutil create -srcfolder "build/deploy/%s.app" $TARGET -ov'):format(params.longname)}}
+  cull_data(app_prefix, {binaries, icon, infoplist})
+  
+  return ursa.rule{("build/%s.dmg"):format(ursa.token{"outputprefix"}), {binaries, ursa.util.token_deferred{"built_data"}, "#culled_data", infoplist, icon}, ursa.util.system_template{('hdiutil create -srcfolder "build/deploy/%s.app" $TARGET -ov'):format(params.longname)}}
 end
 
 return rv

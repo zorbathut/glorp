@@ -94,7 +94,7 @@ local function build_object(src, prefix, compiler)
     
     local depend = src .. " dependencies"
     
-    ursa.token.rule{depend, ursa.util.token_deferred{depend, default = src}, function () return make_dependencies(cpp) end}
+    ursa.token.rule{depend, {glop.headers, lua_headers, ursa.util.token_deferred{depend, default = src}}, function () return make_dependencies(cpp) end}
     depsed[src] = ursa.util.token_deferred{depend}
   end
   

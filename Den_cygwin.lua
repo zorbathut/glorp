@@ -1,3 +1,5 @@
+require "glorp/Den_util"
+
 local params = ...
 
 local rv = {}
@@ -33,6 +35,7 @@ function rv.installers()
   for _, file in ipairs({"fmodex.dll", "libfreetype-6.dll", "libpng-3.dll"}) do
     table.insert(data, ursa.rule{"build/deploy/" .. file, "build/" .. file, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   end
+  table.insert(data, ursa.rule{"build/deploy/libGlop.dll", params.glop.lib, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   table.insert(data, ursa.rule{"build/deploy/licenses.txt", "glorp/resources/licenses.txt", ursa.util.system_template{"cp $SOURCE $TARGET"}})
 
   -- second we generate our actual data copies
@@ -42,9 +45,11 @@ function rv.installers()
       table.insert(items, ursa.rule{("build/deploy/%s"):format(v.dst), v.src, ursa.util.system_template{v.cli}})
     end
     return items
-  end, always_build = true}
+  end, always_rebuild = true}
+  
+  cull_data("build/deploy/", {data})
 
-  ursa.token.rule{"installers", {data, ursa.util.token_deferred{"built_data"}, "#version"}, function ()
+  ursa.token.rule{"installers", {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, function ()
     local v = ursa.token{"version"}
     
     local exesuffix = ("%s-%s.exe"):format(params.midname, v)
@@ -94,7 +99,7 @@ function rv.installers()
     end}
     
     return {
-      ursa.rule{("build/%s-%s.zip"):format(params.midname, v), data, ursa.util.system_template{"cd build/deploy ; zip -9 -r ../../$TARGET *"}},
+      ursa.rule{("build/%s-%s.zip"):format(params.midname, v), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{"cd build/deploy ; zip -9 -r ../../$TARGET *"}},
       ursa.rule{exedest, "build/installer.nsi", "cd build && /cygdrive/c/Program\\ Files\\ \\(x86\\)/NSIS/makensis.exe installer.nsi"},
     }
   end, always_rebuild = true}
