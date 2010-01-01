@@ -47,7 +47,7 @@ do
   local luabindpath = luabindroot .. "/src/"
   ursa.token.rule{"luabind_source_files", nil, function () return ursa.util.system{("cd %s && ls *.cpp"):format(luabindpath)} end}
   for k in ursa.token{"luabind_source_files"}:gmatch("([^\n]+)") do
-    table.insert(luabindobj, ursa.rule{"build/luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice g++ -o $TARGET -c %s -Iglorp/%s -I/usr/mingw/local/include -Ibuild/lua/include -Iglorp/luabuild/luabind-0.9ish %s -g"):format(luabindpath .. k, luabindroot, osd.cxx_flags)}})
+    table.insert(luabindobj, ursa.rule{"build/luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice g++ -O2 -o $TARGET -c %s -Iglorp/%s -I/usr/mingw/local/include -Ibuild/lua/include -Iglorp/luabuild/luabind-0.9ish %s -g"):format(luabindpath .. k, luabindroot, osd.cxx_flags)}})
   end
   
   lua = "build/lua/lib/libluabind.a"
@@ -76,7 +76,7 @@ local buildables = {
 local depsed = {}
 
 local function build_object(src, prefix, compiler)
-  local cli = (" %s -Wall -Wno-sign-compare -Wno-uninitialized -g %s -DDPRINTF_MARKUP -Ibuild/lua/include -I/usr/mingw/local/include %s "):format(compiler or "g++", osd.cxx_flags, src)
+  local cli = ("%s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g %s -DDPRINTF_MARKUP -Ibuild/lua/include -I/usr/mingw/local/include %s "):format(compiler or "g++", osd.cxx_flags, src)
   if not depsed[src] then
     local function make_dependencies(srcfile)
       local deps = ursa.util.system{cli .. "-MM"}
@@ -99,7 +99,7 @@ local function build_object(src, prefix, compiler)
   end
   
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o")
-  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src]}, ursa.util.system_template{"nice glorp/ewrap $TARGET" .. cli .. "-o $TARGET -c"}}
+  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src]}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
   return dst
 end
 
@@ -132,7 +132,7 @@ local function build_program(name)
   table.insert(objs, lua[1])
   
   local dst = "build/" .. name .. osd.extension
-  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link"}, ursa.util.system_template{("nice glorp/ewrap $TARGET g++ -o $TARGET -g $SOURCES -Lbuild/lua/lib -lluabind -lm -llua -lpthread -lz -lpng #curl_link %s"):format(osd.ld_flags)}}
+  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link"}, ursa.util.system_template{("nice glorp/ewrap $TARGET g++ -O2 -o $TARGET -g $SOURCES -Lbuild/lua/lib -lluabind -lm -llua -lpthread -lz -lpng #curl_link %s"):format(osd.ld_flags)}}
   return dst
 end
 
