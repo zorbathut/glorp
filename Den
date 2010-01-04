@@ -68,8 +68,15 @@ ursa.token.rule{"curl_link", nil, function () return "-lcurl" end} --"curl-confi
 
 ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
 
-ursa.rule{"version.cpp", "#version", function () ursa.util.system{([[echo 'extern const char game_version[] = "%s";  extern const char game_fullname[] = "%s";  extern const char game_midname[] = "%s";  extern const char game_slug[] = "%s";' > version.cpp]]):format(ursa.token{"version"}, params.longname, params.midname, params.name)} end}
-
+ursa.rule{"version.cpp", "#version", function ()
+  print("Writing file version.cpp")
+  local fil = io.open("version.cpp", "w")
+  fil:write(([[extern const char game_version[] = "%s";]]):format(ursa.token{"version"}))
+  fil:write(([[extern const char game_fullname[] = "%s";]]):format(params.longname))
+  fil:write(([[extern const char game_midname[] = "%s";]]):format(params.midname))
+  fil:write(([[extern const char game_slug[] = "%s";]]):format(params.name))
+  fil:close()
+end}
 
 local buildables = {
   [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar", cfiles = "glorp/LuaGL", resources = "resource"},
