@@ -21,7 +21,7 @@ function runfile(file, global)
     setfenv(dat, global)
   end
   
-  dat()
+  dat(mode)
 end
 
 runfile("util.lua")
@@ -282,10 +282,6 @@ function render(...)
   overlay:Render()
 end
 function key(button, ascii, event)
-  if button == "q" and event == "press" then
-    achievement.award(achievement.db.test_alpha)
-  end
-
   if button == "printscreen" and event == "press" then
     print("printscr")
     

@@ -6,6 +6,7 @@
 #include "parse.h"
 #include "args.h"
 #include "init.h"
+#include "version.h"
 
 #include <fstream>
 #include <vector>
@@ -14,6 +15,9 @@
 #include <sys/stat.h>
 
 #include <boost/static_assert.hpp>
+
+#define _WIN32_IE 0x0500 // ffff
+#include <shlobj.h>
 
 using namespace std;
 
@@ -68,7 +72,12 @@ string getConfigDirectory() {
   char buff[MAX_PATH + 1];
   SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, buff);
   //dprintf("Home directory: %s\n", buff);
-  return string(buff) + "\\Devastation Net\\";
+  return string(buff) + "\\" + game_fullname + "\\";
+}
+string getDesktopDirectory() {
+  char meep[MAX_PATH + 1] = {0};
+  SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, meep);
+  return meep;
 }
 
 string getTempFilename() {

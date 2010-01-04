@@ -29,15 +29,13 @@
 #include "init.h"
 #include "perfbar.h"
 #include "version.h"
+#include "os.h"
 
 #include "LuaGL.h"
 
 #include "GL/glext.h"
 
 #include <png.h>
-
-#define _WIN32_IE 0x0500 // ffff
-#include <shlobj.h>
 
 using namespace std;
 
@@ -651,11 +649,6 @@ bool screenshot_to(const string &fname) {
 string get_mid_name() {
   return game_midname;
 }
-string get_desktop_directory() {
-  char meep[MAX_PATH + 1] = {0};
-  SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, meep);
-  return meep;
-}
 
 #define LEVELS1	12	/* size of the first part of the stack */
 #define LEVELS2	10	/* size of the second part of the stack */
@@ -810,7 +803,9 @@ void luainit(int argc, const char **argv) {
       def("ShowMouseCursor", &sms),
       def("ScreenshotTo", &screenshot_to),
       def("GetMidName", &get_mid_name),
-      def("GetDesktopDirectory", &get_desktop_directory),
+      def("GetDesktopDirectory", &getDesktopDirectory),
+      def("GetConfigDirectory", &getConfigDirectory),
+      def("MakeConfigDirectory", &makeConfigDirectory),
       def("Perfbar_Set", &set_perfbar),
       def("get_stack_entry", &get_stack_entry, raw(_1)),
       def("debugstack_annotated", &debugstack_annotated, raw(_1))

@@ -71,10 +71,10 @@ ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):form
 ursa.rule{"version.cpp", "#version", function ()
   print("Writing file version.cpp")
   local fil = io.open("version.cpp", "w")
-  fil:write(([[extern const char game_version[] = "%s";]]):format(ursa.token{"version"}))
-  fil:write(([[extern const char game_fullname[] = "%s";]]):format(params.longname))
-  fil:write(([[extern const char game_midname[] = "%s";]]):format(params.midname))
-  fil:write(([[extern const char game_slug[] = "%s";]]):format(params.name))
+  fil:write(([[extern const char game_version[] = "%s";]]):format(ursa.token{"version"}) .. "\n")
+  fil:write(([[extern const char game_fullname[] = "%s";]]):format(params.longname) .. "\n")
+  fil:write(([[extern const char game_midname[] = "%s";]]):format(params.midname) .. "\n")
+  fil:write(([[extern const char game_slug[] = "%s";]]):format(params.name) .. "\n")
   fil:close()
 end}
 
