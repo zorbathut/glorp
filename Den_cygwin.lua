@@ -12,14 +12,15 @@ rv.extension = ".exe"
 rv.create_runnable = function(dat)
   local libpath = "glorp/Glop/Glop/cygwin/dll"
   local libs = "libfreetype-6.dll fmodex.dll libpng-3.dll"
-  local liboutpath = "build/"
+  local liboutpath = params.builddir
 
   local dlls = {}
   for libname in (libs):gmatch("[^%s]+") do
     table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, libname), ("%s/%s"):format(libpath, libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
   end
+  table.insert(dlls, ursa.rule{liboutpath .. "libGlop.dll", params.glop.lib, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   
-  return {deps = {dlls, dat.mainprog}, cli = ("build/%s.exe"):format(params.name)}
+  return {deps = {dlls, dat.mainprog}, cli = ("%s%s.exe"):format(params.builddir, params.name)}
   -- more to come
 end
 
@@ -30,36 +31,36 @@ function rv.installers()
 
   -- DLLs and executables
   for _, file in ipairs({params.name .. ".exe", "reporter.exe"}) do
-    table.insert(data, ursa.rule{"build/deploy/" .. file, "build/" .. file, ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
+    table.insert(data, ursa.rule{params.builddir .. "deploy/" .. file, params.builddir .. file, ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   end
   for _, file in ipairs({"fmodex.dll", "libfreetype-6.dll", "libpng-3.dll"}) do
-    table.insert(data, ursa.rule{"build/deploy/" .. file, "build/" .. file, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+    table.insert(data, ursa.rule{params.builddir .. "deploy/" .. file, params.builddir .. file, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   end
-  table.insert(data, ursa.rule{"build/deploy/libGlop.dll", params.glop.lib, ursa.util.system_template{"cp $SOURCE $TARGET"}})
-  table.insert(data, ursa.rule{"build/deploy/licenses.txt", "glorp/resources/licenses.txt", ursa.util.system_template{"cp $SOURCE $TARGET"}})
+  table.insert(data, ursa.rule{params.builddir .. "deploy/libGlop.dll", params.glop.lib, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+  table.insert(data, ursa.rule{params.builddir .. "deploy/licenses.txt", "glorp/resources/licenses.txt", ursa.util.system_template{"cp $SOURCE $TARGET"}})
 
   -- second we generate our actual data copies
   ursa.token.rule{"built_data", "#datafiles", function ()
     local items = {}
     for _, v in pairs(ursa.token{"datafiles"}) do
-      table.insert(items, ursa.rule{("build/deploy/%s"):format(v.dst), v.src, ursa.util.system_template{v.cli}})
+      table.insert(items, ursa.rule{(params.builddir .. "deploy/%s"):format(v.dst), v.src, ursa.util.system_template{v.cli}})
     end
     return items
   end, always_rebuild = true}
   
-  cull_data("build/deploy/", {data})
+  cull_data(params.builddir .. "deploy/", {data})
 
   ursa.token.rule{"installers", {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, function ()
     local v = ursa.token{"version"}
     
     local exesuffix = ("%s-%s.exe"):format(params.midname, v)
     local exedest = "build/" .. exesuffix
-    ursa.rule{"build/installer.nsi", {data, "glorp/installer.nsi.template"}, function(dst, src)
-      local files = ursa.util.system{"cd build/deploy && find . -type f | sed s*\\\\./**"}
-      local dir = ursa.util.system{"cd build/deploy && find . -type d | sed s*\\\\./**"}
+    ursa.rule{params.builddir .. "installer.nsi", {data, "glorp/installer.nsi.template"}, function(dst, src)
+      local files = ursa.util.system{("cd %sdeploy && find . -type f | sed s*\\\\./**"):format(params.builddir)}
+      local dir = ursa.util.system{("cd %sdeploy && find . -type d | sed s*\\\\./**"):format(params.builddir)}
       
       local inp = io.open("glorp/installer.nsi.template", "rb")
-      local otp = io.open("build/installer.nsi", "w")
+      local otp = io.open(params.builddir .. "installer.nsi", "w")
       local function outwrite(txt)
         otp:write(txt .. "\n")
       end
@@ -88,7 +89,7 @@ function rv.installers()
         elseif line == "$$$TYPE$$$" then
           outwrite('!define PRODUCT_TYPE "release"')
         elseif line == "$$$OUTFILE$$$" then
-          outwrite(('OutFile %s'):format(exesuffix))
+          outwrite(('OutFile ../%s'):format(exesuffix))
         else
           outwrite(line:gsub("$$$LONGNAME$$%$", params.longname):gsub("$$$EXENAME$$%$", params.name .. ".exe"))
         end
@@ -99,8 +100,8 @@ function rv.installers()
     end}
     
     return {
-      ursa.rule{("build/%s-%s.zip"):format(params.midname, v), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{"cd build/deploy ; zip -9 -r ../../$TARGET *"}},
-      ursa.rule{exedest, "build/installer.nsi", "cd build && /cygdrive/c/Program\\ Files\\ \\(x86\\)/NSIS/makensis.exe installer.nsi"},
+      ursa.rule{("build/%s-%s.zip"):format(params.midname, v), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{"cd #builddir/deploy ; zip -9 -r ../../../$TARGET *"}},
+      ursa.rule{exedest, params.builddir .. "installer.nsi", ursa.util.system_template{"cd #builddir && /cygdrive/c/Program\\ Files\\ \\(x86\\)/NSIS/makensis.exe installer.nsi"}},
     }
   end, always_rebuild = true}
   
