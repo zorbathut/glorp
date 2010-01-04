@@ -27,6 +27,8 @@ end
 runfile("util.lua")
 runfile("ui.lua")
 
+runfile("stage_persistence.lua")
+runfile("stage_achievements.lua")
 
 local mainmenu
 local runninggame
@@ -146,6 +148,8 @@ end
 
 
 
+overlay = CreateFrame("Frame")
+overlay:SetLayer(1000000)
 
 function runuifile(file)
   local env = {}
@@ -245,7 +249,8 @@ wedothisfirst = coroutine.wrap(function()
 end)
 
 function tick_loop(...)
-  if ssmessage then ssmessage:tix() end
+  UIParent:Update()
+  
   if wedothisfirst then
     wedothisfirst()
   else
@@ -274,11 +279,13 @@ function render(...)
     imm_render()
   end
   
-  if ssmessage then
-    ssmessage:Render()
-  end
+  overlay:Render()
 end
 function key(button, ascii, event)
+  if button == "q" and event == "press" then
+    achievement.award(achievement.db.test_alpha)
+  end
+
   if button == "printscreen" and event == "press" then
     print("printscr")
     
@@ -289,13 +296,13 @@ function key(button, ascii, event)
     
     if ssmessage then ssmessage:Detach() ssmessage = nil end
     
-    ssmessage = CreateFrame("Text_Multiline")
+    ssmessage = CreateFrame("Text_Multiline", overlay)
     ssmessage:SetAllPoints()
     ssmessage.tixleft = 240
     ssmessage.tixfade = 60
     ssmessage:SetLayer(100000000)
     local txt = "Screenshot saved to " .. GetDesktopDirectory() .. "\\" .. fname
-    function ssmessage:tix()
+    function ssmessage:Tick()
       print("tixtix", self.tixleft)
       self.tixleft = self.tixleft - 1
       if self.tixleft == 0 then self:Detach() ssmessage = nil end
@@ -305,7 +312,7 @@ function key(button, ascii, event)
         self:SetText(("\1C000000%02x\1"):format(self.tixleft / self.tixfade * 255) .. txt)
       end
     end
-    ssmessage:tix()
+    ssmessage:Tick()
   end
   
   if wedothisfirst then

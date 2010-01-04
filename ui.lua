@@ -338,6 +338,16 @@ do
     end
   end
   
+  function Region_Type:Update()
+    if self.Tick then self:Tick() end
+    
+    if self.children then
+      for _, k in ipairs(self.children) do
+        k:Update()
+      end
+    end
+  end
+  
   function Region(parent, name, suppress)
     local reg = setmetatable({}, Region_Type_mt)
     if not parent and not suppress then parent = UIParent end
@@ -432,9 +442,18 @@ end
 
 
 local TextMultilineOverrides = {}
-function TextMultilineOverrides:SetText(text)
-  self.text:SetText("\1J0Cffffffff\1" .. text)
+function TextMultilineOverrides:ResynchText()
+  self.text:SetText(("\1J0C%02x%02x%02x%02x\1"):format(self.tex_r * 255, self.tex_g * 255, self.tex_b * 255, self.tex_a * 255) .. self.tex_tex)
   self.update = true
+end
+function TextMultilineOverrides:SetText(text)
+  self.tex_tex = text
+  self:ResynchText()
+end
+function TextMultilineOverrides:SetColor(r, g, b, a)
+  if not a then a = 1 end
+  self.tex_r, self.tex_g, self.tex_b, self.tex_a = r, g, b, a
+  self:ResynchText()
 end
 function TextMultilineOverrides:Draw()
   local l, u, r, d = self:GetBounds()
@@ -445,6 +464,10 @@ function TextMultilineOverrides:Draw()
   end
   self.text:Render()
 end
+TextMultilineOverrides.tex_r = 1
+TextMultilineOverrides.tex_g = 1
+TextMultilineOverrides.tex_b = 1
+TextMultilineOverrides.tex_a = 1
 
 local SpriteOverrides = {}
 function SpriteOverrides:SetTexture(tex)
