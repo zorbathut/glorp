@@ -4,8 +4,10 @@ local params = ...
 
 local rv = {}
 
-rv.cxx_flags = "-mno-cygwin -mwindows -DWIN32 -DCURL_STATICLIB -I/usr/mingw/local/include/boost-1_38_0 -Iglorp/glop/build/Glop/local/include"
-rv.ld_flags = "-L/lib/mingw -L/usr/mingw/local/lib -Lglorp/glop/Glop/cygwin/lib -mno-cygwin -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -ljpeg -lfreetype -lz"
+ursa.token.rule{"CC", "!" .. params.glop.cc, function () return params.glop.cc end}
+ursa.token.rule{"CXXFLAGS", nil, function () return "-mwindows -DWIN32 -DCURL_STATICLIB -Ic:/cygwin/usr/mingw/local/include -Ic:/cygwin/usr/mingw/local/include/boost-1_38_0 -Iglorp/glop/build/Glop/local/include" end}
+ursa.token.rule{"LDFLAGS", nil, function () return "-L/lib/mingw -Lc:/cygwin/usr/mingw/local/lib -Lglorp/glop/Glop/cygwin/lib -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -ljpeg -lfreetype -lz" end}
+
 rv.extension = ".exe"
 
 -- runnable

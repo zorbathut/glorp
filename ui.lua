@@ -276,6 +276,10 @@ do
   -- Questions: What does "center" mean?
   -- I think "center" is relative to the frame center from the last coordinate system. At least I can't think of anything better for it to mean.
   -- "scale", similar deal.
+  -- okay it turns out all of that is wrong
+  -- "center" is the new origin of the new coordinate system
+  -- "scale" is the width of the new coordinate system (it ends up being the size of the window)
+  -- "rotate" is in degrees I guess
   
   function Region_Type:SetCoordinateScale(x, y, scale, rotate)
     assert((x and y and scale) or not (x or y or scale))
@@ -321,7 +325,7 @@ do
       gl.Translate(cx, cy, 0)
       gl.Scale(scalefact, scalefact, 1)
       gl.Translate(-self.cs_x, -self.cs_y, 0)
-      gl.Rotate(self.cs_rotate, 0, 0, 1)
+      if self.cs_rotate then gl.Rotate(self.cs_rotate, 0, 0, 1) end
     end
     
     if self.Draw then self:Draw() end

@@ -20,22 +20,28 @@ persistence.load("achievements", achievement_persist)
 
 runfile("achievements.lua", loader_glob)
 
+local function make_achievement_badge(dat)
+  local cheev = CreateFrame("Sprite", overlay)
+  local icon = CreateFrame("Sprite", cheev)
+  cheev:SetTexture(achievement_params.bgimage)
+  icon:SetTexture(dat.icon)
+  
+  icon:SetPoint(nil, 0.5, cheev, nil, 0.5)
+  icon:SetPoint("LEFT", cheev, "LEFT", (cheev:GetHeight() - icon:GetWidth()) / 2)
+  local tex = CreateFrame("Text_Multiline", cheev)
+  tex:SetPoint("TOPLEFT", icon, "TOPRIGHT", 10, 0)
+  tex:SetPoint("RIGHT", cheev, "RIGHT", -10, 0)
+  tex:SetPoint("BOTTOM", icon, "BOTTOM")
+  tex:SetText(dat.text)
+
+  return cheev, icon, tex
+end
+
 function achievement.award(link)
   assert(achievement_list[link.id] == link.dat)
   
   if not achievement_persist[link.dat.icon] then
-    local cheev = CreateFrame("Sprite", overlay)
-    local icon = CreateFrame("Sprite", cheev)
-    cheev:SetTexture(achievement_params.bgimage)
-    icon:SetTexture(link.dat.icon)
-    
-    icon:SetPoint(nil, 0.5, cheev, nil, 0.5)
-    icon:SetPoint("LEFT", cheev, "LEFT", (cheev:GetHeight() - icon:GetWidth()) / 2)
-    local tex = CreateFrame("Text_Multiline", cheev)
-    tex:SetPoint("TOPLEFT", icon, "TOPRIGHT", 10, 0)
-    tex:SetPoint("RIGHT", cheev, "RIGHT", -10, 0)
-    tex:SetPoint("BOTTOM", icon, "BOTTOM")
-    tex:SetText(link.dat.text)
+    local cheev, icon, tex = make_achievement_badge(link.dat)
     
     local fades = 20
     cheev.Tick = coroutine.wrap(function ()

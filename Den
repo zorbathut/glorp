@@ -1,5 +1,11 @@
+#!/usr/local/bin/lua
 
 local params = select(1, ...)
+if not params then
+  print("Stop running it from this directory, moron!")
+  os.exit(1)
+end
+
 params.midname = params.longname:gsub("[^%w]", "")
 
 require "luarocks.loader"
@@ -18,7 +24,7 @@ local osd = assert(loadfile("glorp/Den_" .. glop.os .. ".lua")){name = params.na
 local lua
 local lua_headers = {}
 do
-  ursa.token.rule{"luajit_files", nil, function () return ursa.util.system{"cd glorp/luabuild/LuaJIT-1.1.5 && find . -type f | sed s*\\\\./**"} end}
+  ursa.token.rule{"luajit_files", nil, function () return ursa.util.system{"cd glorp/luabuild/LuaJIT-1.1.5 && find src dynasm -type f"} end}
   local copied = {}
   for k in ursa.token{"luajit_files"}:gmatch("([^\n]+)") do
     table.insert(copied, ursa.rule{builddir .. "luajit/" .. k, "glorp/luabuild/LuaJIT-1.1.5/" .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
@@ -31,12 +37,12 @@ do
 
   do
     local buildtype
-    if glop.os == "cygwin" then buildtype = "mingw" end
+    if glop.os == "cygwin" then buildtype = "cygwin" end
     if glop.os == "osx" then buildtype = "macosx" end
     assert(buildtype)
-    ursa.rule{luaobjects, copied, ("cd %sluajit/src && nice make -j5 %s"):format(builddir, buildtype)}
+    ursa.rule{luaobjects, copied, ursa.util.system_template{("cd %sluajit/src && nice make -j5 %s"):format(builddir, buildtype)}}
   end
-  ursa.rule{builddir .. "lua/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}}
+  ursa.rule{builddir .. "lua/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- woneder if this'll work right under cygwin
 
   local luabuilds = {builddir .. "lua/lib/liblua.a"}
   
@@ -50,7 +56,7 @@ do
   local luabindpath = luabindroot .. "/src/"
   ursa.token.rule{"luabind_source_files", nil, function () return ursa.util.system{("cd %s && ls *.cpp"):format(luabindpath)} end}
   for k in ursa.token{"luabind_source_files"}:gmatch("([^\n]+)") do
-    table.insert(luabindobj, ursa.rule{builddir .. "luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice g++ -O2 -o $TARGET -c %s -Iglorp/%s -I/usr/mingw/local/include -I#builddir/lua/include -Iglorp/luabuild/luabind-0.9ish %s -g"):format(luabindpath .. k, luabindroot, osd.cxx_flags)}})
+    table.insert(luabindobj, ursa.rule{builddir .. "luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -Iglorp/%s -I#builddir/lua/include -Iglorp/luabuild/luabind-0.9ish #CXXFLAGS -g"):format(luabindpath .. k, luabindroot)}})
   end
   
   lua = builddir .. "lua/lib/libluabind.a"
@@ -86,7 +92,7 @@ local buildables = {
 local depsed = {}
 
 local function build_object(src, prefix, compiler)
-  local cli = ("%s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g %s -DDPRINTF_MARKUP -I%slua/include -I/usr/mingw/local/include %s "):format(compiler or "g++", osd.cxx_flags, builddir, src)
+  local cli = ("%s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -I%slua/include %s %s "):format(compiler or ursa.token{"CC"}, builddir, ursa.token{"CXXFLAGS"}, src)
   if not depsed[src] then
     local function make_dependencies(srcfile)
       local deps = ursa.util.system{cli .. "-MM"}
@@ -142,7 +148,7 @@ local function build_program(name)
   table.insert(objs, lua[1])
   
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link"}, ursa.util.system_template{("nice glorp/ewrap $TARGET g++ -O2 -o $TARGET -g $SOURCES -L#builddir/lua/lib -lluabind -lm -llua -lpthread -lz -lpng #curl_link %s"):format(osd.ld_flags)}}
+  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link"}, ursa.util.system_template{"nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g $SOURCES -L#builddir/lua/lib -lluabind -lm -llua -lz -lpng #curl_link #LDFLAGS"}}
   return dst
 end
 
