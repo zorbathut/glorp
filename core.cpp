@@ -1,4 +1,7 @@
 
+#include "LuaGL.h"
+#include "LuaGL_ext.h"
+
 #include <Glop/Base.h>
 #include <Glop/Font.h>
 #include <Glop/GlopFrame.h>
@@ -30,10 +33,6 @@
 #include "perfbar.h"
 #include "version.h"
 #include "os.h"
-
-#include "LuaGL.h"
-
-#include "GL/glext.h"
 
 #include <png.h>
 
@@ -508,6 +507,42 @@ public:
   }
 };
 
+class GlShader {
+  int id;
+  
+public:
+  GlShader(string typ) {
+    int typi;
+    if(typ == "VERTEX_SHADER") typi = GL_VERTEX_SHADER; else
+    if(typ == "FRAGMENT_SHADER") typi = GL_FRAGMENT_SHADER; else
+      assert(0);
+    id = glCreateShader(typi);
+  }
+  ~GlShader() {
+    glDeleteShader(id);
+  }
+  
+  int get() const {
+    return id;
+  }
+};
+
+class GlProgram {
+  int id;
+  
+public:
+  GlProgram() {
+    id = glCreateProgram();
+  }
+  ~GlProgram() {
+    glDeleteProgram(id);
+  }
+  
+  int get() const {
+    return id;
+  }
+};
+
 void adaptaload(const string &fname) {
   int error = luaL_dofile(L, ("data/" + fname).c_str());
   if(error) {
@@ -719,6 +754,7 @@ void luainit(int argc, const char **argv) {
   L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
   luaopen_opengl(L);
+  luaopen_opengl_ext(L);
   lua_register(L, "print", debug_print);
   
   ll_subregister(L, "math", "random", math_random);
@@ -790,6 +826,12 @@ void luainit(int argc, const char **argv) {
       class_<GlListID>("GlListID")
         .def(constructor<>())
         .def("get", &GlListID::get),
+      class_<GlShader>("GlShader")
+        .def(constructor<const std::string &>())
+        .def("get", &GlShader::get),
+      class_<GlProgram>("GlProgram")
+        .def(constructor<>())
+        .def("get", &GlProgram::get),
       def("Texture", &GetTex),
       def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),

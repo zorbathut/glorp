@@ -15,9 +15,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <lua.hpp>
 #include <lauxlib.h>
-
-#define BUILDING_LUAGL_DLL
 
 #include "LuaGL.h"
 
@@ -1396,7 +1395,7 @@ static int gl_fog(lua_State *L)
 }
 
 /*FrontFace (mode) -> none*/
-static gl_front_face(lua_State *L)
+static int gl_front_face(lua_State *L)
 {
    GLenum e;
 
@@ -1998,7 +1997,7 @@ static int gl_get_pointer(lua_State *L)
       flags = (GLboolean *)malloc(n * sizeof(GLboolean));
 
       /* call opengl function */
-      glGetPointerv(e, (void *)&flags);
+      glGetPointerv(e, (void **)&flags);
 
       if(flags == 0)
          return 0;
@@ -2013,7 +2012,7 @@ static int gl_get_pointer(lua_State *L)
       params = (GLdouble *)malloc(n * sizeof(GLdouble));
 
       /* call opengl function */
-      glGetPointerv(e, (void *)&params);
+      glGetPointerv(e, (void **)&params);
 
       if(params == 0)
          return 0;
@@ -2390,7 +2389,7 @@ static int gl_is_enabled(lua_State *L)
 }
 
 /*IsList (list) -> true/false*/
-static gl_is_list(lua_State *L)
+static int gl_is_list(lua_State *L)
 {
    /* test argument type */
    if(!lua_isnumber(L, 1))
@@ -2403,7 +2402,7 @@ static gl_is_list(lua_State *L)
 }
 
 /*IsTexture (texture) -> true/false*/
-static gl_is_texture(lua_State *L)
+static int gl_is_texture(lua_State *L)
 {
    /* test argument type */
    if(!lua_isnumber(L, 1))
@@ -4087,7 +4086,7 @@ static const luaL_reg gllib[] = {
   {NULL, NULL}
 };
 
-LUAGL_API int luaopen_opengl (lua_State *L) {
+int luaopen_opengl (lua_State *L) {
   luaL_openlib(L, "gl", gllib, 0);
   return 1;
 }

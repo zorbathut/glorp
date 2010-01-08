@@ -85,7 +85,7 @@ ursa.rule{"version.cpp", "#version", function ()
 end}
 
 local buildables = {
-  [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar", cfiles = "glorp/LuaGL", resources = "resource"},
+  [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar LuaGL LuaGL_ext", cfiles = "glorp/GLee", resources = "resource"},
   ["reporter"] = {corefiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init"},
 }
 
