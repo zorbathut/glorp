@@ -236,10 +236,53 @@ do
   end
   -- we don't yet support deleting
   
-  function List()
+  function gl.List()
     local ite = setmetatable({}, {__index = List_params})
     ite.listid = GlListID()
     
     return ite
+  end
+end
+
+function gl.Shader(typ, program)
+  local shader = {id = GlShader(typ .. "_SHADER")}
+  gl.ShaderSource(shader, program)
+  gl.CompileShader(shader)
+  return shader
+end
+
+function gl.Program()
+  local prog = {id = GlProgram()}
+  return prog
+end
+
+local wrap_vals = {
+  ShaderSource = {true},
+  CompileShader = {true},
+  AttachShader = {true, true},
+  LinkProgram = {true},
+  UseProgram = {true},
+}
+
+local function strip(_, ...) return ... end
+local function reco_proc(nam, flags, ofs, ...)
+  if select("#", ...) == 0 then return end
+  
+  local tite = select(1, ...)
+  
+  if flags[ofs] then
+    if type(tite) ~= "table" or not tite.id then
+      error(("Couldn't remap ID for function %s, parameter %d (%s)"):format(nam, ofs, tostring(tite)))
+    end
+    tite = tite.id:get()
+  end
+  
+  return tite, reco_proc(nam, flags, ofs + 1, strip(...))
+end
+for k, v in pairs(gl) do
+  if wrap_vals[k] then
+    gl[k] = function(...)
+      return v(reco_proc(k, wrap_vals[k], 1, ...))
+    end
   end
 end
