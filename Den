@@ -99,7 +99,7 @@ local function build_object(src, prefix, compiler)
       deps = deps:match("^.*: (.*)$")
       
       local dependencies = {}
-      for file in deps:gmatch("([^ \n\t]+)") do
+      for file in deps:gmatch("([^%s]+)") do
         if file ~= "\\" then
           table.insert(dependencies, file)
         end

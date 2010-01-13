@@ -491,6 +491,10 @@ void TriggerExit() {
   exiting = true;
 };
 
+vector<int> to_delete_lists;
+vector<int> to_delete_shaders;
+vector<int> to_delete_programs;
+
 class GlListID {
   int id;
   
@@ -499,7 +503,7 @@ public:
     id = glGenLists(1);
   }
   ~GlListID() {
-    glDeleteLists(id, 1);
+    to_delete_lists.push_back(id);
   }
   
   int get() const {
@@ -519,7 +523,7 @@ public:
     id = glCreateShader(typi);
   }
   ~GlShader() {
-    glDeleteShader(id);
+    to_delete_shaders.push_back(id);
   }
   
   int get() const {
@@ -535,7 +539,7 @@ public:
     id = glCreateProgram();
   }
   ~GlProgram() {
-    glDeleteProgram(id);
+    to_delete_programs.push_back(id);
   }
   
   int get() const {
@@ -967,6 +971,14 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
           CHECK(0);
         }
       }
+      
+      // siiiigh
+      for(int i = 0; i < to_delete_lists.size(); i++) glDeleteLists(to_delete_lists[i], 1);
+      for(int i = 0; i < to_delete_shaders.size(); i++) glDeleteShader(to_delete_shaders[i]);
+      for(int i = 0; i < to_delete_programs.size(); i++) glDeleteProgram(to_delete_programs[i]);
+      to_delete_lists.clear();
+      to_delete_shaders.clear();
+      to_delete_programs.clear();
       
       if(exiting) {
         window()->Destroy();

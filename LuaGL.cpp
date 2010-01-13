@@ -41,7 +41,7 @@ static GLenum get_enum(const char *str, int n)
    }
    return ENUM_ERROR;
 }
-static GLenum get_gl_enum(lua_State *L, int index)
+GLenum get_gl_enum(lua_State *L, int index)
 {
    unsigned int i;
    const char *str = lua_tostring(L, index);
@@ -71,7 +71,7 @@ static GLenum get_gl_enum(lua_State *L, int index)
    return ret | temp;
 }
 
-static const char *get_str_gl_enum(GLenum num)
+const char *get_str_gl_enum(GLenum num)
 {
    unsigned int i = 0;
 
@@ -87,7 +87,7 @@ static const char *get_str_gl_enum(GLenum num)
 
 /* Gets an array from a lua table, store it in 'array' and returns the no. of elems of the array
    index refers to where the table is in stack. */
-static int get_arrayb(lua_State *L, int index, GLboolean **array)
+int get_arrayb(lua_State *L, int index, GLboolean **array)
 {
    int i;
    int n = luaL_getn(L, index);
@@ -101,7 +101,7 @@ static int get_arrayb(lua_State *L, int index, GLboolean **array)
 
    return n; /* return the number of valid elements found.*/
 }
-static int get_arrayd(lua_State *L, int index, GLdouble **array)
+int get_arrayd(lua_State *L, int index, GLdouble **array)
 {
    int i;
    int n = luaL_getn(L, index);
@@ -116,7 +116,7 @@ static int get_arrayd(lua_State *L, int index, GLdouble **array)
 
    return n; /* return the number of valid elements found.*/
 }
-static int get_arrayf(lua_State *L, int index, GLfloat **array)
+int get_arrayf(lua_State *L, int index, GLfloat **array)
 {
    int i;
    int n = luaL_getn(L, index);
@@ -131,7 +131,7 @@ static int get_arrayf(lua_State *L, int index, GLfloat **array)
 
    return n; /* return the number of valid elements found.*/
 }
-static int get_arrayui(lua_State *L, int index, GLuint **array)
+int get_arrayui(lua_State *L, int index, GLuint **array)
 {
    int i;
    int n = luaL_getn(L, index);
@@ -146,7 +146,7 @@ static int get_arrayui(lua_State *L, int index, GLuint **array)
 
    return n; /* return the number of valid elements found.*/
 }
-static int get_arrayubyte(lua_State *L, int index, GLubyte **array)
+int get_arrayubyte(lua_State *L, int index, GLubyte **array)
 {
    int i;
    int n = luaL_getn(L, index);

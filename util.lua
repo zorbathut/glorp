@@ -1,4 +1,6 @@
 
+local _, mode = ...
+
 math.randomseed(os.time())
 
 function export_items_rw(tab, items)
@@ -221,6 +223,45 @@ end
 
 
 
+
+
+-- hurrr
+do
+  local shutup = false
+  function testerror(bef, nam)
+    if shutup then return end
+    local err = gl.GetError()
+    if err ~= "NO_ERROR" then
+      print("GL ERROR: ", err, bef, nam)
+      if mode then assert(err == "NO_ERROR", err ..  "   " .. bef) end -- fuckyou
+    end
+  end
+  for k, v in pairs(gl) do
+    local tk = k
+    if tk ~= "GetError" then
+      gl[tk] = function (...)
+        testerror("before", k)
+        return (function (...)
+          if tk == "Begin" then
+            assert(not shutup)
+            shutup = true
+          elseif tk == "End" then
+            assert(shutup)
+            shutup = false
+          end
+          testerror("after", k)
+          return ...
+        end)(v(...))
+      end
+    end
+  end
+end
+
+
+
+
+
+
 do
   local List_params = {}
   
@@ -236,7 +277,7 @@ do
   end
   -- we don't yet support deleting
   
-  function gl.List()
+  function glutil.List()
     local ite = setmetatable({}, {__index = List_params})
     ite.listid = GlListID()
     
@@ -244,45 +285,112 @@ do
   end
 end
 
-function gl.Shader(typ, program)
+function glutil.Shader(typ, program)
   local shader = {id = GlShader(typ .. "_SHADER")}
-  gl.ShaderSource(shader, program)
-  gl.CompileShader(shader)
+  glutil.ShaderSource(shader, program)
+  glutil.CompileShader(shader)
   return shader
 end
 
-function gl.Program()
+function glutil.Program()
   local prog = {id = GlProgram()}
   return prog
 end
 
-local wrap_vals = {
-  ShaderSource = {true},
-  CompileShader = {true},
-  AttachShader = {true, true},
-  LinkProgram = {true},
-  UseProgram = {true},
+local snatch = {
+  ShaderSource = true,
+  CompileShader = true,
+  AttachShader = true,
+  LinkProgram = true,
+  UseProgram = true,
+  
+  GetShaderInfoLog = true,
+  GetProgramInfoLog = true,
+  GetShader = true,
+  GetProgram = true,
+  
+  UniformI = true,
+  UniformF = true,
+  GetUniformLocation = true,
+  
+  --UniformI = true,
+  VertexAttribF = true,
+  GetAttribLocation = true,
 }
-
-local function strip(_, ...) return ... end
-local function reco_proc(nam, flags, ofs, ...)
-  if select("#", ...) == 0 then return end
-  
-  local tite = select(1, ...)
-  
-  if flags[ofs] then
-    if type(tite) ~= "table" or not tite.id then
-      error(("Couldn't remap ID for function %s, parameter %d (%s)"):format(nam, ofs, tostring(tite)))
-    end
-    tite = tite.id:get()
-  end
-  
-  return tite, reco_proc(nam, flags, ofs + 1, strip(...))
+for k in pairs(snatch) do
+  snatch[k] = gl[k]
+  assert(snatch[k])
 end
-for k, v in pairs(gl) do
-  if wrap_vals[k] then
-    gl[k] = function(...)
-      return v(reco_proc(k, wrap_vals[k], 1, ...))
-    end
+
+local attrib_lookup = {}
+
+function glutil.ShaderSource(shader, source)
+  snatch.ShaderSource(shader.id:get(), source)
+end
+function glutil.CompileShader(shader)
+  snatch.CompileShader(shader.id:get())
+  if glutil.GetShader(shader, "COMPILE_STATUS") ~= "TRUE" then
+    print("Failed to build shader", glutil.GetShader(shader, "COMPILE_STATUS"))
+    print(snatch.GetShaderInfoLog(shader.id:get()))
+    assert(false)
   end
+end
+function glutil.AttachShader(program, shader)
+  snatch.AttachShader(program.id:get(), shader.id:get())
+end
+function glutil.LinkProgram(program)
+  snatch.LinkProgram(program.id:get())
+  attrib_lookup[program.id:get()] = nil
+end
+function glutil.UseProgram(program)
+  snatch.UseProgram(program and program.id:get() or 0)
+end
+
+function glutil.GetShader(shader, flag)
+  return snatch.GetShader(shader.id:get(), flag)
+end
+function glutil.GetProgram(shader, flag)
+  return snatch.GetProgram(shader.id:get(), flag)
+end
+
+function glutil.UniformI(program, text, ...)
+  local loca = snatch.GetUniformLocation(program.id:get(), text)
+  if loca == -1 then
+    print("WARNING: Uniform " .. text .. " is unused")
+  else
+    snatch.UniformI(loca, ...)
+  end
+end
+function glutil.UniformF(program, text, ...)
+  local loca = snatch.GetUniformLocation(program.id:get(), text)
+  if loca == -1 then
+    print("WARNING: Uniform " .. text .. " is unused")
+  else
+    snatch.UniformF(loca, ...)
+  end
+end
+
+function glutil.VertexAttribInit(program, text)
+  local pid = program.id:get()
+  if not attrib_lookup[pid] then attrib_lookup[pid] = {} end
+  local loca = snatch.GetAttribLocation(pid, text)
+  attrib_lookup[pid][text] = loca
+end
+--[[function glutil.VertexAttribI(program, text, ...)
+  local pid = program.id:get()
+  assert(attrib_lookup[pid] and attrib_lookup[pid][text])
+  snatch.VertexAttribI(attrib_lookup[pid][text], ...)
+end]]
+function glutil.VertexAttrib(program, text, ...)
+  local pid = program.id:get()
+  assert(attrib_lookup[pid] and attrib_lookup[pid][text])
+  if attrib_lookup[pid][text] == -1 then
+    print("WARNING: Attribute " .. text .. " is unused")
+  else
+    snatch.VertexAttribF(attrib_lookup[pid][text], ...)
+  end
+end
+
+for k in pairs(snatch) do
+  gl[k] = nil -- yoink
 end

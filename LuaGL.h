@@ -39,9 +39,20 @@ typedef struct gl_str_value {
   GLenum value;
 } gl_str_value;
 
+GLenum get_gl_enum(lua_State *L, int index);
+const char *get_str_gl_enum(GLenum num);
+
+int get_arrayb(lua_State *L, int index, GLboolean **array);
+int get_arrayd(lua_State *L, int index, GLdouble **array);
+int get_arrayf(lua_State *L, int index, GLfloat **array);
+int get_arrayui(lua_State *L, int index, GLuint **array);
+int get_arrayubyte(lua_State *L, int index, GLubyte **array);
+
 #define MACRIX(ite) {#ite, GL_##ite}
 
 static const gl_str_value gl_str[] = {
+  MACRIX(TRUE),
+  MACRIX(FALSE),
   MACRIX(VERSION_1_1),
   MACRIX(ACCUM),
   MACRIX(LOAD),
@@ -77,8 +88,6 @@ static const gl_str_value gl_str[] = {
   MACRIX(DST_COLOR),
   MACRIX(ONE_MINUS_DST_COLOR),
   MACRIX(SRC_ALPHA_SATURATE),
-  MACRIX(TRUE),
-  MACRIX(FALSE),
   MACRIX(CLIP_PLANE0),
   MACRIX(CLIP_PLANE1),
   MACRIX(CLIP_PLANE2),
@@ -637,16 +646,9 @@ static const gl_str_value gl_str[] = {
   MACRIX(SHADER_TYPE),
   MACRIX(DELETE_STATUS),
   MACRIX(COMPILE_STATUS),
-  MACRIX(INFO_LOG_LENGTH),
-  MACRIX(SHADER_SOURCE_LENGTH),
   
   MACRIX(LINK_STATUS),
   MACRIX(VALIDATE_STATUS),
-  MACRIX(ATTACHED_SHADERS),
-  MACRIX(ACTIVE_ATTRIBUTES),
-  MACRIX(ACTIVE_ATTRIBUTE_MAX_LENGTH),
-  MACRIX(ACTIVE_UNIFORMS),
-  MACRIX(ACTIVE_UNIFORM_MAX_LENGTH),
   
    { 0, 0}
 };

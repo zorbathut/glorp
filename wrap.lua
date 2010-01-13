@@ -109,41 +109,6 @@ end
 
 
 
--- hurrr
-do
-  local shutup = false
-  function testerror(bef)
-    if shutup then return end
-    local err = gl.GetError()
-    if err ~= "NO_ERROR" then
-      print("GL ERROR: ", err, bef)
-      --assert(err == "NO_ERROR", err ..  "   " .. bef) -- fuckyou
-    end
-  end
-  for k, v in pairs(gl) do
-    local tk = k
-    if tk ~= "GetError" then
-      gl[tk] = function (...)
-        testerror("before")
-        return (function (...)
-          if tk == "Begin" then
-            assert(not shutup)
-            shutup = true
-          elseif tk == "End" then
-            assert(shutup)
-            shutup = false
-          end
-          testerror("after")
-          return ...
-        end)(v(...))
-      end
-    end
-  end
-end
-
-
-
-
 
 function fuckshit()
   if failover then return failover() end
