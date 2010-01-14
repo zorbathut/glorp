@@ -323,6 +323,7 @@ for k in pairs(snatch) do
 end
 
 local attrib_lookup = {}
+local uniform_lookup = {}
 
 function glutil.ShaderSource(shader, source)
   snatch.ShaderSource(shader.id:get(), source)
@@ -341,6 +342,7 @@ end
 function glutil.LinkProgram(program)
   snatch.LinkProgram(program.id:get())
   attrib_lookup[program.id:get()] = nil
+  uniform_lookup[program.id:get()] = nil
 end
 function glutil.UseProgram(program)
   snatch.UseProgram(program and program.id:get() or 0)
@@ -354,7 +356,14 @@ function glutil.GetProgram(shader, flag)
 end
 
 function glutil.UniformI(program, text, ...)
-  local loca = snatch.GetUniformLocation(program.id:get(), text)
+  local pid = program.id:get()
+  if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
+  local loca = uniform_lookup[pid][text]
+  if not loca then
+    uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
+    loca = uniform_lookup[pid][text]
+  end
+  
   if loca == -1 then
     print("WARNING: Uniform " .. text .. " is unused")
   else
@@ -362,7 +371,14 @@ function glutil.UniformI(program, text, ...)
   end
 end
 function glutil.UniformF(program, text, ...)
-  local loca = snatch.GetUniformLocation(program.id:get(), text)
+  local pid = program.id:get()
+  if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
+  local loca = uniform_lookup[pid][text]
+  if not loca then
+    uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
+    loca = uniform_lookup[pid][text]
+  end
+  
   if loca == -1 then
     print("WARNING: Uniform " .. text .. " is unused")
   else
@@ -393,4 +409,10 @@ end
 
 for k in pairs(snatch) do
   gl[k] = nil -- yoink
+end
+
+
+
+function math.round(x)
+  return math.floor(x + 0.5)
 end
