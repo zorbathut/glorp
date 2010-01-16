@@ -3,6 +3,12 @@ local _, mode = ...
 
 math.randomseed(os.time())
 
+function rotate_mod(x, m)
+  while x <= 0 do x = x + m end
+  while x > m do x = x - m end
+  return x
+end
+
 function export_items_rw(tab, items)
   local lookup = {}
   for _, v in pairs(items) do
