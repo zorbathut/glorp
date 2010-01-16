@@ -1,5 +1,5 @@
 
-local _, mode = ...
+local mode = ...
 
 math.randomseed(os.time())
 
@@ -336,9 +336,11 @@ function glutil.ShaderSource(shader, source)
 end
 function glutil.CompileShader(shader)
   snatch.CompileShader(shader.id:get())
-  if glutil.GetShader(shader, "COMPILE_STATUS") ~= "TRUE" then
+  local infolog = snatch.GetShaderInfoLog(shader.id:get())
+  print(infolog)
+  print(mode)
+  if (infolog ~= "" and mode) or glutil.GetShader(shader, "COMPILE_STATUS") ~= "TRUE" then
     print("Failed to build shader", glutil.GetShader(shader, "COMPILE_STATUS"))
-    print(snatch.GetShaderInfoLog(shader.id:get()))
     assert(false)
   end
 end
