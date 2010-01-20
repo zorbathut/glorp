@@ -76,7 +76,7 @@ function generic_wrap(target, ...)
 end
 
 function gcstep()
-  local rv = collectgarbage("step", 1)
+  perfbar(0.5, 0.5, 0.5, collectgarbage, "step", 1)
   --if rv then print("cycle") end
 end
 
