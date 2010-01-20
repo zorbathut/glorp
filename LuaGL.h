@@ -28,6 +28,11 @@
 #include <lua.hpp>
 #include <lualib.h>
 
+#include <map>
+#include <string>
+
+using namespace std;
+
 #include "GLee.h"
 
 int luaopen_opengl (lua_State *L);
@@ -652,6 +657,9 @@ static const gl_str_value gl_str[] = {
   
    { 0, 0}
 };
+
+extern map<string, int> luagl_string_to_enum;
+extern map<int, string> luagl_enum_to_string;
 
 #endif
 

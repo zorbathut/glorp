@@ -20,6 +20,8 @@
 
 #include "LuaGL.h"
 
+#include "debug.h"
+
 /* set field of a lua table with a number */
 static void set_field(lua_State *L, unsigned int index, lua_Number value)
 {
@@ -30,16 +32,9 @@ static void set_field(lua_State *L, unsigned int index, lua_Number value)
 
 static GLenum get_enum(const char *str, int n)
 {
-   int i = 0;
-
-   while(gl_str[i].str != 0)
-   {
-      if(strncmp(str, gl_str[i].str, n) == 0 && gl_str[i].str[n] == 0)
-         return gl_str[i].value;
-
-      i++;
-   }
-   return ENUM_ERROR;
+  map<string, int>::iterator itr = luagl_string_to_enum.find(string(str, n));
+  if(itr == luagl_string_to_enum.end()) return ENUM_ERROR;
+  return itr->second;
 }
 GLenum get_gl_enum(lua_State *L, int index)
 {
@@ -73,16 +68,9 @@ GLenum get_gl_enum(lua_State *L, int index)
 
 const char *get_str_gl_enum(GLenum num)
 {
-   unsigned int i = 0;
-
-   while(gl_str[i].str != 0)
-   {
-      if(num == gl_str[i].value)
-         return gl_str[i].str;
-
-      i++;
-   }
-   return NULL;
+  map<int, string>::iterator itr = luagl_enum_to_string.find(num);
+  if(itr == luagl_enum_to_string.end()) return "ENUM_ERROR";
+  return itr->second.c_str();
 }
 
 /* Gets an array from a lua table, store it in 'array' and returns the no. of elems of the array
@@ -4087,6 +4075,20 @@ static const luaL_reg gllib[] = {
 };
 
 int luaopen_opengl (lua_State *L) {
+  // first let's set up the tables
+  int ofs = 0;
+  while(gl_str[ofs].str) {
+    dprintf("%s", gl_str[ofs].str);
+    assert(luagl_string_to_enum.count(gl_str[ofs].str) == 0);
+    luagl_string_to_enum[gl_str[ofs].str] = gl_str[ofs].value;
+    if(luagl_enum_to_string.count(gl_str[ofs].value) == 0)
+      luagl_enum_to_string[gl_str[ofs].value] = gl_str[ofs].str;
+    ofs++;
+  }
+  
   luaL_openlib(L, "gl", gllib, 0);
   return 1;
 }
+
+map<string, int> luagl_string_to_enum;
+map<int, string> luagl_enum_to_string;

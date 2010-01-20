@@ -487,6 +487,89 @@ function SpriteOverrides:SetColor(r, g, b, a)
   self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a = r, g, b, a
 end
 
+
+local RenderSorterOverrides = {}
+do
+  local function GetMatrix(typ)
+    return {gl.Get(typ .. "_MATRIX")}
+  end
+  local function SetMatrix(typ, dat)
+    gl.MatrixMode(typ)
+    gl.LoadMatrix(dat)
+  end
+
+  local collates = {}
+  local RenderSort_Current
+  local function RenderSort_Deactivated(shader, render)
+    assert(false, "Not in a shader rendering context!")
+  end
+  local function RenderSort_Activated(shader, render)
+    if not collates[shader] then
+      collates[shader] = {}
+    end
+    table.insert(collates[shader], {render = render, modelview = GetMatrix("MODELVIEW"), projection = GetMatrix("PROJECTION")})
+  end
+  function RenderSort(...)  -- required 'cause of some of the copying we're doing to create shell environments
+    return RenderSort_Current(...)
+  end
+  RenderSort_Current = RenderSort_Deactivated
+
+
+  function handle(f)
+    SetMatrix("MODELVIEW", f.modelview)
+    SetMatrix("PROJECTION", f.projection)
+    f.render()
+  end
+  
+  function RenderSorterOverrides:Render(...)
+    local model = GetMatrix("MODELVIEW")
+    local proj = GetMatrix("PROJECTION")
+    
+    assert(RenderSort_Current == RenderSort_Deactivated)
+    RenderSort_Current = RenderSort_Activated
+    perfbar(0.5, 0.5, 1.0, self._Render, self, ...)
+    assert(RenderSort_Current == RenderSort_Activated)
+    RenderSort_Current = RenderSort_Deactivated
+    
+    perfbar(0.5, 1.0, 0.5, function ()
+      for _, v in pairs(self.priorities) do
+        if collates[v.shader] then
+          glutil.UseProgram(v.shader)
+          for _, f in pairs(collates[v.shader]) do
+            handle(f)
+          end
+        end
+        collates[v.shader] = nil
+      end
+      
+      for s, v in pairs(collates) do
+        print("Rendering unknown shader", s)
+        glutil.UseProgram(s)
+        for _, f in pairs(v) do
+          handle(f)
+        end
+      end
+      
+      glutil.UseProgram()
+      
+      SetMatrix("MODELVIEW", model)
+      SetMatrix("PROJECTION", proj)
+      
+      collates = {}
+    end)
+  end
+  function RenderSorterOverrides:SetShaderPriority(shader, priority)
+    for k, v in ipairs(self.priorities) do
+      if v.shader == shader then
+        table.remove(self.priorities, k)
+      end
+    end
+    
+    table.insert(self.priorities, {shader = shader, priority = priority})
+    table.sort(self.priorities, function (a, b) return a.priority < b.priority end)
+  end
+end
+
 function CreateFrame(typ, parent, name)
   if not name then name = get_stack_entry(2) end
   
@@ -518,6 +601,14 @@ function CreateFrame(typ, parent, name)
     for k, v in pairs(SpriteOverrides) do
       rg[k] = v
     end
+    return rg
+  elseif typ == "RenderSorter" then
+    local rg = Region(parent, name)
+    rg._Render = rg.Render
+    for k, v in pairs(RenderSorterOverrides) do
+      rg[k] = v
+    end
+    rg.priorities = {}
     return rg
   else
     assert(false)
