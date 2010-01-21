@@ -4074,16 +4074,22 @@ static const luaL_reg gllib[] = {
   {NULL, NULL}
 };
 
+bool tabled = false;
+
 int luaopen_opengl (lua_State *L) {
   // first let's set up the tables
-  int ofs = 0;
-  while(gl_str[ofs].str) {
-    dprintf("%s", gl_str[ofs].str);
-    assert(luagl_string_to_enum.count(gl_str[ofs].str) == 0);
-    luagl_string_to_enum[gl_str[ofs].str] = gl_str[ofs].value;
-    if(luagl_enum_to_string.count(gl_str[ofs].value) == 0)
-      luagl_enum_to_string[gl_str[ofs].value] = gl_str[ofs].str;
-    ofs++;
+  if(!tabled) {
+    int ofs = 0;
+    while(gl_str[ofs].str) {
+      dprintf("%s", gl_str[ofs].str);
+      assert(luagl_string_to_enum.count(gl_str[ofs].str) == 0);
+      luagl_string_to_enum[gl_str[ofs].str] = gl_str[ofs].value;
+      if(luagl_enum_to_string.count(gl_str[ofs].value) == 0)
+        luagl_enum_to_string[gl_str[ofs].value] = gl_str[ofs].str;
+      ofs++;
+    }
+    
+    tabled = true;
   }
   
   luaL_openlib(L, "gl", gllib, 0);

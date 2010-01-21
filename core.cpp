@@ -882,6 +882,9 @@ void luainit(int argc, const char **argv) {
   uilayer = new Layer();
 }
 void luashutdown() {
+  
+  CHECK(!luaL_dostring(L, StringPrintf("if pepperfish_profiler then pepperfish_profiler:stop()  local outfile = io.open(\"profile_%d.txt\", \"w\") pepperfish_profiler:report(outfile) outfile:close() end", (int)time(NULL)).c_str()));
+  
   dprintf("lua closing");
   lua_close(L);
   dprintf("lua closed");

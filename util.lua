@@ -232,7 +232,7 @@ end
 
 
 -- hurrr
-do
+if false then
   local shutup = false
   function testerror(bef, nam)
     if shutup then return end

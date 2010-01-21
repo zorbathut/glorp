@@ -30,6 +30,12 @@ runfile("ui.lua")
 runfile("stage_persistence.lua")
 runfile("stage_achievements.lua")
 
+if mode == "debug" then
+  runfile("pepperfish.lua")
+  pepperfish_profiler = newProfiler("call")
+  pepperfish_profiler:start()
+end
+
 local mainmenu
 local runninggame
 local inminimenu

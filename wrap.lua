@@ -11,7 +11,10 @@ function assert(parm, ...)
   end
 end]]
 
-require("jit.opt").start()
+do
+  local jo = require("jit.opt")
+  if jo then jo:start() end
+end
 
 local function barf(err)
   local chunkies = {}
