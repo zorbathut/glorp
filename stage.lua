@@ -2,6 +2,8 @@
 local _, mode = ...
 
 function runfile(file, global)
+  assert(global)
+  
   local dat, rv = loadfile(file)
   
   if rv and rv:find("No such file or directory") then
@@ -13,8 +15,7 @@ function runfile(file, global)
   end
   
   if rv then
-    print(rv)
-    assert(false)
+    assert(false, rv)
   end
   
   if global then
@@ -24,14 +25,14 @@ function runfile(file, global)
   dat(mode)
 end
 
-runfile("util.lua")
-runfile("ui.lua")
+runfile("util.lua", _G)
+runfile("ui.lua", _G)
 
-runfile("stage_persistence.lua")
-runfile("stage_achievements.lua")
+runfile("stage_persistence.lua", _G)
+runfile("stage_achievements.lua", _G)
 
 if not jit and mode == "debug" then
-  runfile("pepperfish.lua")
+  runfile("pepperfish.lua", _G)
   pepperfish_profiler = newProfiler()
   pepperfish_profiler:start()
 end
@@ -163,7 +164,7 @@ function runuifile(file)
     env[k] = v
   end
   
-  env._G = _G
+  env._G = env
   
   local uip = CreateFrame("Frame")
   uip:SetAllPoints()
@@ -184,7 +185,7 @@ function runuifile(file)
   
   runfile(file, env)
   
-  return env
+  return env, uip
 end
 
 function stdwrap(token, ...)
@@ -195,7 +196,9 @@ function stdwrap(token, ...)
   end
 end
 
-mainmenu = runuifile("menu_core.lua")
+mainmenu, mainmenu_ui = runuifile("menu_core.lua")
+
+mainmenu_ui:Hide()
 
 local bgbg = CreateFrame("Frame")
 bgbg:SetBackgroundColor(mainmenu.bg_r or 0, mainmenu.bg_g or 0, mainmenu.bg_b or 0)
@@ -252,6 +255,8 @@ wedothisfirst = coroutine.wrap(function()
   
   bgbg:Hide()
   wedothisfirst = nil
+  
+  mainmenu_ui:Show()
 end)
 
 function tick_loop(...)
