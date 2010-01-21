@@ -24,25 +24,37 @@ local osd = assert(loadfile("glorp/Den_" .. glop.os .. ".lua")){name = params.na
 local lua
 local lua_headers = {}
 do
-  ursa.token.rule{"luajit_files", nil, function () return ursa.util.system{"cd glorp/luabuild/LuaJIT-1.1.5 && find src dynasm -type f"} end}
-  local copied = {}
-  for k in ursa.token{"luajit_files"}:gmatch("([^\n]+)") do
-    table.insert(copied, ursa.rule{builddir .. "luajit/" .. k, "glorp/luabuild/LuaJIT-1.1.5/" .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
-  end
-  
-  local luaobjects = {}
-  for k in ("lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lvm lzio lcoco ljit_core ljit_mem ljit_dasm ljit_backend lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib ljitlib linit"):gmatch("([^ ]+)") do  -- yes okay hardcoded shut up
-    table.insert(luaobjects, (builddir .. "luajit/src/%s.o"):format(k))
-  end
-
   do
-    local buildtype
-    if glop.os == "cygwin" then buildtype = "cygwin" end
-    if glop.os == "osx" then buildtype = "macosx" end
-    assert(buildtype)
-    ursa.rule{luaobjects, copied, ursa.util.system_template{("cd %sluajit/src && nice make -j5 %s"):format(builddir, buildtype)}}
+    local files = "lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lzio lcoco linit lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib lvm"
+    local path
+    if true then
+      -- luajit
+      files = files .. " ljit_core ljit_mem ljit_dasm ljit_backend ljitlib"
+      path = "glorp/luabuild/LuaJIT-1.1.5/"
+    else
+      path = "glorp/luabuild/lua-5.1.4/"
+    end
+    
+    ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find src -type f && (find dynasm -type f || true) "):format(path)} end}
+    local copied = {}
+    for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
+      table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+    end
+    
+    local luaobjects = {}
+    for k in files:gmatch("([^ ]+)") do  -- yes okay hardcoded shut up
+      table.insert(luaobjects, (builddir .. "luabuild/src/%s.o"):format(k))
+    end
+
+    do
+      local buildtype
+      if glop.os == "cygwin" then buildtype = "cygwin" end
+      if glop.os == "osx" then buildtype = "macosx" end
+      assert(buildtype)
+      ursa.rule{luaobjects, copied, ursa.util.system_template{("cd %sluabuild/src && nice make -j5 %s"):format(builddir, buildtype)}}
+    end
+    ursa.rule{builddir .. "lua/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- wonder if this'll work right under cygwin
   end
-  ursa.rule{builddir .. "lua/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- woneder if this'll work right under cygwin
 
   local luabuilds = {builddir .. "lua/lib/liblua.a"}
   

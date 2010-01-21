@@ -11,9 +11,8 @@ function assert(parm, ...)
   end
 end]]
 
-do
-  local jo = require("jit.opt")
-  if jo then jo:start() end
+if jit then
+  require("jit.opt").start()
 end
 
 local function barf(err)

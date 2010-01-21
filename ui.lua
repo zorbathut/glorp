@@ -534,20 +534,24 @@ do
     perfbar(0.5, 1.0, 0.5, function ()
       for _, v in pairs(self.priorities) do
         if collates[v.shader] then
-          glutil.UseProgram(v.shader)
-          for _, f in pairs(collates[v.shader]) do
-            handle(f)
-          end
+          perfbar(v.r, v.g, v.b, function ()
+            glutil.UseProgram(v.shader)
+            for _, f in pairs(collates[v.shader]) do
+              handle(f)
+            end
+          end)
         end
         collates[v.shader] = nil
       end
       
       for s, v in pairs(collates) do
         print("Rendering unknown shader", s)
-        glutil.UseProgram(s)
-        for _, f in pairs(v) do
-          handle(f)
-        end
+        perfbar(1.0, 0, 0, function ()
+          glutil.UseProgram(s)
+          for _, f in pairs(v) do
+            handle(f)
+          end
+        end)
       end
       
       glutil.UseProgram()
@@ -558,14 +562,18 @@ do
       collates = {}
     end)
   end
-  function RenderSorterOverrides:SetShaderPriority(shader, priority)
+  function RenderSorterOverrides:SetShaderPriority(shader, priority, r, g, b)
     for k, v in ipairs(self.priorities) do
       if v.shader == shader then
         table.remove(self.priorities, k)
       end
     end
     
-    table.insert(self.priorities, {shader = shader, priority = priority})
+    r = r or math.random() * 0.5 + 0.5
+    g = g or math.random() * 0.5 + 0.5
+    b = b or math.random() * 0.5 + 0.5
+    
+    table.insert(self.priorities, {shader = shader, priority = priority, r = r, g = g, b = b})
     table.sort(self.priorities, function (a, b) return a.priority < b.priority end)
   end
 end

@@ -290,6 +290,18 @@ do
     return ite
   end
 end
+function glutil.Autolist(target, name, process)
+  if not target[name] then
+    target[name] = glutil.List()
+    target[name]:Create()
+    
+    process()
+    
+    target[name]:End()
+  end
+  
+  target[name]:Call()
+end
 
 function glutil.Shader(typ, program)
   local shader = {id = GlShader(typ .. "_SHADER")}

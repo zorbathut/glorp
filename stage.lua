@@ -30,9 +30,9 @@ runfile("ui.lua")
 runfile("stage_persistence.lua")
 runfile("stage_achievements.lua")
 
-if mode == "debug" then
+if not jit and mode == "debug" then
   runfile("pepperfish.lua")
-  pepperfish_profiler = newProfiler("call")
+  pepperfish_profiler = newProfiler()
   pepperfish_profiler:start()
 end
 
