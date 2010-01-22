@@ -15,8 +15,7 @@ function loader_glob.achievement(param)
   return {id = #achievement_list, dat = dat}
 end
 
-local achievement_persist = {}
-persistence.load("achievements", achievement_persist)
+local achievement_persist = persistence.load("achievements")
 
 runfile("achievements.lua", loader_glob)
 

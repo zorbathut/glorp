@@ -1,7 +1,7 @@
 
 local _, mode = ...
 
-function runfile(file, global)
+function runfile(file, global, ...)
   assert(global)
   
   local dat, rv = loadfile(file)
@@ -22,7 +22,7 @@ function runfile(file, global)
     setfenv(dat, global)
   end
   
-  dat(mode)
+  dat(mode, ...)
 end
 
 runfile("util.lua", _G)
@@ -50,15 +50,15 @@ end
 local function reset_menu()
   mainmenu, mainmenu_ui = runuifile("menu_core.lua")
 end
-local function Handle(param)
+local function Handle(param, ...)
   if not param then return end
   
   if param == "start_game" then
     destroy_game()
     if mode == "editor" then
-      runninggame = runuifile("editor.lua")
+      runninggame = runuifile("editor.lua", ...)
     else
-      runninggame = runuifile("main.lua")
+      runninggame = runuifile("main.lua", ...)
     end
     mainmenu.UIParent:Hide()
   elseif param == "exit_game" then
@@ -163,7 +163,7 @@ end
 overlay = CreateFrame("Frame")
 overlay:SetLayer(1000000)
 
-function runuifile(file)
+function runuifile(file, ...)
   local env = {}
   for k, v in pairs(_G) do
     env[k] = v
@@ -188,7 +188,7 @@ function runuifile(file)
   env.key = nil
   env.failover = nil
   
-  runfile(file, env)
+  runfile(file, env, ...)
   
   return env, uip
 end

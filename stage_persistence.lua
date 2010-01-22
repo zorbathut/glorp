@@ -18,13 +18,12 @@ if not loaded_from then
   loaded_from = {}
 end
 
-function persistence.load(token, handle)
-  if loaded_from[token] then
-    for k, v in pairs(loaded_from[token]) do
-      handle[k] = v
-    end
+function persistence.load(token)
+  if not loaded_from[token] then
+    loaded_from[token] = {}
   end
-  loaded_from[token] = handle
+  
+  return loaded_from[token]
 end
 function persistence.save()
   local fil = io.open(pfile, "wb")
