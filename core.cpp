@@ -247,6 +247,11 @@ public:
     return tex->GetInternalHeight();
   }
   
+  unsigned long GetPixel(int x, int y) const {
+    assert(x >= 0 && x < tex->GetWidth() && y >= 0 && y < tex->GetHeight());
+    return *(const unsigned long*)tex->GetImage()->Get(x, y);
+  }
+  
   void SetTexture() {
     GlUtils::SetTexture(tex);
     
@@ -274,6 +279,7 @@ std::ostream& operator<<(std::ostream&ostr, WrappedTex const&ite) {
 
 WrappedTex *GetTex(const string &image) {
   Image *tex = Image::Load("data/" + image + ".png");
+  if(!tex) tex = Image::Load("data/" + image + ".jpg");
   if(!tex) return NULL;
   
   return new WrappedTex(tex, image);
@@ -791,6 +797,7 @@ void luainit(int argc, const char **argv) {
         .def("GetInternalWidth", &WrappedTex::GetInternalWidth)
         .def("GetInternalHeight", &WrappedTex::GetInternalHeight)
         .def("SetTexture", &WrappedTex::SetTexture)
+        .def("GetPixel", &WrappedTex::GetPixel)
         .def(tostring(self)),
       class_<PerfBarManager>("Perfbar_Init")
         .def(constructor<float, float, float>())

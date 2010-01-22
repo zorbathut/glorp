@@ -43,8 +43,12 @@ local inminimenu
 
 local function destroy_game()
   if not runninggame then return end
+  if runninggame.shutdown then runninggame.shutdown() end
   runninggame.UIParent:Detach() -- yunk
   runninggame = nil
+end
+local function reset_menu()
+  mainmenu, mainmenu_ui = runuifile("menu_core.lua")
 end
 local function Handle(param)
   if not param then return end
@@ -59,6 +63,7 @@ local function Handle(param)
     mainmenu.UIParent:Hide()
   elseif param == "exit_game" then
     destroy_game()
+    reset_menu()
     mainmenu.UIParent:Show()
   elseif param == "exit" then
     TriggerExit()
@@ -187,6 +192,7 @@ function runuifile(file)
   
   return env, uip
 end
+reset_menu()
 
 function stdwrap(token, ...)
   local context = runninggame or mainmenu
@@ -195,8 +201,6 @@ function stdwrap(token, ...)
     return context[token](...)
   end
 end
-
-mainmenu, mainmenu_ui = runuifile("menu_core.lua")
 
 mainmenu_ui:Hide()
 

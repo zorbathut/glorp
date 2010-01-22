@@ -4081,7 +4081,6 @@ int luaopen_opengl (lua_State *L) {
   if(!tabled) {
     int ofs = 0;
     while(gl_str[ofs].str) {
-      dprintf("%s", gl_str[ofs].str);
       assert(luagl_string_to_enum.count(gl_str[ofs].str) == 0);
       luagl_string_to_enum[gl_str[ofs].str] = gl_str[ofs].value;
       if(luagl_enum_to_string.count(gl_str[ofs].value) == 0)
