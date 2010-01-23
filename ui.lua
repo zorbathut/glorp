@@ -213,12 +213,13 @@ do
     return not self.hide
   end
   
-  function Region_Type:SetAllPoints()
-    assert(self.parent)
-    reanchor(self, "_anchor_x", 0, self.parent, 0, 0)
-    reanchor(self, "_anchor_x", 1, self.parent, 1, 0)
-    reanchor(self, "_anchor_y", 0, self.parent, 0, 0)
-    reanchor(self, "_anchor_y", 1, self.parent, 1, 0)
+  function Region_Type:SetAllPoints(target)
+    target = target or self.parent
+    assert(target)
+    reanchor(self, "_anchor_x", 0, target, 0, 0)
+    reanchor(self, "_anchor_x", 1, target, 1, 0)
+    reanchor(self, "_anchor_y", 0, target, 0, 0)
+    reanchor(self, "_anchor_y", 1, target, 1, 0)
     -- grunch
   end
   function Region_Type:ClearAllPoints(not_sizes, not_points)

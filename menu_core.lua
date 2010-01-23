@@ -39,10 +39,6 @@ end
 function menu.exit_button:Click()
   GlorpController("exit")
 end
-function menu.achievement_button:Click()
-  achievement.award(achievement.db.test)
-  achievement.award(achievement.db.norotate)
-end
 
 function key(button, ascii, event)
   if button == "escape" and event == "press" then

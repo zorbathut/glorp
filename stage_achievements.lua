@@ -21,10 +21,10 @@ runfile("achievements.lua", loader_glob)
 
 local height = 100
 local width_small = 300
-local width_full = 900
+local width_full = 450
 
-local function make_achievement_badge(dat, full)
-  local cheev = CreateFrame("Frame", overlay)
+local function make_achievement_badge(dat, full, parent)
+  local cheev = CreateFrame("Frame", parent or overlay)
   local icon = CreateFrame("Sprite", cheev)
   cheev:SetBackgroundColor(0, 0, 0, 1)
   cheev:SetWidth(full and width_full or width_small)
@@ -38,14 +38,22 @@ local function make_achievement_badge(dat, full)
   tex:SetPoint("TOPLEFT", icon, "TOPRIGHT", 10, 0)
   tex:SetPoint("RIGHT", cheev, "RIGHT", -10, 0)
   tex:SetPoint("BOTTOM", icon, "BOTTOM")
-  tex:SetText(dat.text)
   
   if full then
+    tex:SetText("\1B\1" .. dat.text)
+    print("testing", dat.icon, achievement_list[dat.icon])
+    if achievement_persist[dat.icon] then
+      print("bgcoloring")
+      cheev:SetBackgroundColor(0, 0.3, 0, 1)
+    end
+    
     local fult = CreateFrame("Text_Multiline", cheev)
     fult:SetPoint("TOPLEFT", icon, 1, 0.5, 10, 0)
     fult:SetPoint("RIGHT", cheev, "RIGHT", -10, 0)
     fult:SetPoint("BOTTOM", icon, "BOTTOM")
-    fult:SetText(dat.descr)
+    fult:SetText("\1S0.8\1" .. dat.descr)
+  else
+    tex:SetText(dat.text)
   end
 
   return cheev, icon, tex
@@ -99,4 +107,34 @@ function achievement.award(link)
     achievement_persist[link.dat.icon] = true
     persistence.save()
   end
+end
+
+-- this is terrible but I need to get this done
+function achievement.display()
+  print("entering")
+  local dun = false
+  
+  local achbg = CreateFrame("Button", overlay)
+  function achbg:Click()
+    dun = true
+  end
+  achbg:SetBackgroundColor(0, 0, 0, 0.5)
+  achbg:SetAllPoints(UIParent)
+  achbg:SetLayer(10)
+  
+  local vpos = 1
+  for _, v in pairs(achievement_list) do
+    print("makin' achieve")
+    
+    local x, y = math.mod(vpos - 1, 2) + 1, math.floor((vpos - 1) / 2) + 1
+    
+    local baj = make_achievement_badge(v, true, achbg)
+    baj:SetPoint("CENTER", UIParent, (x - 1) * 0.5 + 0.25, (y - 1) / 5 + 0.1)
+    
+    vpos = vpos + 1
+  end
+  
+  while not dun do coroutine.yield() end
+  
+  achbg:Detach()
 end
