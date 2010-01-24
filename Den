@@ -173,7 +173,7 @@ ursa.command{ursa.command.default, runnable.deps}
 ursa.command{"run", runnable.deps, runnable.cli .. " debug"}
 ursa.command{"runclean", runnable.deps, runnable.cli}
 
-ursa.token.rule{"oggquality", nil, function () return "4" end}  -- heh.
+ursa.token.rule{"oggquality", "!6", function () return "6" end}  -- heh.
 
 -- here is where we're generating the file list for packaging
 do
