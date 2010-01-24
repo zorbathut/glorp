@@ -17,7 +17,6 @@
 #include <boost/static_assert.hpp>
 
 #define _WIN32_IE 0x0500 // ffff
-#include <shlobj.h>
 
 using namespace std;
 
@@ -133,6 +132,10 @@ string getConfigDirectory() {
   string bf = getenv("HOME");
   //dprintf("Home directory: %s\n", bf.c_str());
   return bf + "/.d-net/";
+}
+string getDesktopDirectory() {
+  string bf = getenv("HOME");
+  return bf + "/Desktop/";
 }
 
 static const string directory_delimiter = "/";

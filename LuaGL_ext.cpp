@@ -66,14 +66,18 @@ static int gl_get_shader_info_log(lua_State *L)
 {
   if(!(lua_isnumber(L, 1)))
     luaL_error(L, "incorrect argument to function 'gl.GetShaderInfoLog'");
-  
   GLint len;
   glGetShaderiv((GLuint)lua_tonumber(L, 1), GL_INFO_LOG_LENGTH, &len);
   
-  vector<char> data(len);
-  glGetShaderInfoLog((GLuint)lua_tonumber(L, 1), len, NULL, &data[0]);
-  
-  lua_pushlstring(L, &data[0], len - 1);
+  if(len) {
+    vector<char> data(len);
+    GLsizei len_ignored;
+    glGetShaderInfoLog((GLuint)lua_tonumber(L, 1), len, &len_ignored, &data[0]);
+    
+    lua_pushlstring(L, &data[0], len - 1);
+  } else {
+    lua_pushstring(L, "");
+  }
   return 1;
 }
 static int gl_get_program_info_log(lua_State *L)

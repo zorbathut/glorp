@@ -22,6 +22,8 @@
 
 #include "debug.h"
 
+#include <assert.h>
+
 /* set field of a lua table with a number */
 static void set_field(lua_State *L, unsigned int index, lua_Number value)
 {
