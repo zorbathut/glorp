@@ -8,6 +8,8 @@ ursa.token.rule{"CC", "!" .. params.glop.cc, function () return params.glop.cc e
 ursa.token.rule{"CXXFLAGS", nil, function () return "-mwindows -DWIN32 -DCURL_STATICLIB -Ic:/cygwin/usr/mingw/local/include -Ic:/cygwin/usr/mingw/local/include/boost-1_38_0 -Iglorp/glop/build/Glop/local/include" end}
 ursa.token.rule{"LDFLAGS", nil, function () return "-L/lib/mingw -Lc:/cygwin/usr/mingw/local/lib -Lglorp/glop/Glop/cygwin/lib -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -ljpeg -lfreetype -lz" end}
 
+ursa.token.rule{"FLAC", nil, function () return "/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe" end}
+
 rv.extension = ".exe"
 
 -- runnable

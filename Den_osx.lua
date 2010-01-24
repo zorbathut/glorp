@@ -8,6 +8,8 @@ ursa.token.rule{"CC", "!" .. params.glop.cc, function () return params.glop.cc e
 ursa.token.rule{"CXXFLAGS", nil, function () return "-arch i386 -Fglorp/Glop/build/Glop -DMACOSX -I/opt/local/include" end}
 ursa.token.rule{"LDFLAGS", nil, function () return "-arch i386 -Lglorp/Glop/Glop/OSX/lib -Fglorp/Glop/build/Glop -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework Glop -ljpeg6b -lfreetype235" end}
 
+ursa.token.rule{"FLAC", nil, function () return "flac" end}
+
 rv.extension = ".prog"  -- have to use something or it'll conflict
 
 local runnable_deps
@@ -52,12 +54,14 @@ function rv.installers()
   
   -- first we mirror our run structure over, plus stripping (oh baby oh baby)
   for k, v in pairs(ursa.relative_from{runnable_deps}) do
-    print(v)
     local sufix = v:match(("build/[-%s '.]*.app/(.*)"):format(params.longname))
     assert(sufix)
     
     table.insert(binaries, ursa.rule{app_prefix .. sufix, v, ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
   end
+
+  -- here's our bootstrapper for sane version errors
+  table.insert(binaries, ursa.rule{app_prefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/SystemVersionCheck", ursa.util.system_template{"cp $SOURCE $TARGET"}})
   
   -- second we generate our actual data copies
   ursa.token.rule{"built_data", "#datafiles", function ()
@@ -68,6 +72,7 @@ function rv.installers()
     --assert(false)
     return items
   end, always_rebuild = true}
+
   
   local icon = ursa.rule{app_prefix .. "Contents/Resources/mandible.icns", "glorp/resources/mandicon.png", ursa.util.system_template{("makeicns -in $SOURCE -out $TARGET")}}
   
@@ -83,7 +88,7 @@ function rv.installers()
   <key>CFBundleDevelopmentRegion</key>
   <string>English</string>
   <key>CFBundleExecutable</key>
-  <string>]] .. params.longname .. [[</string>
+  <string>]] .. params.longname .. [[-SystemVersionCheck</string>
   <key>CFBundleIconFile</key>
   <string>mandible.icns</string>
   <key>CFBundleIdentifier</key>
@@ -96,6 +101,11 @@ function rv.installers()
   <string>APPL</string>
   <key>CFBundleVersion</key>
   <string>]] .. ursa.token{"version"} .. [[</string>
+  <key>LSEnvironment</key>
+  <dict>
+      <key>MinimumSystemVersion</key>
+      <string>10.6.0</string>
+  </dict>
 </dict>
 </plist>]])
     

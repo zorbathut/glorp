@@ -196,7 +196,7 @@ do
             cli = "oggenc --downmix -q #oggquality -o $TARGET $SOURCE || oggenc -q #oggquality -o $TARGET $SOURCE"
           elseif ext == "flac" then
             dst = dst:gsub("%.flac", ".ogg")
-            cli = [[(/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe -d $SOURCE -c | oggenc --downmix -q #oggquality -o $TARGET -) || (/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe -d $SOURCE -c | oggenc -q #oggquality -o $TARGET -)]]
+            cli = [[(#FLAC -d $SOURCE -c | oggenc --downmix -q #oggquality -o $TARGET -) || (#FLAC -d $SOURCE -c | oggenc -q #oggquality -o $TARGET -)]]
           else
             cli = "cp $SOURCE $TARGET"
           end
