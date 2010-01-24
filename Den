@@ -173,6 +173,8 @@ ursa.command{ursa.command.default, runnable.deps}
 ursa.command{"run", runnable.deps, runnable.cli .. " debug"}
 ursa.command{"runclean", runnable.deps, runnable.cli}
 
+ursa.token.rule{"oggquality", nil, function () return "4" end}  -- heh.
+
 -- here is where we're generating the file list for packaging
 do
   local data_deps = {}
@@ -191,7 +193,10 @@ do
             cli = "pngcrush -brute -rem alla -cc $SOURCE $TARGET"
           elseif ext == "wav" then
             dst = dst:gsub("%.wav", ".ogg")
-            cli = "oggenc --downmix -q 5 -o $TARGET $SOURCE || oggenc -q 6 -o $TARGET $SOURCE"
+            cli = "oggenc --downmix -q #oggquality -o $TARGET $SOURCE || oggenc -q #oggquality -o $TARGET $SOURCE"
+          elseif ext == "flac" then
+            dst = dst:gsub("%.flac", ".ogg")
+            cli = [[(/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe -d $SOURCE -c | oggenc --downmix -q #oggquality -o $TARGET -) || (/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe -d $SOURCE -c | oggenc -q #oggquality -o $TARGET -)]]
           else
             cli = "cp $SOURCE $TARGET"
           end
@@ -199,8 +204,8 @@ do
           table.insert(data_items, {src = src, dst = dst, cli = cli})
         end
         return data_items
-      end}
-    return token .. "_copy"
+      end, always_rebuild = true}
+    return "#" .. token .. "_copy"
   end
 
   -- replicate the data structure in
@@ -225,7 +230,7 @@ do
   ursa.token.rule{"datafiles", data_deps, function ()
     local chunks = {}
     for _, v in pairs(data_deps) do
-      for _, tv in pairs(ursa.token{v}) do
+      for _, tv in pairs(ursa.token{v:sub(2)}) do
         table.insert(chunks, tv)
       end
     end
