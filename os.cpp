@@ -131,7 +131,7 @@ void seriouslyCrash() {
 string getConfigDirectory() {
   string bf = getenv("HOME");
   //dprintf("Home directory: %s\n", bf.c_str());
-  return bf + "/.d-net/";
+  return bf + "/." + game_fullname + "/";
 }
 string getDesktopDirectory() {
   string bf = getenv("HOME");
