@@ -21,3 +21,7 @@ function cull_data(path, dat)
     return "" -- alright we return nothing this is just a command basically. I need a better way to handle this.
   end, always_rebuild = true}
 end
+
+function token_literal(name, data)
+  ursa.token.rule{name, "!" .. data, function () return data end}
+end

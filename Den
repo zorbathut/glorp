@@ -13,7 +13,12 @@ require "ursa"
 
 clean_dirs = {}
 
-local glop = ursa.embed{"glorp/Glop", "Den"}
+local glop
+if not params.platform then
+  glop = ursa.embed{"glorp/Glop", "Den"}
+else
+  glop = {os = params.platform, headers = {}, lib = {}}
+end
 local builddir_pre = "build/" .. glop.os
 ursa.token.rule{"builddir", "!" .. builddir_pre, function () return builddir_pre end}
 local builddir = builddir_pre .. "/"
@@ -27,7 +32,7 @@ do
   do
     local files = "lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lzio lcoco linit lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib lvm"
     local path
-    if true then
+    if not osd.noluajit then
       -- luajit
       files = files .. " ljit_core ljit_mem ljit_dasm ljit_backend ljitlib"
       path = "glorp/luabuild/LuaJIT-1.1.5/"
@@ -41,18 +46,15 @@ do
       table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
     end
     
+    if not osd.noluajit then
+      table.insert(copied, ursa.rule{builddir .. "luabuild/src/ljit_x86.h", {builddir .. "luabuild/dynasm/dynasm.lua", builddir .. "luabuild/dynasm/dasm_x86.lua", builddir .. "luabuild/src/ljit_x86.dasc"}, ursa.util.system_template{"cd #builddir/luabuild/src ; lua ../dynasm/dynasm.lua -o ljit_x86.h ljit_x86.dasc"}})
+    end
+    
     local luaobjects = {}
     for k in files:gmatch("([^ ]+)") do  -- yes okay hardcoded shut up
-      table.insert(luaobjects, (builddir .. "luabuild/src/%s.o"):format(k))
+      table.insert(luaobjects, ursa.rule{builddir .. "luabuild/src/" .. k .. ".o", copied, ursa.util.system_template{"#CC -O3 -fomit-frame-pointer #LUA_FLAGS -I#builddir/luabuild/dynasm -Wall -x c -c -o $TARGET #builddir/luabuild/src/" .. k .. ".c"}})
     end
 
-    do
-      local buildtype
-      if glop.os == "cygwin" then buildtype = "cygwin" end
-      if glop.os == "osx" then buildtype = "macosx" end
-      assert(buildtype)
-      ursa.rule{luaobjects, copied, ursa.util.system_template{("cd %sluabuild/src && nice make -j5 %s"):format(builddir, buildtype)}}
-    end
     ursa.rule{builddir .. "lua/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- wonder if this'll work right under cygwin
   end
 
@@ -68,7 +70,7 @@ do
   local luabindpath = luabindroot .. "/src/"
   ursa.token.rule{"luabind_source_files", nil, function () return ursa.util.system{("cd %s && ls *.cpp"):format(luabindpath)} end}
   for k in ursa.token{"luabind_source_files"}:gmatch("([^\n]+)") do
-    table.insert(luabindobj, ursa.rule{builddir .. "luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -Iglorp/%s -I#builddir/lua/include -Iglorp/luabuild/luabind-0.9ish #CXXFLAGS -g"):format(luabindpath .. k, luabindroot)}})
+    table.insert(luabindobj, ursa.rule{builddir .. "luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -Iglorp/%s -I#builddir/lua/include -Iglorp/luabuild/luabind-0.9ish -Iglorp/libs/boost #CXXFLAGS -g"):format(luabindpath .. k, luabindroot)}})
   end
   
   lua = builddir .. "lua/lib/libluabind.a"
@@ -104,7 +106,7 @@ local buildables = {
 local depsed = {}
 
 local function build_object(src, prefix, compiler)
-  local cli = ("%s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -I%slua/include %s %s "):format(compiler or ursa.token{"CC"}, builddir, ursa.token{"CXXFLAGS"}, src)
+  local cli = ("%s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp/libs/boost -I%slua/include %s %s "):format(compiler or ursa.token{"CC"}, builddir, ursa.token{"CXXFLAGS"}, src)
   if not depsed[src] then
     local function make_dependencies(srcfile)
       local deps = ursa.util.system{cli .. "-MM"}

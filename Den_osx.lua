@@ -4,13 +4,15 @@ local params = ...
 
 local rv = {}
 
-ursa.token.rule{"CC", "!" .. params.glop.cc, function () return params.glop.cc end}
-ursa.token.rule{"CXXFLAGS", nil, function () return "-arch i386 -Fglorp/Glop/build/Glop -DMACOSX -I/opt/local/include" end}
-ursa.token.rule{"LDFLAGS", nil, function () return "-arch i386 -Lglorp/Glop/Glop/OSX/lib -Fglorp/Glop/build/Glop -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework Glop -ljpeg6b -lfreetype235" end}
+loadfile("glorp/Den_util_osx.lua")(params, rv)
 
-ursa.token.rule{"FLAC", nil, function () return "flac" end}
+token_literal("CC", params.glop.cc)
+token_literal("CXXFLAGS", "-arch i386 -Fglorp/Glop/build/Glop -DMACOSX -I/opt/local/include")
+token_literal("LDFLAGS", "-arch i386 -Lglorp/Glop/Glop/OSX/lib -Fglorp/Glop/build/Glop -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework Glop -ljpeg6b -lfreetype235")
 
-rv.extension = ".prog"  -- have to use something or it'll conflict
+token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -arch i386")
+
+rv.lua_buildtype = "macosx"
 
 local runnable_deps
 
