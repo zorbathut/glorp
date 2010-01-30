@@ -15,7 +15,7 @@ rv.extension = ".prog"  -- have to use something or it'll conflict
 local runnable_deps
 
 rv.create_runnable = function(dat)
-  local basepath = "build/" .. params.longname .. ".app"
+  local basepath = "build/osx/" .. params.longname .. ".app"
   
   local runnable = {}
   
@@ -27,7 +27,7 @@ rv.create_runnable = function(dat)
   
   local function tweak_glop(cli)
     current_glop_iteration = current_glop_iteration + 1
-    current_glop = ursa.rule{"build/glop_lib_" .. current_glop_iteration, current_glop, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool %s $TARGET"):format(cli)}}
+    current_glop = ursa.rule{"build/osx/glop_lib_" .. current_glop_iteration, current_glop, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool %s $TARGET"):format(cli)}}
     --assert(false)
   end
   
@@ -48,13 +48,13 @@ end
 -- installers
 function rv.installers()
   assert(runnable_deps)
-  local app_prefix = ("build/deploy/%s.app/"):format(params.longname)
+  local app_prefix = ("build/osx/deploy/%s.app/"):format(params.longname)
   
   local binaries = {}
   
   -- first we mirror our run structure over, plus stripping (oh baby oh baby)
   for k, v in pairs(ursa.relative_from{runnable_deps}) do
-    local sufix = v:match(("build/[-%s '.]*.app/(.*)"):format(params.longname))
+    local sufix = v:match(("build/osx/[-%s '.]*.app/(.*)"):format(params.longname))
     assert(sufix)
     
     table.insert(binaries, ursa.rule{app_prefix .. sufix, v, ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
@@ -74,7 +74,7 @@ function rv.installers()
   end, always_rebuild = true}
 
   
-  local icon = ursa.rule{app_prefix .. "Contents/Resources/mandible.icns", "glorp/resources/mandicon.png", ursa.util.system_template{("makeicns -in $SOURCE -out $TARGET")}}
+  local icon = ursa.rule{app_prefix .. "Contents/Resources/mandible.icns", "glorp/resources/mandicon.png", ursa.util.system_template{("glorp/resources/makeicns -in $SOURCE -out $TARGET")}}
   
   local infoplist = ursa.rule{app_prefix .. "Contents/Info.plist", "#version", function ()
     print("Writing info.plist")
@@ -115,7 +115,7 @@ function rv.installers()
   
   cull_data(app_prefix, {binaries, icon, infoplist})
   
-  return ursa.rule{("build/%s.dmg"):format(ursa.token{"outputprefix"}), {binaries, ursa.util.token_deferred{"built_data"}, "#culled_data", infoplist, icon}, ursa.util.system_template{('hdiutil create -srcfolder "build/deploy/%s.app" $TARGET -ov'):format(params.longname)}}
+  return ursa.rule{("build/%s.dmg"):format(ursa.token{"outputprefix"}), {binaries, ursa.util.token_deferred{"built_data"}, "#culled_data", infoplist, icon}, ursa.util.system_template{('hdiutil create -srcfolder "build/osx/deploy/%s.app" $TARGET -ov'):format(params.longname)}}
 end
 
 return rv
