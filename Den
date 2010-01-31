@@ -14,16 +14,19 @@ require "ursa"
 clean_dirs = {}
 
 local glop
-if not params.platform then
-  glop = ursa.embed{"glorp/Glop", "Den"}
+if true then
+  glop = ursa.embed{"glorp/Glop", "Den", {{platform = params.platform}}}
 else
   glop = {os = params.platform, headers = {}, lib = {}}
 end
-local builddir_pre = "build/" .. glop.os
+
+local platform = params.platform or platform
+
+local builddir_pre = "build/" .. platform
 ursa.token.rule{"builddir", "!" .. builddir_pre, function () return builddir_pre end}
 local builddir = builddir_pre .. "/"
 
-local osd = assert(loadfile("glorp/Den_" .. glop.os .. ".lua")){name = params.name, longname = params.longname, midname = params.midname, glop = glop, builddir = builddir}
+local osd = assert(loadfile("glorp/Den_" .. platform .. ".lua")){name = params.name, longname = params.longname, midname = params.midname, glop = glop, builddir = builddir}
 
 -- first we build the lua
 local lua
@@ -84,7 +87,11 @@ do
   end
 end
 
-ursa.token.rule{"curl_link", nil, function () return "-lcurl" end} --"curl-config --libs" seems to cause issues
+if not osd.nocurl then
+  token_literal("curl_link", "-lcurl")
+else
+  token_literal("curl_link", "")
+end
 
 ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
 
@@ -99,7 +106,7 @@ ursa.rule{"version.cpp", "#version", function ()
 end}
 
 local buildables = {
-  [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar LuaGL LuaGL_ext", cfiles = "glorp/GLee", resources = "resource"},
+  [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar " .. (osd.gles and "LuaGLES" or "LuaGL LuaGL_ext"), cfiles = osd.gles and "" or "glorp/GLee", resources = "resource"},
   ["reporter"] = {corefiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init"},
 }
 
@@ -151,7 +158,7 @@ local function build_program(name)
     table.insert(objs, build_object(k .. ".c", prefix, "gcc"))
   end
   
-  if glop.os == "cygwin" then
+  if platform == "cygwin" then
     for k in (item.resources or ""):gmatch("([^%s]+)") do
       local dst = (builddir .. "glorp/%s.res"):format(k)
       ursa.rule{dst, "glorp/" .. k .. ".rc", ursa.util.system_template{"nice windres $SOURCE -O coff -o $TARGET"}}

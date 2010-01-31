@@ -1,6 +1,10 @@
 
-#include "LuaGL.h"
-#include "LuaGL_ext.h"
+#ifndef IPHONE
+  #include "LuaGL.h"
+  #include "LuaGL_ext.h"
+#else
+  #include "LuaGLES.h"
+#endif
 
 #include <Glop/Base.h>
 #include <Glop/Font.h>
@@ -56,7 +60,7 @@ const int virt_height = 480;
   }
 #endif
 
-#ifdef MACOSX
+#if defined(MACOSX) || defined(IPHONE)
   #undef printf
   void ods(const string &str) {
     if(str.size() && str[str.size() - 1] == '\n')
@@ -497,6 +501,7 @@ void TriggerExit() {
   exiting = true;
 };
 
+#ifndef IPHONE
 vector<int> to_delete_lists;
 vector<int> to_delete_shaders;
 vector<int> to_delete_programs;
@@ -552,6 +557,7 @@ public:
     return id;
   }
 };
+#endif
 
 void adaptaload(const string &fname) {
   int error = luaL_dofile(L, ("data/" + fname).c_str());
@@ -659,6 +665,7 @@ void get_stack_entry(lua_State *L, int level) {
   lua_concat(L, lua_gettop(L) - 1);
 }
 
+#ifndef IPHONE
 bool screenshot_to(const string &fname) {
   FILE *fil = fopen(fname.c_str(), "wb");
   if(!fil) return false;
@@ -690,6 +697,7 @@ bool screenshot_to(const string &fname) {
   fclose(fil);
   return true;
 }
+#endif
 
 string get_mid_name() {
   return game_midname;
@@ -763,8 +771,12 @@ void debugstack_annotated(lua_State *L) {
 void luainit(int argc, const char **argv) {
   L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
-  luaopen_opengl(L);
-  luaopen_opengl_ext(L);
+  #ifdef IPHONE
+    luaopen_opengles(L);
+  #else
+    luaopen_opengl(L);
+    luaopen_opengl_ext(L);
+  #endif
   lua_register(L, "print", debug_print);
   
   ll_subregister(L, "math", "random", math_random);
@@ -834,6 +846,7 @@ void luainit(int argc, const char **argv) {
         .def("GetText", &FancyTextFrame::GetText),
       class_<SoundSource>("SourceSource_Make")
         .def("Stop", &SoundSource::Stop),
+      #ifndef IPHONE
       class_<GlListID>("GlListID")
         .def(constructor<>())
         .def("get", &GlListID::get),
@@ -843,6 +856,7 @@ void luainit(int argc, const char **argv) {
       class_<GlProgram>("GlProgram")
         .def(constructor<>())
         .def("get", &GlProgram::get),
+      #endif
       def("Texture", &GetTex),
       def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),
@@ -854,7 +868,9 @@ void luainit(int argc, const char **argv) {
       def("GetMouseX", &gmx),
       def("GetMouseY", &gmy),
       def("ShowMouseCursor", &sms),
+      #ifndef IPHONE
       def("ScreenshotTo", &screenshot_to),
+      #endif
       def("GetMidName", &get_mid_name),
       def("GetDesktopDirectory", &getDesktopDirectory),
       def("GetConfigDirectory", &getConfigDirectory),
@@ -981,7 +997,8 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
           CHECK(0);
         }
       }
-      
+
+      #ifndef IPHONE      
       // siiiigh
       for(int i = 0; i < to_delete_lists.size(); i++) glDeleteLists(to_delete_lists[i], 1);
       for(int i = 0; i < to_delete_shaders.size(); i++) glDeleteShader(to_delete_shaders[i]);
@@ -989,6 +1006,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
       to_delete_lists.clear();
       to_delete_shaders.clear();
       to_delete_programs.clear();
+      #endif
       
       if(exiting) {
         window()->Destroy();

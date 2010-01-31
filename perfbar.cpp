@@ -49,6 +49,7 @@ void startPerformanceBar() {
 }
 
 void drawPerformanceBar() {
+  #ifndef IPHONE
   CHECK(pstack.empty());
   
   glMatrixMode(GL_PROJECTION);
@@ -93,4 +94,5 @@ void drawPerformanceBar() {
   glVertex2f(xpind, (1000000.f / 60) * scale);
   
   glEnd();
+  #endif
 }
