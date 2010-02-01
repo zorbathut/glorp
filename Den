@@ -102,11 +102,12 @@ ursa.rule{"version.cpp", "#version", function ()
   fil:write(([[extern const char game_fullname[] = "%s";]]):format(params.longname) .. "\n")
   fil:write(([[extern const char game_midname[] = "%s";]]):format(params.midname) .. "\n")
   fil:write(([[extern const char game_slug[] = "%s";]]):format(params.name) .. "\n")
+  fil:write(([[extern const char game_platform[] = "%s";]]):format(platform) .. "\n")
   fil:close()
 end}
 
 local buildables = {
-  [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar " .. (osd.gles and "LuaGLES" or "LuaGL LuaGL_ext"), cfiles = osd.gles and "" or "glorp/GLee", resources = "resource"},
+  [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar LuaGL_common " .. (osd.gles and "LuaGLES" or "LuaGL LuaGL_ext"), cfiles = osd.gles and "" or "glorp/GLee", mmfiles = osd.gles and "main_iphone" or "", resources = "resource"},
   ["reporter"] = {corefiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init"},
 }
 
@@ -135,7 +136,7 @@ local function build_object(src, prefix, compiler)
     depsed[src] = ursa.util.token_deferred{depend}
   end
   
-  local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o")
+  local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o"):gsub("%.mm", ".o")
   ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src]}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
   return dst
 end
@@ -156,6 +157,9 @@ local function build_program(name)
   end
   for k in (item.cfiles or ""):gmatch("([^%s]+)") do
     table.insert(objs, build_object(k .. ".c", prefix, "gcc"))
+  end
+  for k in (item.mmfiles or ""):gmatch("([^%s]+)") do
+    table.insert(objs, build_object("glorp/" .. k .. ".mm", prefix, "g++ -x objective-c++"))
   end
   
   if platform == "cygwin" then

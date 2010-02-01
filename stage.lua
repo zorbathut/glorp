@@ -1,5 +1,5 @@
 
-local _, mode = ...
+local platform, _, mode = ...
 
 function runfile(file, global, ...)
   assert(global)
@@ -22,7 +22,7 @@ function runfile(file, global, ...)
     setfenv(dat, global)
   end
   
-  dat(mode, ...)
+  dat(mode, platform, ...)
 end
 
 runfile("util.lua", _G)

@@ -40,6 +40,10 @@
 
 #include <png.h>
 
+#ifdef IPHONE
+#include "main_iphone.h"
+#endif
+
 using namespace std;
 
 lua_State *L;
@@ -581,6 +585,7 @@ void adaptaload_wrapped(const string &fname, int argc, const char **argv) {
   if(!error) {
     lua_getglobal(L, "generic_wrap");
     lua_getglobal(L, "file_temp");
+    lua_pushstring(L, game_platform);
     for(int i = 0; i < argc; i++) {
       lua_pushstring(L, argv[i]);
     }
@@ -917,10 +922,13 @@ void luashutdown() {
 }
 
 void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
-  
-  //dprintf("inity");
-  // Initialize
+
   LogToFunction(&log_to_debugstring);
+  
+  #ifdef IPHONE
+    init_osx();
+  #endif
+  
   System::Init();
 
   setInitFlagFile("glorp/settings");
@@ -939,6 +947,11 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   }
   
   {
+    dprintf("path: %s\n", getcwd(NULL, 0));
+    dprintf("%s\n", fontname.c_str());
+    FILE *test = fopen(fontname.c_str(), "r");
+    CHECK(test);
+    
     //Font *font = ShadowFont::Load(fontname.c_str(), 0.05, 0.05);
     Font *font = Font::Load(fontname.c_str());
     CHECK(font);

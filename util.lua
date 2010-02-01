@@ -1,5 +1,5 @@
 
-local mode = ...
+local mode, platform = ...
 
 math.randomseed(os.time())
 
@@ -230,6 +230,7 @@ end
 
 
 
+print(gl.Get("MAX_PROJECTION_STACK_DEPTH"))
 
 -- hurrr
 if false then
@@ -315,120 +316,123 @@ function glutil.Program()
   return prog
 end
 
-local snatch = {
-  ShaderSource = true,
-  CompileShader = true,
-  AttachShader = true,
-  LinkProgram = true,
-  UseProgram = true,
-  
-  GetShaderInfoLog = true,
-  GetProgramInfoLog = true,
-  GetShader = true,
-  GetProgram = true,
-  
-  UniformI = true,
-  UniformF = true,
-  GetUniformLocation = true,
-  
-  --UniformI = true,
-  VertexAttribF = true,
-  GetAttribLocation = true,
-}
-for k in pairs(snatch) do
-  snatch[k] = gl[k]
-  assert(snatch[k])
-end
-
-local attrib_lookup = {}
-local uniform_lookup = {}
-
-function glutil.ShaderSource(shader, source)
-  snatch.ShaderSource(shader.id:get(), source)
-end
-function glutil.CompileShader(shader)
-  snatch.CompileShader(shader.id:get())
-  local infolog = snatch.GetShaderInfoLog(shader.id:get())
-  print(infolog)
-  print(mode)
-  if (infolog ~= "" and mode) or glutil.GetShader(shader, "COMPILE_STATUS") ~= "TRUE" then
-    print("Failed to build shader", glutil.GetShader(shader, "COMPILE_STATUS"))
-    assert(false)
+print(platform)
+if platform ~= "iphone" and platform ~= "iphone_sim" then
+  local snatch = {
+    ShaderSource = true,
+    CompileShader = true,
+    AttachShader = true,
+    LinkProgram = true,
+    UseProgram = true,
+    
+    GetShaderInfoLog = true,
+    GetProgramInfoLog = true,
+    GetShader = true,
+    GetProgram = true,
+    
+    UniformI = true,
+    UniformF = true,
+    GetUniformLocation = true,
+    
+    --UniformI = true,
+    VertexAttribF = true,
+    GetAttribLocation = true,
+  }
+  for k in pairs(snatch) do
+    snatch[k] = gl[k]
+    assert(snatch[k])
   end
-end
-function glutil.AttachShader(program, shader)
-  snatch.AttachShader(program.id:get(), shader.id:get())
-end
-function glutil.LinkProgram(program)
-  snatch.LinkProgram(program.id:get())
-  attrib_lookup[program.id:get()] = nil
-  uniform_lookup[program.id:get()] = nil
-end
-function glutil.UseProgram(program)
-  snatch.UseProgram(program and program.id:get() or 0)
-end
 
-function glutil.GetShader(shader, flag)
-  return snatch.GetShader(shader.id:get(), flag)
-end
-function glutil.GetProgram(shader, flag)
-  return snatch.GetProgram(shader.id:get(), flag)
-end
+  local attrib_lookup = {}
+  local uniform_lookup = {}
 
-function glutil.UniformI(program, text, ...)
-  local pid = program.id:get()
-  if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
-  local loca = uniform_lookup[pid][text]
-  if not loca then
-    uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
-    loca = uniform_lookup[pid][text]
+  function glutil.ShaderSource(shader, source)
+    snatch.ShaderSource(shader.id:get(), source)
   end
-  
-  if loca == -1 then
-    print("WARNING: Uniform " .. text .. " is unused")
-  else
-    snatch.UniformI(loca, ...)
+  function glutil.CompileShader(shader)
+    snatch.CompileShader(shader.id:get())
+    local infolog = snatch.GetShaderInfoLog(shader.id:get())
+    print(infolog)
+    print(mode)
+    if (infolog ~= "" and mode) or glutil.GetShader(shader, "COMPILE_STATUS") ~= "TRUE" then
+      print("Failed to build shader", glutil.GetShader(shader, "COMPILE_STATUS"))
+      assert(false)
+    end
   end
-end
-function glutil.UniformF(program, text, ...)
-  local pid = program.id:get()
-  if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
-  local loca = uniform_lookup[pid][text]
-  if not loca then
-    uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
-    loca = uniform_lookup[pid][text]
+  function glutil.AttachShader(program, shader)
+    snatch.AttachShader(program.id:get(), shader.id:get())
   end
-  
-  if loca == -1 then
-    print("WARNING: Uniform " .. text .. " is unused")
-  else
-    snatch.UniformF(loca, ...)
+  function glutil.LinkProgram(program)
+    snatch.LinkProgram(program.id:get())
+    attrib_lookup[program.id:get()] = nil
+    uniform_lookup[program.id:get()] = nil
   end
-end
+  function glutil.UseProgram(program)
+    snatch.UseProgram(program and program.id:get() or 0)
+  end
 
-function glutil.VertexAttribInit(program, text)
-  local pid = program.id:get()
-  if not attrib_lookup[pid] then attrib_lookup[pid] = {} end
-  local loca = snatch.GetAttribLocation(pid, text)
-  attrib_lookup[pid][text] = loca
-end
---[[function glutil.VertexAttribI(program, text, ...)
-  local pid = program.id:get()
-  assert(attrib_lookup[pid] and attrib_lookup[pid][text])
-  snatch.VertexAttribI(attrib_lookup[pid][text], ...)
-end]]
-function glutil.VertexAttrib(program, text, ...)
-  local pid = program.id:get()
-  assert(attrib_lookup[pid] and attrib_lookup[pid][text])
-  if attrib_lookup[pid][text] == -1 then
-    print("WARNING: Attribute " .. text .. " is unused")
-  else
-    snatch.VertexAttribF(attrib_lookup[pid][text], ...)
+  function glutil.GetShader(shader, flag)
+    return snatch.GetShader(shader.id:get(), flag)
   end
-end
+  function glutil.GetProgram(shader, flag)
+    return snatch.GetProgram(shader.id:get(), flag)
+  end
 
-for k in pairs(snatch) do
-  gl[k] = nil -- yoink
+  function glutil.UniformI(program, text, ...)
+    local pid = program.id:get()
+    if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
+    local loca = uniform_lookup[pid][text]
+    if not loca then
+      uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
+      loca = uniform_lookup[pid][text]
+    end
+    
+    if loca == -1 then
+      print("WARNING: Uniform " .. text .. " is unused")
+    else
+      snatch.UniformI(loca, ...)
+    end
+  end
+  function glutil.UniformF(program, text, ...)
+    local pid = program.id:get()
+    if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
+    local loca = uniform_lookup[pid][text]
+    if not loca then
+      uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
+      loca = uniform_lookup[pid][text]
+    end
+    
+    if loca == -1 then
+      print("WARNING: Uniform " .. text .. " is unused")
+    else
+      snatch.UniformF(loca, ...)
+    end
+  end
+
+  function glutil.VertexAttribInit(program, text)
+    local pid = program.id:get()
+    if not attrib_lookup[pid] then attrib_lookup[pid] = {} end
+    local loca = snatch.GetAttribLocation(pid, text)
+    attrib_lookup[pid][text] = loca
+  end
+  --[[function glutil.VertexAttribI(program, text, ...)
+    local pid = program.id:get()
+    assert(attrib_lookup[pid] and attrib_lookup[pid][text])
+    snatch.VertexAttribI(attrib_lookup[pid][text], ...)
+  end]]
+  function glutil.VertexAttrib(program, text, ...)
+    local pid = program.id:get()
+    assert(attrib_lookup[pid] and attrib_lookup[pid][text])
+    if attrib_lookup[pid][text] == -1 then
+      print("WARNING: Attribute " .. text .. " is unused")
+    else
+      snatch.VertexAttribF(attrib_lookup[pid][text], ...)
+    end
+  end
+
+  for k in pairs(snatch) do
+    gl[k] = nil -- yoink
+  end
 end
 
 
