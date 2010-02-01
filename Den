@@ -176,12 +176,6 @@ end
 local mainprog = build_program(params.name)
 local reporter = build_program("reporter")
 
-local runnable = osd.create_runnable{mainprog = mainprog, reporter = reporter}
-
-ursa.command{ursa.command.default, runnable.deps}
-ursa.command{"run", runnable.deps, runnable.cli .. " debug"}
-ursa.command{"runclean", runnable.deps, runnable.cli}
-
 ursa.token.rule{"oggquality", "!6", function () return "6" end}  -- heh.
 
 -- here is where we're generating the file list for packaging
@@ -249,6 +243,17 @@ do
   ursa.token.rule{"outputprefix", "#version", function ()
     return ("%s-%s"):format(params.midname, ursa.token{"version"})
   end}
+end
+
+local runnable = osd.create_runnable{mainprog = mainprog, reporter = reporter}
+
+ursa.command{ursa.command.default, runnable.deps}
+
+if osd.no_cli_params then
+  ursa.command{"run", runnable.deps, runnable.cli}
+else
+  ursa.command{"run", runnable.deps, runnable.cli .. " debug"}
+  ursa.command{"runclean", runnable.deps, runnable.cli}
 end
 
 ursa.command{"package", osd.installers("datafiles")}
