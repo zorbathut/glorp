@@ -924,12 +924,11 @@ void luashutdown() {
 void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
 
   LogToFunction(&log_to_debugstring);
+  System::Init();
   
   #ifdef IPHONE
     init_osx();
   #endif
-  
-  System::Init();
 
   setInitFlagFile("glorp/settings");
   initProgram(&argc, const_cast<const char ***>(&argv));
