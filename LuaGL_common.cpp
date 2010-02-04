@@ -411,7 +411,12 @@ static int gl_clear_depth(lua_State *L)
       luaL_error(L, "incorrect argument to function 'gl.ClearDepth'");
 
    /* call opengl function */
-   glClearDepthf((GLclampf)lua_tonumber(L, 1));
+   #ifdef IPHONE
+   glClearDepthf
+   #else
+   glClearDepth
+   #endif
+   ((GLclampf)lua_tonumber(L, 1));
 
    return 0;
 }
@@ -453,7 +458,12 @@ static int gl_clip_plane(lua_State *L)
    get_arrayd(L, 2, &equation);
 
    /* call opengl function */
-   glClipPlanef(plane, equation);
+   #ifdef IPHONE
+   glClipPlanef
+   #else
+   glClipPlane
+   #endif
+   (plane, equation);
 
    free(equation);
 
@@ -576,7 +586,12 @@ static int gl_depth_range(lua_State *L)
       luaL_error(L, "incorrect argument to function 'gl.DepthRange'");
 
    /* call opengl function */
-   glDepthRangef((GLclampf)lua_tonumber(L, 1), (GLclampf)lua_tonumber(L, 2));
+    #ifdef IPHONE
+    glDepthRangef
+    #else
+    glDepthRange
+    #endif
+   ((GLclampf)lua_tonumber(L, 1), (GLclampf)lua_tonumber(L, 2));
 
    return 0;
 }

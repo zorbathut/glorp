@@ -20,7 +20,7 @@ else
   glop = {os = params.platform, headers = {}, lib = {}}
 end
 
-local platform = params.platform or platform
+local platform = params.platform or glop.os
 
 local builddir_pre = "build/" .. platform
 ursa.token.rule{"builddir", "!" .. builddir_pre, function () return builddir_pre end}
@@ -50,7 +50,7 @@ do
     end
     
     if not osd.noluajit then
-      table.insert(copied, ursa.rule{builddir .. "luabuild/src/ljit_x86.h", {builddir .. "luabuild/dynasm/dynasm.lua", builddir .. "luabuild/dynasm/dasm_x86.lua", builddir .. "luabuild/src/ljit_x86.dasc"}, ursa.util.system_template{"cd #builddir/luabuild/src ; lua ../dynasm/dynasm.lua -o ljit_x86.h ljit_x86.dasc"}})
+      table.insert(copied, ursa.rule{builddir .. "luabuild/src/ljit_x86.h", {builddir .. "luabuild/dynasm/dynasm.lua", builddir .. "luabuild/dynasm/dasm_x86.lua", builddir .. "luabuild/src/ljit_x86.dasc", builddir .. "luabuild/src/ljit_x86.dash", builddir .. "luabuild/src/ljit_x86_inline.dash"}, ursa.util.system_template{"cd #builddir/luabuild/src ; lua ../dynasm/dynasm.lua -o ljit_x86.h ljit_x86.dasc"}})
     end
     
     local luaobjects = {}

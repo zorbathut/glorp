@@ -2,6 +2,8 @@
 #ifndef IPHONE
   #include "LuaGL.h"
   #include "LuaGL_ext.h"
+  
+  #include "GLee.h"
 #else
   #include "LuaGLES.h"
 #endif

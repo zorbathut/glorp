@@ -10,6 +10,9 @@ using namespace std;
 #include <lauxlib.h>
 
 #include "LuaGL_ext.h"
+#include "LuaGL_common.h"
+
+#include "GLee.h"
 
 #include "debug.h"
 
