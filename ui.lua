@@ -1,6 +1,6 @@
 
 print("MAX_PROJECTION_STACK_DEPTH is", gl.Get("MAX_PROJECTION_STACK_DEPTH"))
-assert(gl.Get("MAX_PROJECTION_STACK_DEPTH") >= 4)
+--assert(gl.Get("MAX_PROJECTION_STACK_DEPTH") >= 4)
 
 UIParent = {} -- faaaake
 
