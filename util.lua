@@ -132,16 +132,7 @@ function glutil.RenderBoundedSprite(tex, sx, sy, ex, ey, r, g, b, a)
   
   tex:SetTexture()
   gl.Color(r or 1, g or 1, b or 1, a or 1)
-  gl.Begin("QUADS")
-  gl.TexCoord(0 + xadj, 0 + yadj)
-  gl.Vertex(sx, sy)
-  gl.TexCoord(teex + xadj, 0 + yadj)
-  gl.Vertex(ex, sy)
-  gl.TexCoord(teex + xadj, teey + yadj)
-  gl.Vertex(ex, ey)
-  gl.TexCoord(0 + xadj, teey + yadj)
-  gl.Vertex(sx, ey)
-  gl.End()
+  glutil.RenderArray("QUADS", 2, {sx, sy, ex, sy, ex, ey, sx, ey}, nil, nil, 2, {0 + xadj, 0 + yadj, teex + xadj, 0 + yadj, teex + xadj, teey + yadj, 0 + xadj, teey + yadj})
   SetNoTexture()
 end
 
@@ -156,16 +147,7 @@ function glutil.RenderBoundedSpriteSegment(tex, sx, sy, ex, ey, ttsx, ttsy, ttex
   
   tex:SetTexture()
   gl.Color(1, 1, 1)
-  gl.Begin("QUADS")
-  gl.TexCoord(teex * ttsx, teey * ttsy)
-  gl.Vertex(sx, sy)
-  gl.TexCoord(teex * ttex, teey * ttsy)
-  gl.Vertex(ex, sy)
-  gl.TexCoord(teex * ttex, teey * ttey)
-  gl.Vertex(ex, ey)
-  gl.TexCoord(teex * ttsx, teey * ttey)
-  gl.Vertex(sx, ey)
-  gl.End()
+  glutil.RenderArray("QUADS", 2, {sx, sy, ex, sy, ex, ey, sx, ey}, nil, nil, 2, {teex * ttsx, teey * ttsy, teex * ttex, teey * ttsy, teex * ttex, teey * ttey, teex * ttsx, teey * ttey})
   SetNoTexture()
 end
 
@@ -176,12 +158,7 @@ end
 function glutil.RenderBoundedBox(r, g, b, sx, sy, ex, ey)
   gl.Color(r, g, b)
   
-  gl.Begin("QUADS")
-  gl.Vertex(sx, sy)
-  gl.Vertex(ex, sy)
-  gl.Vertex(ex, ey)
-  gl.Vertex(sx, ey)
-  gl.End()
+  glutil.RenderArray("QUADS", 2, {sx, sy, ex, sy, ex, ey, sx, ey})
 end
 
 function glutil.RenderCenteredEmptyBox(r, g, b, x, y, width, height)
@@ -190,13 +167,7 @@ end
 
 function glutil.RenderEmptyBox(r, g, b, sx, sy, ex, ey)
   gl.Color(r, g, b)
-  
-  gl.Begin("LINE_LOOP")
-  gl.Vertex(sx, sy)
-  gl.Vertex(ex, sy)
-  gl.Vertex(ex, ey)
-  gl.Vertex(sx, ey)
-  gl.End()
+  glutil.RenderArray("LINE_LOOP", 2, {sx, sy, ex, sy, ex, ey, sx, ey})
 end
 
 
@@ -435,6 +406,30 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
   end
 end
 
+function glutil.RenderArray(mode, vertex_size, vertices, color_size, color, texture_size, texture)
+  gl.EnableClientState("VERTEX_ARRAY")
+  gl.VertexPointer(vertices, vertex_size)
+  if color_size then
+    assert(#color / color_size == #vertices / vertex_size)
+    gl.EnableClientState("COLOR_ARRAY")
+    gl.ColorPointer(color, color_size)
+  end
+  if texture_size then
+    assert(#texture / texture_size == #vertices / vertex_size)
+    gl.EnableClientState("TEXTURE_COORD_ARRAY")
+    gl.TexCoordPointer(texture, texture_size)
+  end
+  
+  gl.DrawArrays(mode, 0, #vertices / vertex_size)
+  
+  gl.DisableClientState("VERTEX_ARRAY")
+  if color_size then
+    gl.DisableClientState("COLOR_ARRAY")
+  end
+  if texture_size then
+    gl.DisableClientState("TEXTURE_COORD_ARRAY")
+  end
+end
 
 
 function math.round(x)
