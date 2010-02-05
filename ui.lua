@@ -308,7 +308,7 @@ do
       local l, u, r, d = self:GetBounds()
       assert(l and u and r and d)
       gl.Color(self.bg_r, self.bg_g, self.bg_b, self.bg_a)
-      glutil.RenderArray("QUADS", 2, {l, u, r, u, r, d, l, d})
+      glutil.RenderArray("TRIANGLE_FAN", 2, {l, u, r, u, r, d, l, d})
     end
     
     if self.cs_x then

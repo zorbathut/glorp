@@ -10,6 +10,8 @@
 
 #include "LuaGL_common.h"
 
+#include <assert.h>
+
 
 /* set field of a lua table with a number */
 void set_field(lua_State *L, unsigned int index, lua_Number value)

@@ -132,7 +132,8 @@ function glutil.RenderBoundedSprite(tex, sx, sy, ex, ey, r, g, b, a)
   
   tex:SetTexture()
   gl.Color(r or 1, g or 1, b or 1, a or 1)
-  glutil.RenderArray("QUADS", 2, {sx, sy, ex, sy, ex, ey, sx, ey}, nil, nil, 2, {0 + xadj, 0 + yadj, teex + xadj, 0 + yadj, teex + xadj, teey + yadj, 0 + xadj, teey + yadj})
+  print("rbs")
+  glutil.RenderArray("TRIANGLE_FAN", 2, {sx, sy, ex, sy, ex, ey, sx, ey}, nil, nil, 2, {0 + xadj, 0 + yadj, teex + xadj, 0 + yadj, teex + xadj, teey + yadj, 0 + xadj, teey + yadj})
   SetNoTexture()
 end
 
@@ -147,7 +148,7 @@ function glutil.RenderBoundedSpriteSegment(tex, sx, sy, ex, ey, ttsx, ttsy, ttex
   
   tex:SetTexture()
   gl.Color(1, 1, 1)
-  glutil.RenderArray("QUADS", 2, {sx, sy, ex, sy, ex, ey, sx, ey}, nil, nil, 2, {teex * ttsx, teey * ttsy, teex * ttex, teey * ttsy, teex * ttex, teey * ttey, teex * ttsx, teey * ttey})
+  glutil.RenderArray("TRIANGLE_FAN", 2, {sx, sy, ex, sy, ex, ey, sx, ey}, nil, nil, 2, {teex * ttsx, teey * ttsy, teex * ttex, teey * ttsy, teex * ttex, teey * ttey, teex * ttsx, teey * ttey})
   SetNoTexture()
 end
 
@@ -158,7 +159,7 @@ end
 function glutil.RenderBoundedBox(r, g, b, sx, sy, ex, ey)
   gl.Color(r, g, b)
   
-  glutil.RenderArray("QUADS", 2, {sx, sy, ex, sy, ex, ey, sx, ey})
+  glutil.RenderArray("TRIANGLE_FAN", 2, {sx, sy, ex, sy, ex, ey, sx, ey})
 end
 
 function glutil.RenderCenteredEmptyBox(r, g, b, x, y, width, height)
