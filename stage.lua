@@ -172,6 +172,10 @@ function runuifile(file, ...)
   env._G = env
   
   local uip = CreateFrame("Frame")
+  -- hackery hackhack
+  if GetScreenX() == 320 and GetScreenY() == 480 then
+    uip:SetCoordinateScale(512, 384, 1024, 0)
+  end
   uip:SetAllPoints()
   env.UIParent = uip
   env.CreateFrame = function (type, parent) return CreateFrame(type, parent or uip) end

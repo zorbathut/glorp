@@ -312,8 +312,6 @@ float cvy(float y) {
 class Text : public Destroyable<FancyTextFrame> {
 public:
   void ScaledMove(float x, float y) {
-    //dprintf("%f/%f convert to %f/%f", x, y, x / virt_width, y / virt_height);
-    //dprintf("old was %f/%f", world->GetChildRelX(id), world->GetChildRelY(id));
     Move(x / virt_width, y / virt_height);
   }
   void WrappedText(const string &txt) {
@@ -773,6 +771,10 @@ void debugstack_annotated(lua_State *L) {
 }
 
 
+int phys_screenx, phys_screeny;
+int get_screenx() { return phys_screenx; }
+int get_screeny() { return phys_screeny; }
+
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
 void luainit(int argc, const char **argv) {
@@ -884,7 +886,10 @@ void luainit(int argc, const char **argv) {
       def("MakeConfigDirectory", &makeConfigDirectory),
       def("Perfbar_Set", &set_perfbar),
       def("get_stack_entry", &get_stack_entry, raw(_1)),
-      def("debugstack_annotated", &debugstack_annotated, raw(_1))
+      def("debugstack_annotated", &debugstack_annotated, raw(_1)),
+      
+      def("GetScreenX", &get_screenx),
+      def("GetScreenY", &get_screeny)
     ];
   }
   
@@ -924,6 +929,14 @@ void luashutdown() {
 }
 
 void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
+  
+  #ifdef IPHONE
+  width = 320;
+  height = 480; // welp
+  #endif
+  
+  phys_screenx = width;
+  phys_screeny = height;
 
   LogToFunction(&log_to_debugstring);
   System::Init();
@@ -1039,6 +1052,8 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
 
 SoundSample *SSLoad(const string &fname_base, float vol) {
   SoundSample *rv;
+  rv = SoundSample::Load("data/" + fname_base + ".caf", false, vol);  // hurr
+  if(rv) return rv;
   rv = SoundSample::Load("data/" + fname_base + ".ogg", false, vol);
   if(rv) return rv;
   rv = SoundSample::Load("data/" + fname_base + ".wav", false, vol);

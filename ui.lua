@@ -395,7 +395,7 @@ end
 function UI_Reset()
   UIParent = nil
   parents = {}
-  UIParent = UI_CreateParent(1024, 768)
+  UIParent = UI_CreateParent(GetScreenX(), GetScreenY())
 end
 UI_Reset()
 
@@ -421,7 +421,7 @@ function TextOverrides:AssimilateBounds()
   self:SetHeight(self.text:GetHeight())
 end
 function TextOverrides:SetSize(size)
-  self.text:SetTextSize(size / 1024)
+  self.text:SetTextSize(size / GetScreenX())
   self:AssimilateBounds()
 end
 function TextOverrides:SetColor(r, g, b, a)
@@ -641,7 +641,7 @@ end
 function TraverseUp(val)
   local x, y = GetMouse()
   
-  local rv = TraverseUpWorker(parents[val].parent, x / 1024 * parents[val].width, y / 768 * parents[val].height, false)
+  local rv = TraverseUpWorker(parents[val].parent, x / GetScreenX() * parents[val].width, y / GetScreenY() * parents[val].height, false)
   
   return rv
 end

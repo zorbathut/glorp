@@ -132,7 +132,6 @@ function glutil.RenderBoundedSprite(tex, sx, sy, ex, ey, r, g, b, a)
   
   tex:SetTexture()
   gl.Color(r or 1, g or 1, b or 1, a or 1)
-  print("rbs")
   glutil.RenderArray("TRIANGLE_FAN", 2, {sx, sy, ex, sy, ex, ey, sx, ey}, nil, nil, 2, {0 + xadj, 0 + yadj, teex + xadj, 0 + yadj, teex + xadj, teey + yadj, 0 + xadj, teey + yadj})
   SetNoTexture()
 end
