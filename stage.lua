@@ -44,7 +44,7 @@ local inminimenu
 local function destroy_game()
   if not runninggame then return end
   if runninggame.shutdown then runninggame.shutdown() end
-  runninggame.UIParent:Detach() -- yunk
+  runninggame.UIRoot:Detach() -- yunk
   runninggame = nil
 end
 local function reset_menu()
@@ -60,11 +60,11 @@ local function Handle(param, ...)
     else
       runninggame = runuifile("main.lua", ...)
     end
-    mainmenu.UIParent:Hide()
+    mainmenu.UIRoot:Hide()
   elseif param == "exit_game" then
     destroy_game()
     reset_menu()
-    mainmenu.UIParent:Show()
+    mainmenu.UIRoot:Show()
   elseif param == "exit" then
     TriggerExit()
   else
@@ -172,13 +172,19 @@ function runuifile(file, ...)
   env._G = env
   
   local uip = CreateFrame("Frame")
+  uip:SetAllPoints()
+  env.UIRoot = uip
   -- hackery hackhack
   if GetScreenX() == 320 and GetScreenY() == 480 then
     uip:SetCoordinateScale(512, 384, 1024, 0)
+    env.UIParent = CreateFrame("Frame", uip)
+    env.UIParent:SetPoint("TOPLEFT", UIParent, "TOPLEFT")
+    env.UIParent:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", 1024, 768)  -- we need for uiparent to have the right coordinates
+  else
+    env.UIParent = uip
   end
-  uip:SetAllPoints()
-  env.UIParent = uip
-  env.CreateFrame = function (type, parent) return CreateFrame(type, parent or uip) end
+  
+  env.CreateFrame = function (type, parent) return CreateFrame(type, parent or env.UIParent) end
   env.GlorpController = Handle
   env.loadfile = function (...)
     local dat, rv = loadfile(...)
@@ -292,7 +298,7 @@ function render(...)
   
   stdwrap("render", ...)
   local context = runninggame or mainmenu
-  context.UIParent:Render()
+  context.UIRoot:Render()
   
   if inminimenu then
     imm_render()

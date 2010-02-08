@@ -20,6 +20,7 @@
 #include <Glop/glop3d/Camera.h>
 #include <Glop/glop3d/Mesh.h>
 #include <Glop/Sound.h>
+#include <Glop/Os.h>
 
 #include <iostream>
 
@@ -66,7 +67,7 @@ const int virt_height = 480;
   }
 #endif
 
-#if defined(MACOSX) || defined(IPHONE)
+#if defined(MACOSX)
   #undef printf
   void ods(const string &str) {
     if(str.size() && str[str.size() - 1] == '\n')
@@ -86,6 +87,8 @@ const int virt_height = 480;
   }
   #define printf FAILURE
 #endif
+  
+// iphone equivalent stashed in main_iphone.mm
 
 extern "C" {
 static int debug_print(lua_State *L) {
@@ -888,6 +891,13 @@ void luainit(int argc, const char **argv) {
       def("get_stack_entry", &get_stack_entry, raw(_1)),
       def("debugstack_annotated", &debugstack_annotated, raw(_1)),
       
+      #ifdef IPHONE
+      def("touch_getCount", &os_touch_getCount),
+      def("touch_getActive", &os_touch_getActive),
+      def("touch_getX", &os_touch_getX),
+      def("touch_getY", &os_touch_getY),
+      #endif
+      
       def("GetScreenX", &get_screenx),
       def("GetScreenY", &get_screeny)
     ];
@@ -988,6 +998,33 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     int lasttick = system()->GetTime();
     while(window()->IsCreated()) {
       system()->Think();
+      
+      // let's put the IPhone key stuff here
+      #ifdef IPHONE
+      {
+        vector<TouchEvent> kiz = os_touch_getEvents();
+        for(int i = 0; i < kiz.size(); i++) {
+          if(kiz[i].type == EVENT_TOUCH || kiz[i].type == EVENT_RELEASE) {
+            lua_getglobal(L, "generic_wrap");
+            lua_getglobal(L, "UI_Key");
+            
+            lua_pushstring(L, StringPrintf("finger_%d", kiz[i].id).c_str());
+            lua_pushnil(L); // no ascii ever
+            if(kiz[i].type == EVENT_TOUCH) {
+              lua_pushstring(L, "press");
+            } else {
+              lua_pushstring(L, "release");
+            }
+            int rv = lua_pcall(L, 4, 0, 0);
+            if (rv) {
+              dprintf("%s", lua_tostring(L, -1));
+              meltdown();
+              CHECK(0);
+            }
+          }
+        }
+      }
+      #endif
       
       {
         PerfStack pb(0.0, 0.0, 0.5);

@@ -401,7 +401,8 @@ UI_Reset()
 
 
 local function Button_Key(self, button, ascii, event)
-  if button ~= "mouse_left" then return true end  -- don't know don't care
+  print(self, button, ascii, event)
+  if button ~= "mouse_left" and not button:match("finger_%d+") then return true end  -- don't know don't care
   
   if event == "press" then
     self.button_down = true
@@ -622,11 +623,25 @@ end
 
 local function TraverseUpWorker(start, x, y, keyed)
   if start.hide then return end
+  print("TUW", x, y)
   
   if start.children then
+    local lx, ly = x, y
+    if start.cs_x then
+      -- now we have to do some transformations
+      -- first, figure out where we are within the coordinate space of the window
+      lx = (lx - (start:GetLeft() + start:GetRight()) / 2) / start:GetWidth()
+      ly = (ly - (start:GetTop() + start:GetBottom()) / 2) / start:GetWidth()
+      -- now we rotate (we don't rotate yet)
+      
+      -- then we rescale
+      lx = lx * start.cs_scale + start.cs_x
+      ly = ly * start.cs_scale + start.cs_y
+      print("Converted", x, y, "to", lx, ly, "with params", start.cs_x, start.cs_y, start.cs_scale, start.cs_rotate)
+    end
     for tid = #start.children, 1, -1 do
       local k = start.children[tid]
-      local rv = TraverseUpWorker(k, x, y, keyed or start.Key)
+      local rv = TraverseUpWorker(k, lx, ly, keyed or start.Key)
       if rv then return rv end
     end
   end
@@ -638,8 +653,26 @@ local function TraverseUpWorker(start, x, y, keyed)
   return nil
 end
 
-function TraverseUp(val)
-  local x, y = GetMouse()
+function TraverseUp(val, button)
+  local finger_id = button:match("finger_(%d+)")
+  
+  local x, y
+  
+  if not finger_id then
+    -- we are doing a normal mouse or keyboard thing
+    x, y = GetMouse()
+  else
+    -- holy shit we are running on an iphone
+    -- can you believe that
+    -- a motherfucking iphone
+    -- jesus goddamn christ
+    finger_id = tonumber(finger_id)
+    assert(finger_id)
+    
+    x, y = touch_getX(finger_id), touch_getY(finger_id)
+    
+    print("finger", finger_id, x, y)
+  end
   
   local rv = TraverseUpWorker(parents[val].parent, x / GetScreenX() * parents[val].width, y / GetScreenY() * parents[val].height, false)
   
@@ -688,7 +721,7 @@ function UI_Key(button, ascii, event)
   if not passdown then return end
   
   for k in ipairs(parents) do
-    local frame_target = TraverseUp(k)
+    local frame_target = TraverseUp(k, button)
     -- Otherwise, we first figure out what the topmost frame it's on is, with topmost being simply defined as "last in the render order but with the key over it".
     -- Then we traverse up, looking for something that wants to eat it.
     while frame_target do
