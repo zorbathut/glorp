@@ -313,6 +313,7 @@ do
     
     if self.cs_x then
       gl.MatrixMode("PROJECTION")
+
       gl.PushMatrix()
       
       local sx, sy, ex, ey = self:GetBounds()
@@ -433,12 +434,14 @@ function TextOverrides:SetText(text)
   self:AssimilateBounds()
 end
 function TextOverrides:Draw()
+  print("horrible text draw")
   local l, u, r, d = self:GetBounds()
   if not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
     self.text:SetPosition(l, u, l, u, r, d)
     self.text:UpdateSize(0, 0)
   end
   self.text:Render()
+  print("horrible text draw done")
 end
 
 
@@ -457,6 +460,7 @@ function TextMultilineOverrides:SetColor(r, g, b, a)
   self:ResynchText()
 end
 function TextMultilineOverrides:Draw()
+  print("horrible multitext draw")
   local l, u, r, d = self:GetBounds()
   if self.update or not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
     self.text:UpdateSize(r - l, d - u)
@@ -464,6 +468,7 @@ function TextMultilineOverrides:Draw()
     self.update = nil
   end
   self.text:Render()
+  print("horrible multitext done")
 end
 TextMultilineOverrides.tex_r = 1
 TextMultilineOverrides.tex_g = 1

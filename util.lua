@@ -235,8 +235,17 @@ if false then
   end
 end
 
-
-
+--[[
+for k, v in pairs(gl) do
+  gl[k] = function (...)
+    print("before", k)
+    return (function (...)
+      print("after", k)
+      return ...
+    end)(v(...))
+  end
+end
+]]
 
 
 
