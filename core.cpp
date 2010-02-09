@@ -938,6 +938,11 @@ void luashutdown() {
   delete uilayer;
 }
 
+void fatal(const string &message) {
+  dprintf("FATAL EXPLOSION OF FAILURE: %s", message.c_str()); fflush(stdout);
+  CHECK(0);
+}
+
 void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
   
   #ifdef IPHONE
@@ -949,6 +954,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   phys_screeny = height;
 
   LogToFunction(&log_to_debugstring);
+  SetFatalErrorHandler(&fatal);
   System::Init();
   
   #ifdef IPHONE
