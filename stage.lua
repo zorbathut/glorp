@@ -1,7 +1,7 @@
 
 local platform, _, mode = ...
 
-function runfile(file, global, ...)
+function runfile_worker(file, global, optional, ...)
   assert(global)
   
   local dat, rv = loadfile(file)
@@ -15,6 +15,8 @@ function runfile(file, global, ...)
   end
   
   if rv then
+    if optional and rv:find("No such file or directory") then return end
+    
     assert(false, rv)
   end
   
@@ -23,6 +25,12 @@ function runfile(file, global, ...)
   end
   
   dat(mode, platform, ...)
+end
+function runfile(file, global, ...)
+  runfile_worker(file, global, false, ...)
+end
+function runfile_optional(file, global, ...)
+  runfile_worker(file, global, true, ...)
 end
 
 runfile("util.lua", _G)

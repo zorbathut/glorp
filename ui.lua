@@ -322,7 +322,7 @@ do
       gl.Translate(cx, cy, 0)
       gl.Scale(scalefact, scalefact, 1)
       gl.Translate(-self.cs_x, -self.cs_y, 0)
-      if self.cs_rotate then gl.Rotate(self.cs_rotate, 0, 0, 1) end
+      if self.cs_rotate then gl.Rotate(self.cs_rotate / 3.14159 * 180, 0, 0, 1) end
     end
     
     if self.Draw then self:Draw() end
@@ -624,7 +624,6 @@ end
 
 local function TraverseUpWorker(start, x, y, keyed)
   if start.hide then return end
-  print("TUW", x, y)
   
   if start.children then
     local lx, ly = x, y

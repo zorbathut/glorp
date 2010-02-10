@@ -17,7 +17,7 @@ end
 
 local achievement_persist = persistence.load("achievements")
 
-runfile("achievements.lua", loader_glob)
+runfile_optional("achievements.lua", loader_glob)
 
 local height = 100
 local width_small = 300
