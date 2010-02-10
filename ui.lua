@@ -637,7 +637,6 @@ local function TraverseUpWorker(start, x, y, keyed)
       -- then we rescale
       lx = lx * start.cs_scale + start.cs_x
       ly = ly * start.cs_scale + start.cs_y
-      print("Converted", x, y, "to", lx, ly, "with params", start.cs_x, start.cs_y, start.cs_scale, start.cs_rotate)
     end
     for tid = #start.children, 1, -1 do
       local k = start.children[tid]
@@ -654,7 +653,7 @@ local function TraverseUpWorker(start, x, y, keyed)
 end
 
 function TraverseUp(val, button)
-  local finger_id = button:match("finger_(%d+)")
+  local finger_id = button and button:match("finger_(%d+)")
   
   local x, y
   
