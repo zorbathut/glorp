@@ -33,40 +33,48 @@ local lua
 local lua_headers = {}
 do
   do
-    local files = "lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lzio lcoco linit lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib lvm"
-    local path
     if not osd.noluajit then
-      -- luajit
-      files = files .. " ljit_core ljit_mem ljit_dasm ljit_backend ljitlib"
-      path = "glorp/luabuild/LuaJIT-1.1.5/"
+      local path = "glorp/luabuild/LuaJIT-2.0.0-b2p1/"
+      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find -type f | sed s*\\\\./**"):format(path)} end}
+      local copied = {}
+      for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
+        table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+      end
+      
+      ursa.rule{builddir .. "luabuild/src/libluajit.a", copied, ursa.util.system_template{("cd %s && make -j5"):format(builddir .. "luabuild")}}
+      ursa.rule{builddir .. "lua/lib/liblua.a", builddir .. "luabuild/src/libluajit.a", ursa.util.system_template{"cp $SOURCE $TARGET"}}
+      
+      -- luajit includes it in src
+      table.insert(lua_headers, ursa.rule{builddir .. "lua/include/lua.hpp", builddir .. "luabuild/src/lua.hpp", ursa.util.system_template{"cp $SOURCE $TARGET"}})
+      table.insert(lua_headers, ursa.rule{builddir .. "lua/include/luajit.h", builddir .. "luabuild/src/luajit.h", ursa.util.system_template{"cp $SOURCE $TARGET"}})
     else
-      path = "glorp/luabuild/lua-5.1.4/"
-    end
-    
-    ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find src -type f && (find dynasm -type f || true) "):format(path)} end}
-    local copied = {}
-    for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
-      table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
-    end
-    
-    if not osd.noluajit then
-      table.insert(copied, ursa.rule{builddir .. "luabuild/src/ljit_x86.h", {builddir .. "luabuild/dynasm/dynasm.lua", builddir .. "luabuild/dynasm/dasm_x86.lua", builddir .. "luabuild/src/ljit_x86.dasc", builddir .. "luabuild/src/ljit_x86.dash", builddir .. "luabuild/src/ljit_x86_inline.dash"}, ursa.util.system_template{"cd #builddir/luabuild/src ; lua ../dynasm/dynasm.lua -o ljit_x86.h ljit_x86.dasc"}})
-    end
-    
-    local luaobjects = {}
-    for k in files:gmatch("([^ ]+)") do  -- yes okay hardcoded shut up
-      table.insert(luaobjects, ursa.rule{builddir .. "luabuild/src/" .. k .. ".o", copied, ursa.util.system_template{"#CC -O3 -fomit-frame-pointer #LUA_FLAGS -I#builddir/luabuild/dynasm -Wall -x c -c -o $TARGET #builddir/luabuild/src/" .. k .. ".c"}})
-    end
+      local files = "lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lzio lcoco linit lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib lvm"
+      local path = "glorp/luabuild/lua-5.1.4/"
+      
+      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find src -type f && (find dynasm -type f || true) "):format(path)} end}
+      local copied = {}
+      for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
+        table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+      end
+      
+      local luaobjects = {}
+      for k in files:gmatch("([^ ]+)") do  -- yes okay hardcoded shut up
+        table.insert(luaobjects, ursa.rule{builddir .. "luabuild/src/" .. k .. ".o", copied, ursa.util.system_template{"#CC -O3 -fomit-frame-pointer #LUA_FLAGS -I#builddir/luabuild/dynasm -Wall -x c -c -o $TARGET #builddir/luabuild/src/" .. k .. ".c"}})
+      end
 
-    ursa.rule{builddir .. "lua/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- wonder if this'll work right under cygwin
+      ursa.rule{builddir .. "lua/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- wonder if this'll work right under cygwin
+      
+      -- base lua includes it in etc
+      table.insert(lua_headers, ursa.rule{builddir .. "lua/include/lua.hpp", builddir .. "luabuild/etc/lua.hpp", ursa.util.system_template{"cp $SOURCE $TARGET"}})
+    end
   end
 
   local luabuilds = {builddir .. "lua/lib/liblua.a"}
   
   for k in ("lua.h lauxlib.h lualib.h luaconf.h"):gmatch("([^ ]+)") do
-    table.insert(lua_headers, ursa.rule{builddir .. "lua/include/" .. k, "glorp/luabuild/LuaJIT-1.1.5/src/" .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+    table.insert(lua_headers, ursa.rule{builddir .. "lua/include/" .. k, builddir .. "luabuild/src/" .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   end
-  table.insert(lua_headers, ursa.rule{builddir .. "lua/include/lua.hpp", "glorp/luabuild/LuaJIT-1.1.5/etc/lua.hpp", ursa.util.system_template{"cp $SOURCE $TARGET"}})
+  
   
   local luabindobj = {}
   local luabindroot = "glorp/luabuild/luabind-0.9ish"
