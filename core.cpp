@@ -291,8 +291,11 @@ std::ostream& operator<<(std::ostream&ostr, WrappedTex const&ite) {
 
 
 WrappedTex *GetTex(const string &image) {
+  dprintf("%s\n", getcwd(NULL, 0));
   Image *tex = Image::Load("data/" + image + ".png");
   if(!tex) tex = Image::Load("data/" + image + ".jpg");
+  if(!tex) tex = Image::Load(image + ".png");
+  if(!tex) tex = Image::Load(image + ".jpg");
   if(!tex) return NULL;
   
   return new WrappedTex(tex, image);

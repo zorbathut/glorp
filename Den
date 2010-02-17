@@ -35,11 +35,12 @@ do
   do
     if not osd.noluajit then
       local path = "glorp/luabuild/LuaJIT-2.0.0-b2p1/"
-      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find -type f | sed s*\\\\./**"):format(path)} end}
+      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
         table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
       end
+      table.insert(copied, ursa.rule{builddir .. "luabuild/src/Makefile", builddir .. "luabuild/src/Makefile." .. platform, ursa.util.system_template{"cp $SOURCE $TARGET"}})
       
       ursa.rule{builddir .. "luabuild/src/libluajit.a", copied, ursa.util.system_template{("cd %s && make -j5"):format(builddir .. "luabuild")}}
       ursa.rule{builddir .. "lua/lib/liblua.a", builddir .. "luabuild/src/libluajit.a", ursa.util.system_template{"cp $SOURCE $TARGET"}}
