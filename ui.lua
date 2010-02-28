@@ -50,6 +50,8 @@ do
     return self.bg_r and 20 -- everything is 20, unless it actually fails to exist
   end
   local function getpoint(self, axis, point)
+    assert(point)
+    
     --print("gp", self, axis, point)
     if self[axis] then
       do
@@ -77,7 +79,13 @@ do
       end -- zero points falls back to no constraints
     end
     
-    return point * getsize(self, axis)
+    local gs = getsize(self, axis)
+    if not gs then
+      print("Failure to get size for " .. tostring(self.__name) .. " axis " .. tostring(axis))
+      assert(gs)
+    end
+    
+    return point * gs
   end
   local function reanchor(self, axis, token, ...)
     if not self[axis] then
