@@ -6,7 +6,7 @@ local rv = {}
 
 token_literal("CC", params.glop.cc)
 token_literal("CXXFLAGS", "-mwindows -DWIN32 -DCURL_STATICLIB -Ic:/cygwin/usr/mingw/local/include -Iglorp/glop/build/Glop/local/include")
-token_literal("LDFLAGS", "-L/lib/mingw -Lc:/cygwin/usr/mingw/local/lib -Lglorp/glop/Glop/cygwin/lib -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -ljpeg -lfreetype -lz")
+token_literal("LDFLAGS", "-L/lib/mingw -Lc:/cygwin/usr/mingw/local/lib -Lglorp/glop/Glop/cygwin/lib -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -ljpeg -lfreetype -lz -limagehlp")
 
 token_literal("FLAC", "/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe")
 

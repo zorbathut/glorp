@@ -185,7 +185,27 @@ void makeConfigDirectory() {
   }
 }
 
-// if Cygwin or other Linux
+string exename() {
+  return loc_exename;
+}
+
+#ifdef WIN32
+CONTEXT *crash_context = NULL;
+class SignalHandler {
+public:
+  static WINAPI LONG signal_h(EXCEPTION_POINTERS *lol) {
+    crash_context = lol->ContextRecord;
+    CHECK(0);
+  } // WE NEVER DIE
+  
+  SignalHandler() {
+    SetUnhandledExceptionFilter(&signal_h);
+  }
+} sighandler;
+
+#else
+
+// OSX, iPhone, make this work better? we do want a stack trace if at all possible
 typedef void (*sighandler_t)(int);
 
 class SignalHandler {
@@ -199,15 +219,63 @@ public:
     signal(SIGSEGV, &signal_h);
   }
 } sighandler;
+#endif
 
-string exename() {
-  return loc_exename;
+#ifdef __GNUG__
+inline bool verifyInlined(const void *const p) {
+  return __builtin_return_address(1) == p;
 }
 
-// if GCC
+bool testInlined() {
+  return verifyInlined(__builtin_return_address(1));
+}
 
-#if defined(__GNUG__)
- 
+bool isUnoptimized() {
+  return !testInlined();
+}
+#else
+#error Not using GCC? What?
+#endif
+
+// if Windows
+#ifdef WIN32
+// magic!
+#include <excpt.h>
+#include <imagehlp.h>
+
+vector<const void*> dumpy_stack() {
+  vector<const void*> stack;
+  
+  CONTEXT *context = crash_context;
+  
+  CONTEXT ctx;
+  if(!context) {
+    // oh bloody hell
+    HINSTANCE kernel32 = LoadLibrary("Kernel32.dll");
+    typedef void ( * RtlCaptureContextFunc ) ( CONTEXT * ContextRecord );
+    RtlCaptureContextFunc rtlCaptureContext = (RtlCaptureContextFunc) GetProcAddress( kernel32, "RtlCaptureContext" );
+    
+    rtlCaptureContext(&ctx);
+    context = &ctx;
+  }
+
+  STACKFRAME frame;
+  memset(&frame, 0, sizeof(frame));
+  
+  frame.AddrPC.Offset = context->Eip;
+  frame.AddrPC.Mode = AddrModeFlat;
+  frame.AddrStack.Offset = context->Esp;
+  frame.AddrStack.Mode = AddrModeFlat;
+  frame.AddrFrame.Offset = context->Ebp;
+  frame.AddrFrame.Mode = AddrModeFlat;
+
+  while(StackWalk(IMAGE_FILE_MACHINE_I386, GetCurrentProcess(), GetCurrentThread(), &frame, context, 0, SymFunctionTableAccess, SymGetModuleBase, 0)) {
+    stack.push_back((const void*)frame.AddrPC.Offset);
+  }
+
+  return stack;
+}
+#else
 const unsigned int kStackTraceMax = 20;
 const unsigned int kMaxClassDepth = kStackTraceMax * 2 + 1;
 BOOST_STATIC_ASSERT(kMaxClassDepth % 2 == 1); // Must be odd.
@@ -233,15 +301,7 @@ template <> struct StackTracer<2, kMaxClassDepth> {
   static void printStack(vector<const void *> *vek) {}
 };
 
-inline bool verifyInlined(const void *const p) {
-  return __builtin_return_address(1) == p;
-}
-
-bool testInlined() {
-  return verifyInlined(__builtin_return_address(1));
-}
-
-void dumpStackTrace() {
+vector<const void *> dumpy_stack() {
   vector<const void *> stack;
   if(testInlined()) {
     dprintf("Stacktracing (inlined)\n");
@@ -250,6 +310,26 @@ void dumpStackTrace() {
     dprintf("Stacktracing\n");
     StackTracer<2>::printStack(&stack);
   }
+  
+  return stack;
+}
+
+// this never happens anymore
+/*
+#else
+
+void dumpStackTrace() {
+  dprintf("No stack trace available\n");
+}
+
+bool isUnoptimized() {
+  return false;
+}*/
+
+#endif
+
+void dumpStackTrace() {
+  vector<const void *> stack = dumpy_stack();
   
   vector<pair<string, string> > tokens;
   if(FLAGS_addr2line) {
@@ -305,19 +385,3 @@ void dumpStackTrace() {
 
   dprintf("\n");
 }
-
-bool isUnoptimized() {
-  return !testInlined();
-}
-
-#else
-
-void dumpStackTrace() {
-  dprintf("No stack trace available\n");
-}
-
-bool isUnoptimized() {
-  return false;
-}
-
-#endif

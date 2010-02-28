@@ -776,6 +776,9 @@ void debugstack_annotated(lua_State *L) {
   lua_concat(L, lua_gettop(L));
 }
 
+void CrashHorribly() {
+  *(int*)0 = 0;
+}
 
 int phys_screenx, phys_screeny;
 int get_screenx() { return phys_screenx; }
@@ -902,7 +905,9 @@ void luainit(int argc, const char **argv) {
       #endif
       
       def("GetScreenX", &get_screenx),
-      def("GetScreenY", &get_screeny)
+      def("GetScreenY", &get_screeny),
+      
+      def("CrashHorribly", &CrashHorribly)
     ];
   }
   
