@@ -102,7 +102,7 @@ else
   token_literal("curl_link", "")
 end
 
-ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
+ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name)}
 
 ursa.rule{"version.cpp", "#version", function ()
   print("Writing file version.cpp")
@@ -182,7 +182,7 @@ local function build_program(name)
   table.insert(objs, lua[1])
   
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link"}, ursa.util.system_template{"nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g $SOURCES -L#builddir/lua/lib -lluabind -lm -llua -lz -lpng #curl_link #LDFLAGS"}}
+  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link", glop.sublibs}, ursa.util.system_template{"nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g -Wl,--start-group $SOURCES -L#builddir/lua/lib -lluabind -lm -llua #curl_link #LDFLAGS -Wl,--end-group"}}
   return dst
 end
 
@@ -242,7 +242,7 @@ do
   end
 
   -- replicate the data structure in
-  ursa.token.rule{"data_files", nil, "if cd data; then find . -type f | sed s*\\\\./**; fi", always_rebuild = true}
+  ursa.token.rule{"data_files", nil, "if cd data; then find . -type f | sed s*\\\\./**; fi"}
   table.insert(data_deps, copy_a_lot("data", "data/", "data/"))
 
   ursa.token.rule{"stock_files", nil, "cd glorp/resources && ls mandible_games.png", always_rebuild = true}

@@ -5,8 +5,8 @@ local params = ...
 local rv = {}
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-mwindows -DWIN32 -DCURL_STATICLIB -Ic:/cygwin/usr/mingw/local/include -Iglorp/glop/build/Glop/local/include")
-token_literal("LDFLAGS", "-L/lib/mingw -Lc:/cygwin/usr/mingw/local/lib -Lglorp/glop/Glop/cygwin/lib -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -ljpeg -lfreetype -lz -limagehlp")
+token_literal("CXXFLAGS", "-mwindows -DWIN32 -DCURL_STATICLIB -Ic:/cygwin/usr/mingw/local/include -Iglorp/glop/release/cygwin/include")
+token_literal("LDFLAGS", "-L/lib/mingw -Lc:/cygwin/usr/mingw/local/lib -Lglorp/Glop/release/cygwin/lib -mwindows -lGlop -lGlop -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -lfmodex -limagehlp")
 
 token_literal("FLAC", "/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe")
 
@@ -17,15 +17,14 @@ rv.lua_buildtype = "cygwin"
 
 -- runnable
 rv.create_runnable = function(dat)
-  local libpath = "glorp/Glop/Glop/cygwin/dll"
-  local libs = "libfreetype-6.dll fmodex.dll libpng-3.dll"
+  local libpath = "glorp/Glop/Glop/source/third_party/system_cygwin/dll"
+  local libs = "fmodex.dll"
   local liboutpath = params.builddir
 
   local dlls = {}
   for libname in (libs):gmatch("[^%s]+") do
     table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, libname), ("%s/%s"):format(libpath, libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
   end
-  table.insert(dlls, ursa.rule{liboutpath .. "libGlop.dll", params.glop.lib, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   
   return {deps = {dlls, dat.mainprog}, cli = ("%s%s.exe"):format(params.builddir, params.name)}
   -- more to come
@@ -40,10 +39,9 @@ function rv.installers()
   for _, file in ipairs({params.name .. ".exe", "reporter.exe"}) do
     table.insert(data, ursa.rule{params.builddir .. "deploy/" .. file, params.builddir .. file, ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   end
-  for _, file in ipairs({"fmodex.dll", "libfreetype-6.dll", "libpng-3.dll"}) do
+  for _, file in ipairs({"fmodex.dll"}) do
     table.insert(data, ursa.rule{params.builddir .. "deploy/" .. file, params.builddir .. file, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   end
-  table.insert(data, ursa.rule{params.builddir .. "deploy/libGlop.dll", params.glop.lib, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   table.insert(data, ursa.rule{params.builddir .. "deploy/licenses.txt", "glorp/resources/licenses.txt", ursa.util.system_template{"cp $SOURCE $TARGET"}})
 
   -- second we generate our actual data copies
