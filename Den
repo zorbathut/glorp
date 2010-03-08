@@ -52,7 +52,7 @@ do
       local files = "lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lzio lcoco linit lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib lvm"
       local path = "glorp/luabuild/lua-5.1.4/"
       
-      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find src -type f && (find dynasm -type f || true) "):format(path)} end}
+      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find src etc -type f"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
         table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
@@ -122,8 +122,8 @@ local buildables = {
 
 local depsed = {}
 
-local function build_object(src, prefix, compiler)
-  local cli = ("%s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp/libs/boost -I%slua/include %s %s "):format(compiler or ursa.token{"CC"}, builddir, ursa.token{"CXXFLAGS"}, src)
+local function build_object(src, prefix, compiler, flags)
+  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp/libs/boost -I%slua/include %s %s "):format(compiler or ursa.token{"CC"}, flags or "", builddir, ursa.token{"CXXFLAGS"}, src)
   if not depsed[src] then
     local function make_dependencies(srcfile)
       local deps = ursa.util.system{cli .. "-MM"}
@@ -141,7 +141,7 @@ local function build_object(src, prefix, compiler)
     
     local depend = src .. " dependencies"
     
-    ursa.token.rule{depend, {glop.headers, lua_headers, ursa.util.token_deferred{depend, default = src}}, function () return make_dependencies(cpp) end}
+    ursa.token.rule{depend, {glop.headers, lua_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli}, function () return make_dependencies(cpp) end}
     depsed[src] = ursa.util.token_deferred{depend}
   end
   
@@ -168,7 +168,7 @@ local function build_program(name)
     table.insert(objs, build_object(k .. ".c", prefix, "gcc"))
   end
   for k in (item.mmfiles or ""):gmatch("([^%s]+)") do
-    table.insert(objs, build_object("glorp/" .. k .. ".mm", prefix, "g++ -x objective-c++"))
+    table.insert(objs, build_object("glorp/" .. k .. ".mm", prefix, nil, "-x objective-c++"))
   end
   
   if platform == "cygwin" then
