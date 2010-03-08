@@ -182,7 +182,8 @@ local function build_program(name)
   table.insert(objs, lua[1])
   
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link", glop.sublibs}, ursa.util.system_template{"nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g -Wl,--start-group $SOURCES -L#builddir/lua/lib -lluabind -lm -llua #curl_link #LDFLAGS -Wl,--end-group"}}
+  --ursa.rule{dst, {objs, glop.lib, lua, "#curl_link", glop.sublibs}, ursa.util.system_template{"nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g -Wl,--start-group $SOURCES -L#builddir/lua/lib -lluabind -lm -llua #curl_link #LDFLAGS -Wl,--end-group"}}
+  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link", glop.sublibs}, ursa.util.system_template{"nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g $SOURCES -L#builddir/lua/lib -lluabind -lm -llua #curl_link #LDFLAGS"}}
   return dst
 end
 

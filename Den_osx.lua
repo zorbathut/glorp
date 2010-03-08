@@ -7,8 +7,8 @@ local rv = {}
 loadfile("glorp/Den_util_osx.lua")(params, rv)
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-arch i386 -Fglorp/Glop/build/Glop -DMACOSX -I/opt/local/include")
-token_literal("LDFLAGS", "-arch i386 -Lglorp/Glop/Glop/OSX/lib -Fglorp/Glop/build/Glop -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework Glop -ljpeg6b -lfreetype235")
+token_literal("CXXFLAGS", "-arch i386 -DMACOSX -I/opt/local/include -Iglorp/glop/release/osx/include")
+token_literal("LDFLAGS", "-arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit")
 
 token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -arch i386")
 
@@ -25,22 +25,23 @@ rv.create_runnable = function(dat)
   local current_glop_iteration = 0
   
   -- copy our main executable
-  table.insert(runnable, ursa.rule{basepath .. "/Contents/MacOS/" .. params.longname, dat.mainprog, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+  table.insert(runnable, ursa.rule{basepath .. "/Contents/MacOS/" .. params.longname, dat.mainprog, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool -change ./libfmodex.dylib @executable_path/../Frameworks/libfmodex.dylib $TARGET"):format(cli)}})
   
+  --[[
   local function tweak_glop(cli)
     current_glop_iteration = current_glop_iteration + 1
     current_glop = ursa.rule{"build/osx/glop_lib_" .. current_glop_iteration, current_glop, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool %s $TARGET"):format(cli)}}
     --assert(false)
-  end
+  end]]
   
   -- copy subsidiary libraries
-  for libname in ("libfmodex.dylib libz.dylib"):gmatch("[^%s]+") do
-    table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/Glop.framework/%s"):format(basepath, libname), ("glorp/Glop/Glop/OSX/lib/%s"):format(libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
-    tweak_glop(("-change ./%s @executable_path/../Frameworks/Glop.Framework/%s"):format(libname, libname))
+  for libname in ("libfmodex.dylib"):gmatch("[^%s]+") do
+    table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/%s"):format(basepath, libname), ("glorp/Glop/Glop/source/third_party/system_osx/lib/%s"):format(libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
+    --tweak_glop(("-change ./%s @executable_path/../Frameworks/%s"):format(libname, libname))
   end
   
   -- copy the main glop library
-  table.insert(runnable, ursa.rule{basepath .. "/Contents/Frameworks/Glop.framework/Glop", current_glop, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+  --table.insert(runnable, ursa.rule{basepath .. "/Contents/Frameworks/Glop.framework/Glop", current_glop, ursa.util.system_template{"cp $SOURCE $TARGET"}})
   
   runnable_deps = runnable
   
