@@ -694,7 +694,9 @@ bool screenshot_to(const string &fname) {
   glReadPixels(0, 0, x, y, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, &dat[0]);
   
   png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+  assert(png_ptr);
   png_infop info_ptr = png_create_info_struct(png_ptr);
+  assert(info_ptr);
   assert(!setjmp(png_jmpbuf(png_ptr)));
   png_init_io(png_ptr, fil);
   
@@ -704,7 +706,6 @@ bool screenshot_to(const string &fname) {
   png_write_end(png_ptr, NULL);
   
   png_destroy_write_struct(&png_ptr, &info_ptr);
-  
   fclose(fil);
   return true;
 }
