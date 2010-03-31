@@ -170,6 +170,7 @@ end
 
 overlay = CreateFrame("Frame")
 overlay:SetLayer(1000000)
+overlay:SetAllPoints()
 
 function runuifile(file, ...)
   local env = {}

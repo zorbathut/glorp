@@ -34,73 +34,131 @@ local lua_headers = {}
 do
   do
     if not osd.noluajit then
-      local path = "glorp/luabuild/LuaJIT-2.0.0-beta3/"
+      local path = "glorp/libs/LuaJIT-2.0.0-beta3/"
       ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
         if k == "src/Makefile" then
           -- let's make some changes
-          table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{('sed -e "s@CC= gcc@CC= %s@" -e "s/.XCFLAGS+= -DLUA_USE_APICHECK/XCFLAGS+= -DLUA_USE_APICHECK/" -e "s/.XCFLAGS+= -DLUA_USE_ASSERT/XCFLAGS+= -DLUA_USE_ASSERT/" -e "s/.BUILDMODE= static/BUILDMODE= static/" -e "s/HOST_RM= del/# HOST_RM= del/" $SOURCE > $TARGET'):format(glop.libcc)}})
+          table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.system_template{('sed -e "s@CC= gcc@CC= %s@" -e "s/.XCFLAGS+= -DLUA_USE_APICHECK/XCFLAGS+= -DLUA_USE_APICHECK/" -e "s/.XCFLAGS+= -DLUA_USE_ASSERT/XCFLAGS+= -DLUA_USE_ASSERT/" -e "s/.BUILDMODE= static/BUILDMODE= static/" -e "s/HOST_RM= del/# HOST_RM= del/" $SOURCE > $TARGET'):format(glop.libcc)}})
         else
-          table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+          table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.copy{}})
         end
       end
       
-      ursa.rule{builddir .. "luabuild/src/libluajit.a", copied, ursa.util.system_template{("cd %s && make -j5"):format(builddir .. "luabuild")}}
-      ursa.rule{builddir .. "lua/lib/liblua.a", builddir .. "luabuild/src/libluajit.a", ursa.util.system_template{"cp $SOURCE $TARGET"}}
+      ursa.rule{builddir .. "lib_build/lua/src/libluajit.a", copied, ursa.util.system_template{("cd %slib_build/lua && make -j5"):format(builddir)}}
+      ursa.rule{builddir .. "lib_release/lib/liblua.a", builddir .. "lib_build/lua/src/libluajit.a", ursa.util.copy{}}
       
       -- luajit includes it in src
-      table.insert(lua_headers, ursa.rule{builddir .. "lua/include/lua.hpp", builddir .. "luabuild/src/lua.hpp", ursa.util.system_template{"cp $SOURCE $TARGET"}})
-      table.insert(lua_headers, ursa.rule{builddir .. "lua/include/luajit.h", builddir .. "luabuild/src/luajit.h", ursa.util.system_template{"cp $SOURCE $TARGET"}})
+      table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/lua.hpp", builddir .. "lib_build/lua/src/lua.hpp", ursa.util.copy{}})
+      table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/luajit.h", builddir .. "lib_build/lua/src/luajit.h", ursa.util.copy{}})
     else
       local files = "lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lzio lcoco linit lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib lvm"
-      local path = "glorp/luabuild/lua-5.1.4/"
+      local path = "glorp/libs/lua-5.1.4/"
       
       ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find src etc -type f"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
-        table.insert(copied, ursa.rule{builddir .. "luabuild/" .. k, path .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+        table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.copy{}})
       end
       
       local luaobjects = {}
       for k in files:gmatch("([^ ]+)") do  -- yes okay hardcoded shut up
-        table.insert(luaobjects, ursa.rule{builddir .. "luabuild/src/" .. k .. ".o", copied, ursa.util.system_template{"#CC -O3 -fomit-frame-pointer #LUA_FLAGS -I#builddir/luabuild/dynasm -Wall -x c -c -o $TARGET #builddir/luabuild/src/" .. k .. ".c"}})
+        table.insert(luaobjects, ursa.rule{builddir .. "lib_build/lua/src/" .. k .. ".o", copied, ursa.util.system_template{"#CC -O3 -fomit-frame-pointer #LUA_FLAGS -I#builddir/libs/dynasm -Wall -x c -c -o $TARGET #builddir/libs/src/" .. k .. ".c"}})
       end
 
-      ursa.rule{builddir .. "lua/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- wonder if this'll work right under cygwin
+      ursa.rule{builddir .. "lib_release/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- wonder if this'll work right under cygwin
       
       -- base lua includes it in etc
-      table.insert(lua_headers, ursa.rule{builddir .. "lua/include/lua.hpp", builddir .. "luabuild/etc/lua.hpp", ursa.util.system_template{"cp $SOURCE $TARGET"}})
+      table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/lua.hpp", builddir .. "lib_build/lua/etc/lua.hpp", ursa.util.copy{}})
     end
   end
 
-  local luabuilds = {builddir .. "lua/lib/liblua.a"}
+  local luabuilds = {builddir .. "lib_release/lib/liblua.a"}
   
   for k in ("lua.h lauxlib.h lualib.h luaconf.h"):gmatch("([^ ]+)") do
-    table.insert(lua_headers, ursa.rule{builddir .. "lua/include/" .. k, builddir .. "luabuild/src/" .. k, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+    table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/" .. k, builddir .. "lib_build/lua/src/" .. k, ursa.util.copy{}})
   end
   
   
   local luabindobj = {}
-  local luabindroot = "glorp/luabuild/luabind-0.9"
+  local luabindroot = "glorp/libs/luabind-0.9"
   local luabindpath = luabindroot .. "/src/"
   ursa.token.rule{"luabind_source_files", nil, function () return ursa.util.system{("cd %s && ls *.cpp"):format(luabindpath)} end}
   for k in ursa.token{"luabind_source_files"}:gmatch("([^\n]+)") do
-    table.insert(luabindobj, ursa.rule{builddir .. "luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -Iglorp/%s -I#builddir/lua/include -Iglorp/luabuild/luabind-0.9ish -Iglorp/libs/boost #CXXFLAGS -g"):format(luabindpath .. k, luabindroot)}})
+    table.insert(luabindobj, ursa.rule{builddir .. "lib_build/luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -Iglorp/%s -I#builddir/lib_release/include -Iglorp/libs/luabind-0.9ish -Iglorp/libs/boost #CXXFLAGS -g"):format(luabindpath .. k, luabindroot)}})
   end
   
-  lua = builddir .. "lua/lib/libluabind.a"
+  lua = builddir .. "lib_release/lib/libluabind.a"
   ursa.rule{lua, luabindobj, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}}
   
   ursa.token.rule{"luabind_headers", nil, function () return ursa.util.system{("cd %s/luabind && find . -type f | sed s*\\\\./**"):format(luabindroot)} end}
   for item in ursa.token{"luabind_headers"}:gmatch("([^\n]+)") do
-    local dest = builddir .. "lua/include/luabind/" .. item
-    ursa.rule{dest, luabindroot .. "/luabind/" .. item, ursa.util.system_template{"cp $SOURCE $TARGET"}}
-    table.insert(lua_headers, dest)
+    table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/luabind/" .. item, luabindroot .. "/luabind/" .. item, ursa.util.copy{}})
   end
 end
 
+local curl = {}
+local curllib
 if not osd.nocurl then
+  -- let's curl it up a notch
+  local path = "glorp/libs/curl-7.20.0"
+  
+  local files = {}
+  
+  ursa.token.rule{"curl_files", nil, function () return ursa.util.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  for item in ursa.token{"curl_files"}:gmatch("([^\n]+)") do
+    if item == "Makefile" or item == "include/curl/curlbuild.h" then
+    elseif item == "Makefile.in" then
+      table.insert(files, ursa.rule{builddir .. "lib_build/curl/" .. item, path .. "/" .. item, ursa.util.system_template{('sed -e "s@SUBDIRS = lib src@SUBDIRS = lib@" $SOURCE > $TARGET'):format(glop.libcc)}})
+    elseif item == "include/curl/curlbuild.h.in" then
+      table.insert(files, ursa.rule{builddir .. "lib_build/curl/" .. item, path .. "/" .. item, ('sed -e "/#define __CURL_CURLBUILD_H/a\\\n#define CURL_STATICLIB" %s > %s'):format(path .. "/" .. item, builddir .. "lib_build/curl/" .. item)})
+    elseif item == "configure"  and platform == "cygwin" then
+      table.insert(files, ursa.rule{builddir .. "lib_build/curl/" .. item, path .. "/" .. item, ursa.util.system_template{([[sed
+        -e "s/for sel_arg1 in/for sel_arg1 in 'int'/"
+        -e "s/for sel_arg234 in/for sel_arg234 in 'fd_set *'/"
+        -e "s/for sel_arg5 in/for sel_arg5 in 'const struct timeval *'/"
+        -e "s/for sel_retv in/for sel_retv in 'int'/"
+        
+        -e "s/for recv_arg1 in/for recv_arg1 in 'SOCKET'/"
+        -e "s/for recv_arg2 in/for recv_arg2 in 'char *'/"
+        -e "s/for recv_arg3 in/for recv_arg3 in 'int'/"
+        -e "s/for recv_arg4 in/for recv_arg4 in 'int'/"
+        -e "s/for recv_retv in/for recv_retv in 'int'/"
+        
+        -e "s/for recvfrom_arg1 in/for recvfrom_arg1 in 'SOCKET'/"
+        -e "s/for recvfrom_arg2 in/for recvfrom_arg2 in 'char *'/"
+        -e "s/for recvfrom_arg3 in/for recvfrom_arg3 in 'int'/"
+        -e "s/for recvfrom_arg4 in/for recvfrom_arg4 in 'int'/"
+        -e "s/for recvfrom_arg5 in/for recvfrom_arg5 in 'struct sockaddr *'/"
+        -e "s/for recvfrom_arg6 in/for recvfrom_arg6 in 'int *'/"
+        -e "s/for recvfrom_retv in/for recvfrom_retv in 'int'/"
+        
+        -e "s/for send_arg1 in/for send_arg1 in 'SOCKET'/"
+        -e "s/for send_arg2 in/for send_arg2 in 'const char *'/"
+        -e "s/for send_arg3 in/for send_arg3 in 'int'/"
+        -e "s/for send_arg4 in/for send_arg4 in 'int'/"
+        -e "s/for send_retv in/for send_retv in 'int'/"
+        
+        $SOURCE > $TARGET && chmod +x $TARGET]]):format(glop.libcc):gsub("\n", " ")}})
+    else
+      table.insert(files, ursa.rule{builddir .. "lib_build/curl/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
+  end
+  
+  local makefile = ursa.rule{{builddir .. "lib_build/curl/Makefile", builddir .. "lib_build/curl/include/curl/curlbuild.h"}, files, ursa.util.system_template{('cd %s/lib_build/curl && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --disable-shared --disable-dependency-tracking --disable-ftp --disable-file --disable-ldap --disable-ldaps --disable-rtsp --disable-proxy --disable-dict --disable-telnet --disable-tftp --disable-pop3 --disable-imap --disable-smtp --disable-manual --disable-ipv6 --disable-crypto-auth --disable-cookies'):format(builddir, glop.libcc, glop.libcflags, glop.libldflags)}}
+  
+  local lib = ursa.rule{builddir .. "lib_build/curl/lib/.libs/libcurl.a", makefile, ('cd %slib_build/curl && make'):format(builddir)}  -- can't parallelize this, libcurl is a butt
+  
+  curllib = ursa.rule{builddir .. "lib_release/lib/libcurl.a", lib, ursa.util.copy{}}
+  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/curl.h", builddir .. "lib_build/curl/include/curl/curl.h", ursa.util.copy{}})
+  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/curlver.h", builddir .. "lib_build/curl/include/curl/curlver.h", ursa.util.copy{}})
+  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/curlbuild.h", builddir .. "lib_build/curl/include/curl/curlbuild.h", ursa.util.copy{}})
+  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/curlrules.h", builddir .. "lib_build/curl/include/curl/curlrules.h", ursa.util.copy{}})
+  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/easy.h", builddir .. "lib_build/curl/include/curl/easy.h", ursa.util.copy{}})
+  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/multi.h", builddir .. "lib_build/curl/include/curl/multi.h", ursa.util.copy{}})
+  --table.insert(curl, ursa.rule{ -- more later
+  -- copy dat shit
   token_literal("curl_link", "-lcurl")
 else
   token_literal("curl_link", "")
@@ -121,13 +179,16 @@ end}
 
 local buildables = {
   [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar LuaGL_common " .. (osd.gles and "LuaGLES" or "LuaGL LuaGL_ext"), cfiles = osd.gles and "" or "glorp/GLee", mmfiles = osd.gles and "main_iphone" or "", resources = "resource"},
-  ["reporter"] = {corefiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init"},
+  ["reporter"] = {corefiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", curl = true},
 }
 
 local depsed = {}
 
 local function build_object(src, prefix, compiler, flags)
-  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp/libs/boost -I%slua/include %s %s "):format(compiler or ursa.token{"CC"}, flags or "", builddir, ursa.token{"CXXFLAGS"}, src)
+  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp/libs/boost -I%slib_release/include %s %s "):format(compiler or ursa.token{"CC"}, flags or "", builddir, ursa.token{"CXXFLAGS"}, src)
+  
+  local clurl = (src == "glorp/reporter_main.cpp") and curl or {}
+  
   if not depsed[src] then
     local function make_dependencies(srcfile)
       local deps = ursa.util.system{cli .. "-MM"}
@@ -145,12 +206,12 @@ local function build_object(src, prefix, compiler, flags)
     
     local depend = src .. " dependencies"
     
-    ursa.token.rule{depend, {glop.headers, lua_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli}, function () return make_dependencies(cpp) end}
+    ursa.token.rule{depend, {glop.headers, lua_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, clurl}, function () return make_dependencies(cpp) end}
     depsed[src] = ursa.util.token_deferred{depend}
   end
   
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o"):gsub("%.mm", ".o")
-  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src]}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
+  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src], clurl}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
   return dst
 end
 
@@ -185,8 +246,15 @@ local function build_program(name)
   
   table.insert(objs, lua[1])
   
+  local extradeps = {}
+  local extralink = ""
+  if item.curl then
+    table.insert(extradeps, curllib)
+    extralink = extralink .. " #curl_link"
+  end
+  
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link", glop.sublibs}, ursa.util.system_template{"nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g -Wl,--start-group $SOURCES -L#builddir/lua/lib -lluabind -lm -llua #curl_link #LDFLAGS -Wl,--end-group"}}
+  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link", glop.sublibs, extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g -Wl,--start-group $SOURCES -L#builddir/lib_release/lib -lluabind -lm -llua %s #LDFLAGS -Wl,--end-group"):format(extralink)}}
   return dst
 end
 

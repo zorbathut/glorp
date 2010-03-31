@@ -5,7 +5,7 @@ local params = ...
 local rv = {}
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-mwindows -DWIN32 -DCURL_STATICLIB -Iglorp/glop/release/cygwin/include")
+token_literal("CXXFLAGS", "-mwindows -DWIN32 -Iglorp/glop/release/cygwin/include")
 token_literal("LDFLAGS", "-L/lib/mingw -Lglorp/Glop/release/cygwin/lib -mwindows -lGlop -lGlop -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -lfmodex -limagehlp")
 
 token_literal("FLAC", "/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe")
