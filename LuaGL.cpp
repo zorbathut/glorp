@@ -1896,102 +1896,6 @@ int static gl_tex_gen(lua_State *L)
    return 0;
 }
 
-/*TexImage(level, internalformat, format, pixels) -> none*/
-static int gl_tex_image(lua_State *L)
-{
-   GLenum e;
-   GLfloat *pixels;
-   GLsizei width, height;
-   int iformat;
-
-   /* test arguments type */
-   if(!( lua_isnumber(L, 1) && lua_isnumber(L, 2) &&
-         lua_isstring(L, 3) && lua_istable(L, 4) ))
-      luaL_error(L, "incorrect argument to function 'gl.TexImage'");
-
-   e = get_gl_enum(L, 3);
-
-   /* test argument */
-   if(e == ENUM_ERROR)
-      luaL_error(L, "incorrect string argument to function 'gl.TexImage'");
-
-   iformat = (int)lua_tonumber(L, 2);
-
-   if((height = get_array2f(L, 4, &pixels, &width)) != -1)
-   {
-      glTexImage2D(GL_TEXTURE_2D, (GLint)lua_tonumber(L, 1),
-                   iformat, width/iformat, height, 0, e, GL_FLOAT, pixels);
-      return 0;
-   }
-   else
-   {
-      width = get_arrayf(L, 4, &pixels);
-      glTexImage1D(GL_TEXTURE_1D, (GLint)lua_tonumber(L, 1),
-                   iformat, width/iformat, 0, e, GL_FLOAT, pixels);
-      return 0;
-   }
-}
-
-/*TexSubImage (level, format, pixels, xoffset) -> none
-  TexSubImage (level, format, pixels, xoffset, yoffset) -> none*/
-static int gl_tex_sub_image(lua_State *L)
-{
-   GLenum format;
-   GLfloat *pixels;
-   GLsizei width, height;
-   int size = 1;
-
-   /* test arguments type */
-   if(!( lua_isnumber(L, 1) && lua_isstring(L, 2) &&
-         lua_istable(L, 3) && lua_isnumber(L, 4) ))
-      luaL_error(L, "incorrect argument to function 'gl.TexSubImage'");
-
-   format = get_gl_enum(L, 2);
-   switch(format)
-   {
-      case GL_COLOR_INDEX:
-      case GL_RED:
-      case GL_GREEN:
-      case GL_BLUE:
-      case GL_ALPHA:
-      case GL_LUMINANCE:
-         size = 1;
-         break;
-
-      case GL_LUMINANCE_ALPHA:
-         size = 2;
-         break;
-
-      case GL_RGB:
-      //case GL_BGR_EXT:
-         size = 3;
-         break;
-
-      case GL_RGBA:
-      //case GL_BGRA_EXT:
-         size = 4;
-         break;
-   }
-
-   /* test argument */
-   if(format == ENUM_ERROR)
-      luaL_error(L, "incorrect string argument to function 'gl.TexSubImage'");
-
-   if((height = get_array2f(L, 3, &pixels, &width)) != -1)
-   {
-      glTexSubImage2D(GL_TEXTURE_2D, (GLint)lua_tonumber(L, 1), (GLint)lua_tonumber(L, 4),
-                      (GLint)lua_tonumber(L, 5), width/size, height, format, GL_FLOAT, pixels);
-      return 0;
-   }
-   else
-   {
-      width = get_arrayf(L, 3, &pixels);
-      glTexSubImage1D(GL_TEXTURE_1D, (GLint)lua_tonumber(L, 1), (GLint)lua_tonumber(L, 4),
-                      width/size, format, GL_FLOAT, pixels);
-      return 0;
-   }
-}
-
 /*TexParameter (target, pname, param) -> none
   TexParameter (target, pname, paramsArray) -> none*/
 static int gl_tex_parameter(lua_State *L)
@@ -2691,6 +2595,23 @@ static const gl_str_value gl_str[] = {
   MACRIX(LINK_STATUS),
   MACRIX(VALIDATE_STATUS),
   
+  MACRIX(DRAW_FRAMEBUFFER),
+  MACRIX(READ_FRAMEBUFFER),
+  MACRIX(FRAMEBUFFER),
+  MACRIX(RENDERBUFFER),
+  MACRIX(DEPTH_ATTACHMENT),
+  MACRIX(STENCIL_ATTACHMENT),
+  MACRIX(DEPTH_STENCIL_ATTACHMENT),
+  MACRIX(COLOR_ATTACHMENT0),
+  MACRIX(COLOR_ATTACHMENT1),
+  MACRIX(COLOR_ATTACHMENT2),
+  MACRIX(COLOR_ATTACHMENT3),
+  
+  MACRIX(FRAMEBUFFER_COMPLETE),
+  MACRIX(FRAMEBUFFER_INCOMPLETE_ATTACHMENT),
+  //MACRIX(FRAMEBUFFER_INCOMPLETE_DIMENSIONS),
+  //MACRIX(FRAMEBUFFER_INCOMPLETE_MISSING_DIMENSIONS),
+  //MACRIX(FRAMEBUFFER_INCOMPLETE_UNSUPPORTED),
    { 0, 0}
 };
 

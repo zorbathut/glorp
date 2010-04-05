@@ -204,7 +204,7 @@ end
 print(gl.Get("MAX_PROJECTION_STACK_DEPTH"))
 
 -- hurrr
-if false then
+if true then
   local shutup = false
   function testerror(bef, nam)
     if shutup then return end
@@ -296,6 +296,16 @@ function glutil.Program()
   return prog
 end
 
+function glutil.Framebuffer()
+  local prog = {id = GlFramebuffer()}
+  return prog
+end
+
+function glutil.Texture()
+  local prog = {id = GlTexture()}
+  return prog
+end
+
 print(platform)
 if platform ~= "iphone" and platform ~= "iphone_sim" then
   local snatch = {
@@ -317,6 +327,13 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     --UniformI = true,
     VertexAttribF = true,
     GetAttribLocation = true,
+    
+    BindFramebuffer = true,
+    BindRenderbuffer = true,
+    FramebufferRenderbuffer = true,
+    FramebufferTexture2D = true,
+    
+    BindTexture = true,
   }
   for k in pairs(snatch) do
     snatch[k] = gl[k]
@@ -393,6 +410,8 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     local pid = program.id:get()
     if not attrib_lookup[pid] then attrib_lookup[pid] = {} end
     local loca = snatch.GetAttribLocation(pid, text)
+    assert(loca)
+    print("ALOOKUP", pid, text, loca)
     attrib_lookup[pid][text] = loca
   end
   --[[function glutil.VertexAttribI(program, text, ...)
@@ -404,9 +423,37 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     local pid = program.id:get()
     assert(attrib_lookup[pid] and attrib_lookup[pid][text])
     if attrib_lookup[pid][text] == -1 then
-      print("WARNING: Attribute " .. text .. " is unused")
+      print("WARNING: Attribute " .. text .. " is unused", pid)
     else
       snatch.VertexAttribF(attrib_lookup[pid][text], ...)
+    end
+  end
+
+  local lastfb
+  function glutil.BindFramebuffer(target, framebuffer)
+    lastfb = framebuffer
+    if framebuffer then
+      snatch.BindFramebuffer(target, framebuffer.id:get())
+    else
+      snatch.BindFramebuffer(target, 0)
+    end
+  end
+  function glutil.BindRenderbuffer(target, renderbuffer)
+    snatch.BindRenderbuffer(target, renderbuffer.id:get())
+  end
+  function glutil.FramebufferRenderbuffer(target, attach, rbt, rb)
+    snatch.FramebufferRenderbuffer(target, attach, rbt, rb.id:get())
+  end
+  function glutil.FramebufferTexture2D(target, attach, textarg, tex, level)
+    lastfb[attach] = tex  -- we do this to keep it from being garbage collected
+    snatch.FramebufferTexture2D(target, attach, textarg, tex.id:get(), level)
+  end
+  
+  function glutil.BindTexture(typ, tex)
+    if tex then
+      snatch.BindTexture(typ, tex.id:get())
+    else
+      snatch.BindTexture(typ, 0)
     end
   end
 

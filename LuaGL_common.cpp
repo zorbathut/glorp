@@ -249,8 +249,10 @@ int get_array2f(lua_State *L, int index, GLfloat **array, int *size)
    {
       lua_rawgeti(L, index, i+1);
 
-      if(!lua_istable(L, -1))
-         return -1;
+      if(!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        return -1;
+      }
 
       for(j = 0; j < *size; j++)
       {
@@ -258,8 +260,10 @@ int get_array2f(lua_State *L, int index, GLfloat **array, int *size)
 
          (*array)[i*(*size) + j] = (GLfloat)lua_tonumber(L, -1);
 
-         lua_remove(L, -1);
+         lua_pop(L, 1);
       }
+      
+      lua_pop(L, 1);
    }
 
    return n; /* return the number of valid elements found.*/
@@ -945,7 +949,7 @@ static int gl_get(lua_State *L)
          luaL_error(L, "incorrect string argument to function 'gl.Get'");
          break;
    }
-   dprintf("mallocing %d\n", size * sizeof(GLdouble));
+   //dprintf("mallocing %d\n", size * sizeof(GLdouble));
    params = (GLdouble *)malloc(size * sizeof(GLdouble));
   params[0] = 1234;
    
@@ -956,9 +960,9 @@ static int gl_get(lua_State *L)
    glGetDoublev(e, params);
    #endif
    
-   dprintf("GLGET2 %d %d %f\n", GL_MAX_PROJECTION_STACK_DEPTH, (int)e, params[0]);
-   dprintf("%f\n", params[0]);
-   dprintf("err %d\n", glGetError());
+   //dprintf("GLGET2 %d %d %f\n", GL_MAX_PROJECTION_STACK_DEPTH, (int)e, params[0]);
+   //dprintf("%f\n", params[0]);
+   //dprintf("err %d\n", glGetError());
 
    for(i = 0; i < size; i++)
       lua_pushnumber(L, params[i]);

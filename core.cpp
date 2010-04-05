@@ -291,7 +291,6 @@ std::ostream& operator<<(std::ostream&ostr, WrappedTex const&ite) {
 
 
 WrappedTex *GetTex(const string &image) {
-  dprintf("%s\n", getcwd(NULL, 0));
   Image *tex = Image::Load("data/" + image + ".png");
   if(!tex) tex = Image::Load("data/" + image + ".jpg");
   if(!tex) tex = Image::Load(image + ".png");
@@ -515,6 +514,9 @@ void TriggerExit() {
 vector<int> to_delete_lists;
 vector<int> to_delete_shaders;
 vector<int> to_delete_programs;
+vector<GLuint> to_delete_framebuffers;
+vector<GLuint> to_delete_renderbuffers;
+vector<GLuint> to_delete_textures;
 
 class GlListID {
   int id;
@@ -561,6 +563,55 @@ public:
   }
   ~GlProgram() {
     to_delete_programs.push_back(id);
+  }
+  
+  int get() const {
+    return id;
+  }
+};
+
+class GlFramebuffer {
+  GLuint id;
+  
+public:
+  GlFramebuffer() {
+    glGenFramebuffers(1, &id);
+  }
+  ~GlFramebuffer() {
+    to_delete_framebuffers.push_back(id);
+  }
+  
+  int get() const {
+    return id;
+  }
+};
+
+class GlRenderbuffer {
+  GLuint id;
+  
+public:
+  GlRenderbuffer() {
+    glGenRenderbuffers(1, &id);
+  }
+  ~GlRenderbuffer() {
+    to_delete_renderbuffers.push_back(id);
+  }
+  
+  int get() const {
+    return id;
+  }
+};
+
+class GlTexture {
+  GLuint id;
+  
+public:
+  GlTexture() {
+    glGenTextures(1, &id);
+    dprintf("glorp texid %d\n", id);
+  }
+  ~GlTexture() {
+    to_delete_textures.push_back(id);
   }
   
   int get() const {
@@ -875,6 +926,15 @@ void luainit(int argc, const char **argv) {
       class_<GlProgram>("GlProgram")
         .def(constructor<>())
         .def("get", &GlProgram::get),
+      class_<GlFramebuffer>("GlFramebuffer")
+        .def(constructor<>())
+        .def("get", &GlFramebuffer::get),
+      class_<GlRenderbuffer>("GlRenderbuffer")
+        .def(constructor<>())
+        .def("get", &GlRenderbuffer::get),
+      class_<GlTexture>("GlTexture")
+        .def(constructor<>())
+        .def("get", &GlTexture::get),
       #endif
       def("Texture", &GetTex),
       def("Text_SetColor", &tsc),
@@ -1082,9 +1142,15 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
       for(int i = 0; i < to_delete_lists.size(); i++) glDeleteLists(to_delete_lists[i], 1);
       for(int i = 0; i < to_delete_shaders.size(); i++) glDeleteShader(to_delete_shaders[i]);
       for(int i = 0; i < to_delete_programs.size(); i++) glDeleteProgram(to_delete_programs[i]);
+      for(int i = 0; i < to_delete_framebuffers.size(); i++) glDeleteFramebuffers(1, &to_delete_framebuffers[i]);
+      for(int i = 0; i < to_delete_renderbuffers.size(); i++) glDeleteRenderbuffers(1, &to_delete_renderbuffers[i]);
+      for(int i = 0; i < to_delete_textures.size(); i++) glDeleteTextures(1, &to_delete_textures[i]);
       to_delete_lists.clear();
       to_delete_shaders.clear();
       to_delete_programs.clear();
+      to_delete_framebuffers.clear();
+      to_delete_renderbuffers.clear();
+      to_delete_textures.clear();
       #endif
       
       if(exiting) {

@@ -279,6 +279,177 @@ static int gl_get_attrib_location(lua_State *L) {
   return 1;
 }
 
+static int gl_bind_framebuffer(lua_State *L)
+{
+  GLenum a;
+  
+  if(!(lua_isstring(L, 1) && lua_isnumber(L, 2)))
+    luaL_error(L, "incorrect argument to function 'gl.BindFramebuffer'");
+  
+  /* get values */
+  a = (GLenum)get_gl_enum(L, 1);
+
+  /* test arguments */
+  if((a == ENUM_ERROR))
+    luaL_error(L, "incorrect string argument to function 'gl.BindFramebuffer'");
+   
+  glBindFramebuffer(a, (GLuint)lua_tonumber(L, 2));
+  
+  return 0;
+}
+static int gl_bind_renderbuffer(lua_State *L)
+{
+  GLenum a;
+  
+  if(!(lua_isstring(L, 1) && lua_isnumber(L, 2)))
+    luaL_error(L, "incorrect argument to function 'gl.BindRenderbuffer'");
+  
+  /* get values */
+  a = (GLenum)get_gl_enum(L, 1);
+
+  /* test arguments */
+  if((a == ENUM_ERROR))
+    luaL_error(L, "incorrect string argument to function 'gl.BindRenderbuffer'");
+   
+  glBindRenderbuffer(a, (GLuint)lua_tonumber(L, 2));
+  
+  return 0;
+}
+
+static int gl_renderbuffer_storage(lua_State *L)
+{
+  GLenum a, b;
+  
+  if(!(lua_isstring(L, 1) && lua_isstring(L, 2) && lua_isnumber(L, 3) && lua_isnumber(L, 4)))
+    luaL_error(L, "incorrect argument to function 'gl.RenderbufferStorage'");
+  
+  /* get values */
+  a = (GLenum)get_gl_enum(L, 1);
+  b = (GLenum)get_gl_enum(L, 2);
+
+  /* test arguments */
+  if((a == ENUM_ERROR) || (b == ENUM_ERROR))
+    luaL_error(L, "incorrect string argument to function 'gl.RenderbufferStorage'");
+   
+  glRenderbufferStorage(a, b, (GLuint)lua_tonumber(L, 3), (GLuint)lua_tonumber(L, 4));
+  
+  return 0;
+}
+
+static int gl_framebuffer_renderbuffer(lua_State *L)
+{
+  GLenum a, b, c;
+  
+  if(!(lua_isstring(L, 1) && lua_isstring(L, 2) && lua_isstring(L, 3) && lua_isnumber(L, 4)))
+    luaL_error(L, "incorrect argument to function 'gl.FramebufferRenderbuffer'");
+  
+  /* get values */
+  a = (GLenum)get_gl_enum(L, 1);
+  b = (GLenum)get_gl_enum(L, 2);
+  c = (GLenum)get_gl_enum(L, 3);
+
+  /* test arguments */
+  if((a == ENUM_ERROR) || (b == ENUM_ERROR) || (c == ENUM_ERROR))
+    luaL_error(L, "incorrect string argument to function 'gl.FramebufferRenderbuffer'");
+   
+  glFramebufferRenderbuffer(a, b, c, (GLuint)lua_tonumber(L, 4));
+  
+  return 0;
+}
+
+static int gl_framebuffer_texture_2d(lua_State *L)
+{
+  GLenum a, b, c;
+  
+  if(!(lua_isstring(L, 1) && lua_isstring(L, 2) && lua_isstring(L, 3) && lua_isnumber(L, 4) && lua_isnumber(L, 5)))
+    luaL_error(L, "incorrect argument to function 'gl.FramebufferTexture2D'");
+  
+  /* get values */
+  a = (GLenum)get_gl_enum(L, 1);
+  b = (GLenum)get_gl_enum(L, 2);
+  c = (GLenum)get_gl_enum(L, 3);
+
+  /* test arguments */
+  if((a == ENUM_ERROR) || (b == ENUM_ERROR) || (c == ENUM_ERROR))
+    luaL_error(L, "incorrect string argument to function 'gl.FramebufferTexture2D'");
+   
+  glFramebufferTexture2D(a, b, c, (GLuint)lua_tonumber(L, 4), (GLuint)lua_tonumber(L, 5));
+  
+  return 0;
+}
+
+static int gl_check_framebuffer_status(lua_State *L)
+{
+  GLenum a;
+  
+  if(!(lua_isstring(L, 1)))
+    luaL_error(L, "incorrect argument to function 'gl.CheckFramebufferStatus'");
+  
+  /* get values */
+  a = (GLenum)get_gl_enum(L, 1);
+
+  /* test arguments */
+  if((a == ENUM_ERROR))
+    luaL_error(L, "incorrect string argument to function 'gl.CheckFramebufferStatus'");
+   
+  GLuint glo = glCheckFramebufferStatus(a);
+  
+  lua_pushstring(L, get_str_gl_enum(glo));
+  return 1;
+}
+
+
+
+/*TexImage(level, internalformat, format, pixels) -> none*/
+static int gl_tex_image_2d(lua_State *L)
+{
+  /* test arguments type */
+  if(!(
+      lua_isstring(L, 1) && // target
+      lua_isnumber(L, 2) && // level
+      (lua_isstring(L, 3) || lua_isnumber(L, 3)) && // internalformat
+      lua_isnumber(L, 4) && // width
+      lua_isnumber(L, 5) && // height
+      lua_isnumber(L, 6) && // border
+      lua_isstring(L, 7) && // format
+      lua_isstring(L, 8) // type
+  ))
+    luaL_error(L, "incorrect argument to function 'gl.TexImage'");
+
+  GLenum target = get_gl_enum(L, 1);
+  GLint level = lua_tointeger(L, 2);
+  GLint internalFormat;
+  if(lua_isstring(L, 3)) {
+    internalFormat = get_gl_enum(L, 3);
+  } else {
+    internalFormat = lua_tointeger(L, 3);
+  }
+  GLsizei width = lua_tointeger(L, 4);
+  GLsizei height = lua_tointeger(L, 5);
+  GLint border = lua_tointeger(L, 6);
+  GLenum format = get_gl_enum(L, 7);
+  GLenum type = get_gl_enum(L, 8);
+  
+  if(target == ENUM_ERROR || internalFormat == ENUM_ERROR || format == ENUM_ERROR || type == ENUM_ERROR)
+    luaL_error(L, "incorrect string argument to function 'gl.TexImage'");
+
+  static int shift = 0;
+  
+  int *x = new int[width * height];
+  for(int i = 0; i < width * height; i++)
+    x[i] = i * 256 + 0x80000080 + shift;
+  shift += 50;
+  
+  //glTexImage2D(target, level, internalFormat, width, height, border, format, type, x);
+  dprintf("teximage %d/%d\n", width, height);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, x);
+  delete [] x;
+  
+  return 0;
+}
+
+
+
 static const luaL_reg gllib[] = {
   {"ShaderSource", gl_shader_source},
   {"CompileShader", gl_compile_shader},
@@ -298,6 +469,15 @@ static const luaL_reg gllib[] = {
   //{"VertexAttribI", gl_vertex_attrib_i},
   {"VertexAttribF", gl_vertex_attrib_f},
   {"GetAttribLocation", gl_get_attrib_location},
+  
+  {"BindFramebuffer", gl_bind_framebuffer},
+  {"BindRenderbuffer", gl_bind_renderbuffer},
+  {"RenderbufferStorage", gl_renderbuffer_storage},
+  {"FramebufferRenderbuffer", gl_framebuffer_renderbuffer},
+  {"FramebufferTexture2D", gl_framebuffer_texture_2d},
+  {"CheckFramebufferStatus", gl_check_framebuffer_status},
+  
+  {"TexImage2D", gl_tex_image_2d},
   {NULL, NULL}
 };
 

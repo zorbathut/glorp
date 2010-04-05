@@ -333,6 +333,8 @@ do
       if self.cs_rotate then gl.Rotate(self.cs_rotate / 3.14159 * 180, 0, 0, 1) end
     end
     
+    if self.DrawPre then self:DrawPre() end
+    
     if self.Draw then self:Draw() end
     
     if self.children then
@@ -340,6 +342,8 @@ do
         k:Render()
       end
     end
+    
+    if self.DrawPost then self:DrawPost() end
     
     if self.cs_x then
       gl.MatrixMode("PROJECTION")
