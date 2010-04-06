@@ -11,10 +11,6 @@ function assert(parm, ...)
   end
 end]]
 
-if jit then
-  require("jit.opt").start()
-end
-
 local function barf(err)
   local chunkies = {}
   function doit(err)

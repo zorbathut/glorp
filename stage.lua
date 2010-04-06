@@ -206,6 +206,7 @@ function runuifile(file, ...)
   env.render = nil
   env.key = nil
   env.failover = nil
+  env.UI_Loop = nil
   
   runfile(file, env, ...)
   

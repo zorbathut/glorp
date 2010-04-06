@@ -6,6 +6,19 @@ if not params then
   os.exit(1)
 end
 
+local noluajit = false
+do
+  local newtargets = {}
+  for _, v in pairs(params.targets) do
+    if v == "noluajit" then
+      noluajit = true
+    else
+      table.insert(newtargets, v)
+    end
+  end
+  params.targets = newtargets
+end
+
 params.midname = params.longname:gsub("[^%w]", "")
 
 require "luarocks.loader"
@@ -33,14 +46,22 @@ local lua
 local lua_headers = {}
 do
   do
-    if not osd.noluajit then
-      local path = "glorp/libs/LuaJIT-2.0.0-beta3/"
+    if not osd.noluajit and not noluajit then
+      local path = "glorp/libs/LuaJIT-2.0.0-beta4/"
       ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
         if k == "src/Makefile" then
           -- let's make some changes
-          table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.system_template{('sed -e "s@CC= gcc@CC= %s@" -e "s/.XCFLAGS+= -DLUA_USE_APICHECK/XCFLAGS+= -DLUA_USE_APICHECK/" -e "s/.XCFLAGS+= -DLUA_USE_ASSERT/XCFLAGS+= -DLUA_USE_ASSERT/" -e "s/.BUILDMODE= static/BUILDMODE= static/" -e "s/HOST_RM= del/# HOST_RM= del/" $SOURCE > $TARGET'):format(glop.libcc)}})
+          table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.system_template{([[
+            sed
+              -e "s@CC= gcc@CC= %s@"
+              -e "s/.XCFLAGS+= -DLUA_USE_APICHECK/XCFLAGS+= -DLUA_USE_APICHECK/"
+              -e "s/.XCFLAGS+= -DLUA_USE_ASSERT/XCFLAGS+= -DLUA_USE_ASSERT/"
+              -e "s/.BUILDMODE= static/BUILDMODE= static/"
+              -e "s/HOST_RM= del/# HOST_RM= del/" ]] ..
+              [[ -e "s/.XCFLAGS+= -DLUAJIT_DISABLE_JIT/XCFLAGS+= -DLUAJIT_DISABLE_JIT/" ]] --[[ This segment should be commented out if you want the jit to actually work! ]] ..
+            [[$SOURCE > $TARGET]]):format(glop.libcc):gsub("\n", " ")}})
         else
           table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.copy{}})
         end
@@ -64,7 +85,7 @@ do
       
       local luaobjects = {}
       for k in files:gmatch("([^ ]+)") do  -- yes okay hardcoded shut up
-        table.insert(luaobjects, ursa.rule{builddir .. "lib_build/lua/src/" .. k .. ".o", copied, ursa.util.system_template{"#CC -O3 -fomit-frame-pointer #LUA_FLAGS -I#builddir/libs/dynasm -Wall -x c -c -o $TARGET #builddir/libs/src/" .. k .. ".c"}})
+        table.insert(luaobjects, ursa.rule{builddir .. "lib_build/lua/src/" .. k .. ".o", copied, ursa.util.system_template{"#CC -O3 -fomit-frame-pointer #LUA_FLAGS -I#builddir/lib_build/lua/dynasm -Wall -x c -c -o $TARGET #builddir/lib_build/lua/src/" .. k .. ".c"}})
       end
 
       ursa.rule{builddir .. "lib_release/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- wonder if this'll work right under cygwin
@@ -355,6 +376,7 @@ if osd.no_cli_params then
   ursa.command{"run", runnable.deps, runnable.cli}
 else
   ursa.command{"run", runnable.deps, runnable.cli .. " debug"}
+  ursa.command{"editor", runnable.deps, runnable.cli .. " editor"}
   ursa.command{"runclean", runnable.deps, runnable.cli}
 end
 

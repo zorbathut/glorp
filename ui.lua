@@ -50,6 +50,7 @@ do
     return self.bg_r and 20 -- everything is 20, unless it actually fails to exist
   end
   local function getpoint(self, axis, point)
+    assert(axis)
     assert(point)
     
     --print("gp", self, axis, point)
@@ -164,6 +165,7 @@ do
     elseif axis == "y" or axis == "_anchor_y" then
       return getpoint(self, "_anchor_y", pt)
     else
+      print("Weird axis:", axis)
       assert(false)
     end
   end
