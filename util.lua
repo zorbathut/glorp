@@ -203,6 +203,8 @@ end
 
 print(gl.Get("MAX_PROJECTION_STACK_DEPTH"))
 
+--local log = io.open("gl.txt", "w")
+
 -- hurrr
 if true then
   local shutup = false
@@ -211,7 +213,7 @@ if true then
     local err = gl.GetError()
     if err ~= "NO_ERROR" then
       print("GL ERROR: ", err, bef, nam)
-      if mode then assert(err == "NO_ERROR", err ..  "   " .. bef) end -- fuckyou
+      if mode then assert(err == "NO_ERROR", err ..  "   " .. bef .. " " .. nam) end -- fuckyou
     end
   end
   for k, v in pairs(gl) do
