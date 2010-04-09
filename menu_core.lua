@@ -18,8 +18,9 @@ menu.achievement_text = CreateFrame("Text", menu.achievement_button)
 menu.achievement_text:SetColor(1, 1, 1)
 menu.achievement_text:SetSize(40)
 menu.achievement_text:SetText("Achievements")
+menu.achievement_button:Hide() -- we don't want this anymore
 
---[[
+
 local ptr = CreateFrame("Text")
 ptr:SetSize(40)
 ptr:SetColor(1, 1, 1)
@@ -30,7 +31,7 @@ local anchor = menu.ok_text
 local function spt()
   ptr:SetPoint(1, 0.5, anchor, 0, 0.5, -10, 0)
 end
-spt()]]
+spt()
 
 
 function menu.ok_button:Click()
@@ -45,8 +46,7 @@ function key(button, ascii, event)
     GlorpController("exit")
   end
   
-  --[[
-  if (button == "enter" or button == "z" or button == "x" or button == "c") and event == "press" then
+  if (button == "enter" or button == "z" or button == "x" or button == "c" or button == "space") and event == "press" then
     if anchor == menu.ok_text then
       GlorpController("start_game")
     else
@@ -61,7 +61,7 @@ function key(button, ascii, event)
       anchor = menu.ok_text
     end
     spt()
-  end]]
+  end
 end
 
 runfile("menu.lua", _G)
