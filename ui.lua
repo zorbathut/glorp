@@ -498,6 +498,9 @@ end
 function SpriteOverrides:SetColor(r, g, b, a)
   self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a = r, g, b, a
 end
+function SpriteOverrides:GetColor()
+  return self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a
+end
 
 
 local RenderSorterOverrides = {}
