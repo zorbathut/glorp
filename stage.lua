@@ -48,6 +48,7 @@ end
 local mainmenu
 local runninggame
 local inminimenu
+local minimenu_repopulate
 
 local function destroy_game()
   if not runninggame then return end
@@ -75,6 +76,8 @@ local function Handle(param, ...)
     mainmenu.UIRoot:Show()
   elseif param == "exit" then
     TriggerExit()
+  elseif param == "repopulate_menu" then
+    minimenu_repopulate(...)
   else
     assert(false)
   end
@@ -134,10 +137,38 @@ minimenu_right:SetColor(1, 1, 1)
 
 minimenu_frames:Hide()
 
+local minimenu_entries = {}
 local minimenu_pos = 1
+function minimenu_repopulate(params)
+  for i = 2, #minimenu_entries - 1 do
+    minimenu_entries[i][1]:Detach()
+    minimenu_entries[i][2]:Detach()
+  end
+
+  minimenu_entries = {{minimenu_resume_button, minimenu_resume}}
+  
+  for _, v in pairs(params) do
+    local button = CreateFrame("Button", minimenu_frames)
+    local text = CreateFrame("Text", button)
+    text:SetText(v.text)
+    text:SetColor(1, 1, 1)
+    text:SetSize(30)
+    text:SetPoint("CENTER", button, "CENTER")
+    function button:Click() v.event() end
+    table.insert(minimenu_entries, {button, text})
+  end
+  
+  table.insert(minimenu_entries, {minimenu_return_button, minimenu_return})
+  
+  minimenu_entries[1][2]:SetPoint("CENTER", UIParent, "CENTER", 0, -50)
+  
+  for i = 2, #minimenu_entries do
+    minimenu_entries[i][2]:SetPoint("CENTER", minimenu_entries[i - 1][2], "CENTER", 0, 100)
+  end
+end
 
 local function imm_resync()
-  local junct = (minimenu_pos == 1) and minimenu_resume or minimenu_return
+  local junct = minimenu_entries[minimenu_pos][2]
   
   minimenu_left:SetPoint(1, 0.5, junct, 0, 0.5, -20, 0)
   minimenu_right:SetPoint(0, 0.5, junct, 1, 0.5, 20, 0)
@@ -155,14 +186,20 @@ end
 
 local function imm_key(button, ascii, event)
   print("immkey", button, ascii, event)
-  if (button == "arrow_down" or button == "arrow_up") and event == "press" then
-    minimenu_pos = (minimenu_pos == 1) and 2 or 1
+  if (button == "arrow_down") and (event == "press" or event == "press_double") then
+    minimenu_pos = minimenu_pos + 1
+    if minimenu_pos == #minimenu_entries + 1 then minimenu_pos = 1 end
+    imm_resync()
+  end
+  if (button == "arrow_up") and (event == "press" or event == "press_double") then
+    minimenu_pos = minimenu_pos - 1
+    if minimenu_pos == 0 then minimenu_pos = #minimenu_entries end
     imm_resync()
   end
   
-  if (button == "enter" or button == "space") and event == "press" then
-    local junct = (minimenu_pos == 1) and minimenu_resume_button or minimenu_return_button
-    junct:Click()
+  if (button == "enter" or button == "space") and (event == "press" or event == "press_double") then
+    minimenu_entries[minimenu_pos][1]:Click()
+    imm_end()
   end
 end
 
@@ -347,7 +384,7 @@ function key(button, ascii, event)
   end
   
   if wedothisfirst then
-    if event == "press" then
+    if event == "press" or event == "press_double" then
       somethingpressed = true
     end
     return
