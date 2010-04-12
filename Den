@@ -346,7 +346,7 @@ do
   table.insert(data_deps, copy_a_lot("luaglorp", "data/", "glorp/"))
 
   -- Lua files and font files in our core
-  ursa.token.rule{"core_files", nil, "ls *.lua *.ttf", always_rebuild = true}
+  ursa.token.rule{"core_files", nil, "ls *.lua *.ttf | grep -v crashmelt | grep -v playtest.lev.lua", always_rebuild = true}
   table.insert(data_deps, copy_a_lot("core", "", ""))
 
   ursa.token.rule{"datafiles", data_deps, function ()
