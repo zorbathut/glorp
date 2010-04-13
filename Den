@@ -6,7 +6,7 @@ if not params then
   os.exit(1)
 end
 
-local noluajit = false
+local noluajit = params.noluajit
 do
   local newtargets = {}
   for _, v in pairs(params.targets) do
@@ -59,7 +59,9 @@ do
               -e "s/.XCFLAGS+= -DLUA_USE_APICHECK/XCFLAGS+= -DLUA_USE_APICHECK/"
               -e "s/.XCFLAGS+= -DLUA_USE_ASSERT/XCFLAGS+= -DLUA_USE_ASSERT/"
               -e "s/.BUILDMODE= static/BUILDMODE= static/"
+              -e "s/.CC= gcc -m32/CC= gcc -m32/" 
               -e "s/HOST_RM= del/# HOST_RM= del/" ]] ..
+              
               [[ -e "s/.XCFLAGS+= -DLUAJIT_DISABLE_JIT/XCFLAGS+= -DLUAJIT_DISABLE_JIT/" ]] --[[ This segment should be commented out if you want the jit to actually work! ]] ..
             [[$SOURCE > $TARGET]]):format(glop.libcc):gsub("\n", " ")}})
         else
@@ -274,8 +276,13 @@ local function build_program(name)
     extralink = extralink .. " #curl_link"
   end
   
+  local sg, eg = "-Wl,--start-group", "-Wl,--end-group"
+  if platform == "osx" then
+    sg, eg = "", ""
+  end
+  
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link", glop.sublibs, extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g -Wl,--start-group $SOURCES -L#builddir/lib_release/lib -lluabind -lm -llua %s #LDFLAGS -Wl,--end-group"):format(extralink)}}
+  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link", glop.sublibs, extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g %s $SOURCES -L#builddir/lib_release/lib -lluabind -lm -llua %s #LDFLAGS %s"):format(sg, extralink, eg)}}
   return dst
 end
 
