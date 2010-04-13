@@ -48,9 +48,9 @@ function key(button, ascii, event)
   
   if (button == "enter" or button == "z" or button == "x" or button == "c" or button == "space") and event == "press" then
     if anchor == menu.ok_text then
-      GlorpController("start_game")
+      menu.ok_button:Click()
     else
-      GlorpController("exit")
+      menu.exit_button:Click()
     end
   end
   

@@ -975,14 +975,6 @@ void luainit(int argc, const char **argv) {
   adaptaload("wrap.lua");
   adaptaload_wrapped("stage.lua", argc, argv);
   
-  /*adaptaload_wrapped("ui.lua");
-  
-  if(FLAGS_editor) {
-    adaptaload_wrapped("editor.lua");
-  } else {
-    adaptaload_wrapped("main.lua");
-  }*/
-  
   if(last_preserved_token.size()) {
     lua_getglobal(L, "generic_wrap");
     lua_getglobal(L, "de_fuckshit");
