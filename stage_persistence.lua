@@ -23,6 +23,8 @@ function persistence.load(token)
     loaded_from[token] = {}
   end
   
+  assert(loaded_from[token])
+  
   return loaded_from[token]
 end
 function persistence.save()
