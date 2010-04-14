@@ -128,7 +128,8 @@ for k, v in pairs(glop.libs) do
 end
 
 local curl_headers = {}
-if not osd.nocurl then
+
+do
   -- let's curl it up a notch
   local path = "glorp/libs/curl-7.20.0"
   
@@ -199,11 +200,6 @@ if not osd.nocurl then
   table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curlrules.h", builddir .. "lib_build/curl/include/curl/curlrules.h", ursa.util.copy{}})
   table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/easy.h", builddir .. "lib_build/curl/include/curl/easy.h", ursa.util.copy{}})
   table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/multi.h", builddir .. "lib_build/curl/include/curl/multi.h", ursa.util.copy{}})
-  --table.insert(curl, ursa.rule{ -- more later
-  -- copy dat shit
-  token_literal("curl_link", "-lcurl")
-else
-  token_literal("curl_link", "")
 end
 
 ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
@@ -302,7 +298,7 @@ local function build_program(name)
   end
   
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, lua, "#curl_link", extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g %s $SOURCES -L#builddir/lib_release/lib -lluabind -lm -llua #curl_link #LDFLAGS %s"):format(sg, eg)}}
+  ursa.rule{dst, {objs, lua, extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g %s $SOURCES -L#builddir/lib_release/lib -lluabind -lm -llua #LDFLAGS %s"):format(sg, eg)}}
   return dst
 end
 

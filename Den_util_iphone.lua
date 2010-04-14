@@ -5,7 +5,6 @@ loadfile("glorp/Den_util_osx.lua")(params, rv)
 
 rv.noluajit = true
 rv.gles = true
-rv.nocurl = true
 
 rv.build_overrides = {}
 function rv.build_overrides.wav(dst)
