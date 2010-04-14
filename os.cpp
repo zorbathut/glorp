@@ -125,7 +125,11 @@ void outputDebugString(const string &str) {
 #define printf FAILURE
 
 void seriouslyCrash() {
+  dprintf("crash1\n");
+  raise(SIGKILL); // melt
+  dprintf("crash2\n");
   exit(-1);
+  dprintf("crash3\n");
 }
 
 string getConfigDirectory() {
@@ -145,7 +149,9 @@ void wrap_mkdir(const string &str) {
 }
 
 string getTempFilename() {
-  char temparg[20] = "/tmp/d-net-XXXXXX";
+  char temparg[128] = "/tmp/";
+  strcat(temparg, game_slug);
+  strcat(temparg, "-XXXXXX");
   close(mkstemp(temparg));
   return temparg;
 }
@@ -157,13 +163,16 @@ void SpawnProcess(const string &exec, const vector<string> &params) {
   for(int i = 0; i < params.size(); i++)
     args.push_back(params[i].c_str());
   args.push_back(NULL);
+  
+  dprintf("PARAMETERS\n");
+  for(int i = 0; i < args.size() - 1; i++)
+    dprintf("%s\n", args[i]);
+  
 
   if(fork() == 0) {
     dprintf("trying to execv\n");
     execv(exec.c_str(), const_cast<char * const *>(&args[0]));  // stupid c
     dprintf("execv failed :(\n");
-    execv(("/usr/games/" + exec).c_str(), const_cast<char * const *>(&args[0]));
-    dprintf("execv *really* failed\n");
   }
 }
 

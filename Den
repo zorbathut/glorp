@@ -121,8 +121,13 @@ do
   end
 end
 
-local curl = {}
-local curllib
+-- this will contain all the libs that got built from glop
+local libs = {}
+for k, v in pairs(glop.libs) do
+  libs[k] = v
+end
+
+local curl_headers = {}
 if not osd.nocurl then
   -- let's curl it up a notch
   local path = "glorp/libs/curl-7.20.0"
@@ -135,7 +140,21 @@ if not osd.nocurl then
     elseif item == "Makefile.in" then
       table.insert(files, ursa.rule{builddir .. "lib_build/curl/" .. item, path .. "/" .. item, ursa.util.system_template{('sed -e "s@SUBDIRS = lib src@SUBDIRS = lib@" $SOURCE > $TARGET'):format(glop.libcc)}})
     elseif item == "include/curl/curlbuild.h.in" then
-      table.insert(files, ursa.rule{builddir .. "lib_build/curl/" .. item, path .. "/" .. item, ('sed -e "/#define __CURL_CURLBUILD_H/a\\\n#define CURL_STATICLIB" %s > %s'):format(path .. "/" .. item, builddir .. "lib_build/curl/" .. item)})
+      table.insert(files, ursa.rule{builddir .. "lib_build/curl/" .. item, path .. "/" .. item, function ()
+        print("stupid reparse of curlbuild.h.in")
+        local fin = io.open(path .. "/" .. item, "r")
+        local fout = io.open(builddir .. "lib_build/curl/" .. item, "w")
+        while true do
+          local lin = fin:read("*line")
+          if not lin then break end
+          fout:write(lin .. "\n")
+          if lin == "#define __CURL_CURLBUILD_H" then
+            fout:write("#define CURL_STATICLIB" .. "\n")
+          end
+        end
+        fin:close()
+        fout:close()
+      end})
     elseif item == "configure"  and platform == "cygwin" then
       table.insert(files, ursa.rule{builddir .. "lib_build/curl/" .. item, path .. "/" .. item, ursa.util.system_template{([[sed
         -e "s/for sel_arg1 in/for sel_arg1 in 'int'/"
@@ -173,13 +192,13 @@ if not osd.nocurl then
   
   local lib = ursa.rule{builddir .. "lib_build/curl/lib/.libs/libcurl.a", makefile, ('cd %slib_build/curl && make'):format(builddir)}  -- can't parallelize this, libcurl is a butt
   
-  curllib = ursa.rule{builddir .. "lib_release/lib/libcurl.a", lib, ursa.util.copy{}}
-  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/curl.h", builddir .. "lib_build/curl/include/curl/curl.h", ursa.util.copy{}})
-  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/curlver.h", builddir .. "lib_build/curl/include/curl/curlver.h", ursa.util.copy{}})
-  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/curlbuild.h", builddir .. "lib_build/curl/include/curl/curlbuild.h", ursa.util.copy{}})
-  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/curlrules.h", builddir .. "lib_build/curl/include/curl/curlrules.h", ursa.util.copy{}})
-  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/easy.h", builddir .. "lib_build/curl/include/curl/easy.h", ursa.util.copy{}})
-  table.insert(curl, ursa.rule{builddir .. "lib_release/include/curl/multi.h", builddir .. "lib_build/curl/include/curl/multi.h", ursa.util.copy{}})
+  libs.libcurl = ursa.rule{builddir .. "lib_release/lib/libcurl.a", lib, ursa.util.copy{}}
+  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curl.h", builddir .. "lib_build/curl/include/curl/curl.h", ursa.util.copy{}})
+  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curlver.h", builddir .. "lib_build/curl/include/curl/curlver.h", ursa.util.copy{}})
+  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curlbuild.h", builddir .. "lib_build/curl/include/curl/curlbuild.h", ursa.util.copy{}})
+  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curlrules.h", builddir .. "lib_build/curl/include/curl/curlrules.h", ursa.util.copy{}})
+  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/easy.h", builddir .. "lib_build/curl/include/curl/easy.h", ursa.util.copy{}})
+  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/multi.h", builddir .. "lib_build/curl/include/curl/multi.h", ursa.util.copy{}})
   --table.insert(curl, ursa.rule{ -- more later
   -- copy dat shit
   token_literal("curl_link", "-lcurl")
@@ -201,16 +220,17 @@ ursa.rule{"version.cpp", "#version", function ()
 end}
 
 local buildables = {
-  [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar LuaGL_common " .. (osd.gles and "LuaGLES" or "LuaGL LuaGL_ext"), cfiles = osd.gles and "" or "glorp/GLee", mmfiles = osd.gles and "main_iphone" or "", resources = "resource"},
-  ["reporter"] = {corefiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", curl = true},
+  [params.name] = {corefiles = "main version", glorpfiles = "core debug debug_911_on os util parse args init perfbar LuaGL_common " .. (osd.gles and "LuaGLES" or "LuaGL LuaGL_ext"), cfiles = osd.gles and "" or "glorp/GLee", mmfiles = osd.gles and "main_iphone" or "", resources = "resource", libs = "zlib libpng libjpeg libfreetype libfmodex glop"},
+  ["reporter"] = {corefiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
 }
 
 local depsed = {}
 
-local function build_object(src, prefix, compiler, flags)
-  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp/libs/boost -I%slib_release/include %s %s "):format(compiler or ursa.token{"CC"}, flags or "", builddir, ursa.token{"CXXFLAGS"}, src)
+local function build_object(src, prefix, params)
+  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp/libs/boost -I%slib_release/include %s %s "):format(params.compiler or ursa.token{"CC"}, params.flags or "", builddir, ursa.token{"CXXFLAGS"}, src)
   
-  local clurl = (src == "glorp/reporter_main.cpp") and curl or {}
+  -- we *should* be doing something substantially more reliable and sane here. we're not, because this is much easier
+  local clurl = (src == "glorp/reporter_main.cpp") and curl_headers or {}
   
   if not depsed[src] then
     local function make_dependencies(srcfile)
@@ -247,16 +267,16 @@ local function build_program(name)
   local objs = {}
   
   for k in (item.corefiles or ""):gmatch("([^%s]+)") do
-    table.insert(objs, build_object(k .. ".cpp", prefix))
+    table.insert(objs, build_object(k .. ".cpp", prefix, {flags = item.flags}))
   end
   for k in (item.glorpfiles or ""):gmatch("([^%s]+)") do
-    table.insert(objs, build_object("glorp/" .. k .. ".cpp", prefix))
+    table.insert(objs, build_object("glorp/" .. k .. ".cpp", prefix, {flags = item.flags}))
   end
   for k in (item.cfiles or ""):gmatch("([^%s]+)") do
-    table.insert(objs, build_object(k .. ".c", prefix, "gcc"))
+    table.insert(objs, build_object(k .. ".c", prefix, {compiler = "gcc", flags = item.flags}))
   end
   for k in (item.mmfiles or ""):gmatch("([^%s]+)") do
-    table.insert(objs, build_object("glorp/" .. k .. ".mm", prefix, nil, "-x objective-c++"))
+    table.insert(objs, build_object("glorp/" .. k .. ".mm", prefix, {flags = (item.flags or "") .. " -x objective-c++"}))
   end
   
   if platform == "cygwin" then
@@ -269,11 +289,11 @@ local function build_program(name)
   
   table.insert(objs, lua[1])
   
+  -- feed in all the lib files we need
   local extradeps = {}
-  local extralink = ""
-  if item.curl then
-    table.insert(extradeps, curllib)
-    extralink = extralink .. " #curl_link"
+  for v in item.libs:gmatch("([^%s]+)") do
+    assert(libs[v])
+    table.insert(extradeps, libs[v])
   end
   
   local sg, eg = "-Wl,--start-group", "-Wl,--end-group"
@@ -282,7 +302,7 @@ local function build_program(name)
   end
   
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, glop.lib, lua, "#curl_link", glop.sublibs, extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g %s $SOURCES -L#builddir/lib_release/lib -lluabind -lm -llua %s #LDFLAGS %s"):format(sg, extralink, eg)}}
+  ursa.rule{dst, {objs, lua, "#curl_link", extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g %s $SOURCES -L#builddir/lib_release/lib -lluabind -lm -llua #curl_link #LDFLAGS %s"):format(sg, eg)}}
   return dst
 end
 

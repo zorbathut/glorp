@@ -8,7 +8,7 @@ loadfile("glorp/Den_util_osx.lua")(params, rv)
 
 token_literal("CC", params.glop.cc)
 token_literal("CXXFLAGS", "-arch i386 -DMACOSX -I/opt/local/include -Iglorp/glop/release/osx/include")
-token_literal("LDFLAGS", "-arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit")
+token_literal("LDFLAGS", "-arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
 
 token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -arch i386")
 
@@ -62,6 +62,9 @@ function rv.installers()
     
     table.insert(binaries, ursa.rule{app_prefix .. sufix, v, ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
   end
+  
+  -- copy the reporter
+  table.insert(binaries, ursa.rule{app_prefix .. "Contents/Resources/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
 
   -- here's our bootstrapper for sane version errors
   table.insert(binaries, ursa.rule{app_prefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/SystemVersionCheck", ursa.util.system_template{"cp $SOURCE $TARGET"}})

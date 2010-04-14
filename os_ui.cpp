@@ -3,7 +3,7 @@
 
 #include "debug.h"
 
-#ifndef NO_WINDOWS
+#if defined(WIN32)
 
 #include <windows.h> // :D
 
@@ -20,6 +20,10 @@ pair<int, int> getScreenRes() {
   glorb.second = GetSystemMetrics(SM_CYSCREEN);
   return glorb;
 }
+
+#elif defined(MACOSX)
+
+// implemented in os_ui_osx.mm
 
 #else
 
