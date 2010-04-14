@@ -229,6 +229,7 @@ function runuifile(file, ...)
   else
     env.UIParent = uip
   end
+
   
   env.CreateFrame = function (type, parent) return CreateFrame(type, parent or env.UIParent) end
   env.GlorpController = Handle
@@ -339,6 +340,8 @@ function loop(...)
   end
 end
 function render(...)
+  gl.ClearColor(0, 0, 0, 1)
+  gl.Clear("COLOR_BUFFER_BIT")
   gl.Disable("CULL_FACE") -- ffffffff
   
   if wedothisfirst then bgbg:Render() return end
@@ -375,9 +378,9 @@ function key(button, ascii, event)
       self.tixleft = self.tixleft - 1
       if self.tixleft == 0 then self:Detach() ssmessage = nil end
       if self.tixleft > self.tixfade then
-        self:SetText("\1C000000ff\1" .. txt)
+        self:SetText("\1Cffffffff\1" .. txt)
       else
-        self:SetText(("\1C000000%02x\1"):format(self.tixleft / self.tixfade * 255) .. txt)
+        self:SetText(("\1Cffffff%02x\1"):format(self.tixleft / self.tixfade * 255) .. txt)
       end
     end
     ssmessage:Tick()
