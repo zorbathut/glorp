@@ -417,6 +417,7 @@ UI_Reset()
 
 local function Button_Key(self, button, ascii, event)
   print(self, button, ascii, event)
+  if not button then return true end
   if button ~= "mouse_left" and not button:match("finger_%d+") then return true end  -- don't know don't care
   
   if event == "press" then
