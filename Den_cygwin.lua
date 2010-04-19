@@ -6,7 +6,7 @@ local rv = {}
 
 token_literal("CC", params.glop.cc)
 token_literal("CXXFLAGS", "-mwindows -DWIN32 -Iglorp/glop/release/cygwin/include")
-token_literal("LDFLAGS", "-L/lib/mingw -Lglorp/Glop/release/cygwin/lib -mwindows -lGlop -lGlop -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -lfmodex -limagehlp")
+token_literal("LDFLAGS", "-L/lib/mingw -Lglorp/Glop/release/cygwin/lib -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp")
 
 token_literal("FLAC", "/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe")
 
@@ -55,14 +55,14 @@ function rv.installers()
   
   cull_data(params.builddir .. "deploy/", {data})
 
-  ursa.token.rule{"installers", {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, function ()
+  ursa.token.rule{"installers", {data, "#built_data", "#culled_data", "#version"}, function ()
     local v = ursa.token{"version"}
     
     local exesuffix = ("%s-%s.exe"):format(params.midname, v)
     local exedest = "build/" .. exesuffix
     ursa.rule{params.builddir .. "installer.nsi", {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version", "glorp/installer.nsi.template"}, function(dst, src)
-      local files = ursa.util.system{("cd %sdeploy && find . -type f | sed s*\\\\./**"):format(params.builddir)}
-      local dir = ursa.util.system{("cd %sdeploy && find . -type d | sed s*\\\\./**"):format(params.builddir)}
+      local files = ursa.system{("cd %sdeploy && find . -type f | sed s*\\\\./**"):format(params.builddir)}
+      local dir = ursa.system{("cd %sdeploy && find . -type d | sed s*\\\\./**"):format(params.builddir)}
       
       local inp = io.open("glorp/installer.nsi.template", "rb")
       local otp = io.open(params.builddir .. "installer.nsi", "w")

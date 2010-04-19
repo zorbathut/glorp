@@ -10,11 +10,11 @@ function cull_data(path, dat)
       valids[val] = true
     end
     
-    for f in ursa.util.system{("cd \"%s\" && find . -type f"):format(path)}:gmatch("([^\n]+)") do
+    for f in ursa.system{("cd \"%s\" && find . -type f"):format(path)}:gmatch("([^\n]+)") do
       local fi = f:match("%./(.*)")
       if not valids[fi] then
         print("======== REMOVING", fi)
-        ursa.util.system{"rm \"" .. path .. fi .. "\""}
+        ursa.system{"rm \"" .. path .. fi .. "\""}
       end
     end
     
