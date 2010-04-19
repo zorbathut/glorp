@@ -48,7 +48,7 @@ do
   do
     if not osd.noluajit and not noluajit then
       local path = "glorp/libs/LuaJIT-2.0.0-beta4/"
-      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
         if k == "src/Makefile" then
@@ -79,7 +79,7 @@ do
       local files = "lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lzio lcoco linit lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib lvm"
       local path = "glorp/libs/lua-5.1.4/"
       
-      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.util.system{("cd %s && find src etc -type f"):format(path)} end}
+      ursa.token.rule{"lua_files", "!" .. path, function () return ursa.system{("cd %s && find src etc -type f"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
         table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.copy{}})
@@ -107,7 +107,7 @@ do
   local luabindobj = {}
   local luabindroot = "glorp/libs/luabind-0.9"
   local luabindpath = luabindroot .. "/src/"
-  ursa.token.rule{"luabind_source_files", nil, function () return ursa.util.system{("cd %s && ls *.cpp"):format(luabindpath)} end}
+  ursa.token.rule{"luabind_source_files", nil, function () return ursa.system{("cd %s && ls *.cpp"):format(luabindpath)} end}
   for k in ursa.token{"luabind_source_files"}:gmatch("([^\n]+)") do
     table.insert(luabindobj, ursa.rule{builddir .. "lib_build/luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -Iglorp/%s -I#builddir/lib_release/include -Iglorp/libs/luabind-0.9ish -Iglorp/libs/boost #CXXFLAGS -g"):format(luabindpath .. k, luabindroot)}})
   end
@@ -115,7 +115,7 @@ do
   lua = builddir .. "lib_release/lib/libluabind.a"
   ursa.rule{lua, luabindobj, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}}
   
-  ursa.token.rule{"luabind_headers", nil, function () return ursa.util.system{("cd %s/luabind && find . -type f | sed s*\\\\./**"):format(luabindroot)} end}
+  ursa.token.rule{"luabind_headers", nil, function () return ursa.system{("cd %s/luabind && find . -type f | sed s*\\\\./**"):format(luabindroot)} end}
   for item in ursa.token{"luabind_headers"}:gmatch("([^\n]+)") do
     table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/luabind/" .. item, luabindroot .. "/luabind/" .. item, ursa.util.copy{}})
   end
@@ -135,7 +135,7 @@ do
   
   local files = {}
   
-  ursa.token.rule{"curl_files", nil, function () return ursa.util.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  ursa.token.rule{"curl_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
   for item in ursa.token{"curl_files"}:gmatch("([^\n]+)") do
     if item == "Makefile" or item == "include/curl/curlbuild.h" then
     elseif item == "Makefile.in" then
@@ -230,7 +230,7 @@ local function build_object(src, prefix, params)
   
   if not depsed[src] then
     local function make_dependencies(srcfile)
-      local deps = ursa.util.system{cli .. "-MM"}
+      local deps = ursa.system{cli .. "-MM"}
       deps = deps:match("^.*: (.*)$")
       
       local dependencies = {}
