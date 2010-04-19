@@ -1,5 +1,5 @@
 function cull_data(path, dat)
-  ursa.token.rule{"culled_data", {ursa.util.token_deferred{"built_data"}, "#built_data"}, function ()
+  ursa.token.rule{"culled_data", {"#built_data"}, function ()
     local valids = {}
     for _, v in pairs(ursa.relative_from{{dat, ursa.token{"built_data"}}}) do
       local val = v:match(path:gsub("%-", "%%-") .. "(.*)")
