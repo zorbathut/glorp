@@ -60,7 +60,7 @@ function rv.installers()
     
     local exesuffix = ("%s-%s.exe"):format(params.midname, v)
     local exedest = "build/" .. exesuffix
-    ursa.rule{params.builddir .. "installer.nsi", {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version", "glorp/installer.nsi.template"}, function(dst, src)
+    ursa.rule{params.builddir .. "installer.nsi", {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version", "glorp/installer.nsi.template"}, function()
       local files = ursa.system{("cd %sdeploy && find . -type f | sed s*\\\\./**"):format(params.builddir)}
       local dir = ursa.system{("cd %sdeploy && find . -type d | sed s*\\\\./**"):format(params.builddir)}
       

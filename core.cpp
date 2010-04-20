@@ -53,9 +53,6 @@ using namespace std;
 
 lua_State *L;
 
-const int virt_width = 640;
-const int virt_height = 480;
-
 int phys_screenx, phys_screeny;
 int get_screenx() { return phys_screenx; }
 int get_screeny() { return phys_screeny; }
@@ -333,44 +330,6 @@ void SetNoTex() {
   glLoadIdentity();
   glMatrixMode(GL_MODELVIEW);
 }
-
-float cvx(float x) {
-  return x / virt_width * window()->GetWidth();
-}
-float cvy(float y) {
-  return y / virt_height * window()->GetHeight();
-}
-
-class Text : public Destroyable<FancyTextFrame> {
-public:
-  void ScaledMove(float x, float y) {
-    Move(x / virt_width, y / virt_height);
-  }
-  void WrappedText(const string &txt) {
-    SetText("\1Cffffffff\1" + txt);
-  }
-  
-  void Render() const {
-    Destroyable<FancyTextFrame>::Render();
-  }
-  
-  Text(const string &txt) : Destroyable<FancyTextFrame>("hi hi hi hi hi") {
-    WrappedText(txt);
-  };
-  
-  ~Text() { 
-    dprintf("Obliterating text");
-  }
-};
-
-class Fader : public Destroyable<SolidBoxFrame> {
-public:
-  Fader() : Destroyable<SolidBoxFrame>(Color(0, 0, 0, 0)) { };
-  
-  void SetOpacity(float opacity) {
-    SetColor(Color(0, 0, 0, opacity));
-  }
-};
 
 GlopKey adapt(const string &id) {
   CHECK(id.size() > 0);
@@ -882,19 +841,6 @@ void luainit(int argc, const char **argv) {
     
     module(L)
     [
-      class_<Text>("Text_Make")
-        .def(constructor<const std::string &>())
-        .def("Move", &Text::ScaledMove)
-        .def("Hide", &Text::Hide)
-        .def("Show", &Text::Show)
-        .def("SetLayer", &Text::SetLayer)
-        .def("SetText", &Text::WrappedText),
-      class_<Fader>("Fader_Make")
-        .def(constructor<>())
-        .def("SetOpacity", &Fader::SetOpacity)
-        .def("Hide", &Fader::Hide)
-        .def("Show", &Fader::Show)
-        .def("SetLayer", &Fader::SetLayer),
       class_<WrappedTex>("WrappedTex_Internal")
         //.def(constructor<const std::string &>())
         .def("GetWidth", &WrappedTex::GetWidth)
