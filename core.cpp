@@ -1039,12 +1039,11 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   
   {
     dprintf("path: %s\n", getcwd(NULL, 0));
-    dprintf("%s\n", fontname.c_str());
-    FILE *test = fopen(fontname.c_str(), "r");
-    CHECK(test);
-    
     //Font *font = ShadowFont::Load(fontname.c_str(), 0.05, 0.05);
     Font *font = Font::Load(fontname.c_str());
+    if(!font) {
+      font = Font::Load(("data/" + fontname).c_str());
+    }
     CHECK(font);
     InitDefaultFrameStyle(font);
   }
