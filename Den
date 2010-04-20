@@ -368,7 +368,7 @@ do
           table.insert(data_items, {src = src, dst = dst, cli = cli})
         end
         return data_items
-      end, always_rebuild = true}
+      end}
     return "#" .. token .. "_copy"
   end
 
