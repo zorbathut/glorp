@@ -11,6 +11,14 @@ function assert(parm, ...)
   end
 end]]
 
+
+local plat, mode
+function wrap_init(platform, filename, mode_in, ...)
+  plat, mode = platform, mode_in
+  print(plat, mode)
+  wrap_init = nil
+end
+
 local function barf(err)
   local chunkies = {}
   function doit(err)
@@ -36,7 +44,11 @@ local function barf(err)
     
   end
   
-  error(rv .. "\n")
+  if not mode then
+    error(rv .. "\n")
+  else
+    print(rv .. "\n")
+  end
 end
 
 local errorcount = 0
@@ -60,14 +72,19 @@ function strip_traceback(err)
   return rz .. "\n"
 end
 
+local shattered = false
 function generic_wrap(target, ...)
+  if shattered then return true end
+  
   assert(target)
   local dt = {...}
   local it = select('#', ...)
   local rv, err = xpcall(function () return target(unpack(dt, 1, it)) end, function (ter) return {ter, debugstack_annotated()} end)
   if not rv then
     print("gwrap failure")
+    shattered = true
     barf(err)
+    return
   else
     return err
   end

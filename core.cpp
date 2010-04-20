@@ -22,6 +22,8 @@
 #include <Glop/Sound.h>
 #include <Glop/Os.h>
 
+#include "GLee.h"
+
 #include <iostream>
 
 #include <lua.hpp>
@@ -53,6 +55,10 @@ lua_State *L;
 
 const int virt_width = 640;
 const int virt_height = 480;
+
+int phys_screenx, phys_screeny;
+int get_screenx() { return phys_screenx; }
+int get_screeny() { return phys_screeny; }
 
 #ifdef WIN32
   void ods(const string &str) {
@@ -209,12 +215,33 @@ public:
     
     lua_getglobal(L, "generic_wrap");
     lua_getglobal(L, "render");
-    int rv = lua_pcall(L, 1, 0, 0);
+    int rv = lua_pcall(L, 1, 1, 0);
     if (rv) {
       dprintf("%s", lua_tostring(L, -1));
       meltdown();
       CHECK(0);
     }
+    
+    if(lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
+      GlUtils::SetNoTexture();
+      glBegin(GL_QUADS);
+      int scal = phys_screenx / 20;
+      for(int x = -5; x < 5; x++) {
+        for(int y = -2; y < 2; y++) {
+          if((x + y) % 2 == 0) {
+            glColor3d(1., 1., 1.);
+          } else {
+            glColor3d(1., 0., 0.);
+          }
+          glVertex2d((x + 0.) * scal + phys_screenx / 2, (y + 0.) * scal + phys_screeny / 2);
+          glVertex2d((x + 1.) * scal + phys_screenx / 2, (y + 0.) * scal + phys_screeny / 2);
+          glVertex2d((x + 1.) * scal + phys_screenx / 2, (y + 1.) * scal + phys_screeny / 2);
+          glVertex2d((x + 0.) * scal + phys_screenx / 2, (y + 1.) * scal + phys_screeny / 2);
+        }
+      }
+      glEnd();
+    }
+    lua_pop(L, 1);
   }
 };
 
@@ -832,10 +859,6 @@ void CrashHorribly() {
   *(int*)0 = 0;
 }*/
 
-int phys_screenx, phys_screeny;
-int get_screenx() { return phys_screenx; }
-int get_screeny() { return phys_screeny; }
-
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
 void luainit(int argc, const char **argv) {
@@ -973,6 +996,17 @@ void luainit(int argc, const char **argv) {
   }
   
   adaptaload("wrap.lua");
+  
+  {
+    lua_getglobal(L, "wrap_init");
+    lua_pushstring(L, game_platform);
+    for(int i = 0; i < argc; i++) {
+      lua_pushstring(L, argv[i]);
+    }
+    int error = lua_pcall(L, 1 + argc, 0, 0);
+    assert(!error);
+  }
+  
   adaptaload_wrapped("stage.lua", argc, argv);
   
   if(last_preserved_token.size()) {
