@@ -174,6 +174,8 @@ local function imm_resync()
   minimenu_right:SetPoint(0, 0.5, junct, 1, 0.5, 20, 0)
 end
 
+minimenu_repopulate({}) -- default
+
 local function imm_start()
   minimenu_frames:Show()
   minimenu_pos = 1

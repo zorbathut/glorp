@@ -1041,6 +1041,8 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   {
     KeyList listen_to_shit;
     
+    bool wasdown = false;
+    
     int lasttick = system()->GetTime();
     while(window()->IsCreated()) {
       system()->Think();
@@ -1090,9 +1092,14 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
       }
       
       if(input()->IsKeyDownFrame(kKeyF12)) {
-        meltdown();
-        luashutdown();
-        luainit(argc, argv);
+        if(!wasdown) {
+          meltdown();
+          luashutdown();
+          luainit(argc, argv);
+        }
+        wasdown = true;
+      } else {
+        wasdown = false;
       }
       
       {

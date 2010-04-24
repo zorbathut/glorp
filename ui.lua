@@ -310,6 +310,9 @@ do
     
     self.bg_r, self.bg_g, self.bg_b, self.bg_a = r, g, b, a
   end
+  function Region_Type:GetBackgroundColor()
+    return self.bg_r, self.bg_g, self.bg_b, self.bg_a
+  end
   
   function Region_Type:Render()
     if self.hide then return end
@@ -337,11 +340,13 @@ do
     
     if self.DrawPre then self:DrawPre() end
     
-    if self.Draw then self:Draw() end
-    
-    if self.children then
-      for _, k in ipairs(self.children) do
-        k:Render()
+    if not self.DrawSkip then
+      if self.Draw then self:Draw() end
+      
+      if self.children then
+        for _, k in ipairs(self.children) do
+          k:Render()
+        end
       end
     end
     
@@ -420,7 +425,7 @@ local function Button_Key(self, button, ascii, event)
   if not button then return true end
   if button ~= "mouse_left" and not button:match("finger_%d+") then return true end  -- don't know don't care
   
-  if event == "press" then
+  if event == "press" or event == "press_double" then
     self.button_down = true
   elseif event == "release" and self.button_down then
     self.button_down = false
@@ -790,14 +795,19 @@ local frame = 1000 / 60
 
 local last_inside = {}
 function UI_Loop(tix, ...)
-  local this_inside = AccumulateInternals()
+  local this_inside
+  perfbar(0, 0.5, 0.5, function ()
+    this_inside = AccumulateInternals()
+  end)
   
-  for k in pairs(last_inside) do
-    if not this_inside[k] and k.MouseOut then k:MouseOut() end
-  end
-  for k in pairs(this_inside) do
-    if not last_inside[k] and k.MouseIn then k:MouseIn() end
-  end
+  perfbar(0.5, 0.0, 0.5, function ()
+    for k in pairs(last_inside) do
+      if not this_inside[k] and k.MouseOut then k:MouseOut() end
+    end
+    for k in pairs(this_inside) do
+      if not last_inside[k] and k.MouseIn then k:MouseIn() end
+    end
+  end)
   
   last_inside = this_inside
   
