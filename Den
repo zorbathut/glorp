@@ -111,7 +111,7 @@ do
   local luabindpath = luabindroot .. "/src/"
   ursa.token.rule{"luabind_source_files", nil, function () return ursa.system{("cd %s && ls *.cpp"):format(luabindpath)} end}
   for k in ursa.token{"luabind_source_files"}:gmatch("([^\n]+)") do
-    table.insert(luabindobj, ursa.rule{builddir .. "lib_build/luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -Iglorp/%s -I#builddir/lib_release/include -Iglorp/libs/luabind-0.9ish -Iglorp/libs/boost #CXXFLAGS -g"):format(luabindpath .. k, luabindroot)}})
+    table.insert(luabindobj, ursa.rule{builddir .. "lib_build/luabind/" .. k:gsub(".cpp", ".o"), {luabuilds, luabindpath .. k, lua_headers}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -Iglorp/%s -I#builddir/lib_release/include -Iglorp/libs/luabind-0.9 -Iglorp/libs/boost #CXXFLAGS -g"):format(luabindpath .. k, luabindroot)}})
   end
   
   lua = builddir .. "lib_release/lib/libluabind.a"
