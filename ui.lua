@@ -431,6 +431,10 @@ local function Button_Key(self, button, ascii, event)
     self.button_down = false
     if self.Click then self:Click() end
   end
+  
+  if event == "press_repeat" then
+    if self.Repeat then self:Repeat() end
+  end
 end
 local function Button_MouseOut(self)
   self.button_down = false
