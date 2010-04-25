@@ -371,7 +371,9 @@ function key(button, ascii, event)
     if ssmessage then ssmessage:Detach() ssmessage = nil end
     
     ssmessage = CreateFrame("Text_Multiline", overlay)
-    ssmessage:SetAllPoints()
+    ssmessage:SetPoint("TOPLEFT", UIParent, "TOPLEFT")
+    ssmessage:SetPoint("RIGHT", UIParent, "RIGHT")
+    ssmessage:SetHeight(1000)
     ssmessage.tixleft = 240
     ssmessage.tixfade = 60
     ssmessage:SetLayer(100000000)
