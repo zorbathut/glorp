@@ -41,26 +41,36 @@ function menu.exit_button:Click()
   GlorpController("exit")
 end
 
+local allow_anchor = true
+function disable_anchor()
+  allow_anchor = false
+  
+  ptr:Hide()
+end
+
+
 function key(button, ascii, event)
   if button == "escape" and event == "press" then
     GlorpController("exit")
   end
   
-  if (button == "enter" or button == "z" or button == "x" or button == "c" or button == "space") and event == "press" then
-    if anchor == menu.ok_text then
-      menu.ok_button:Click()
-    else
-      menu.exit_button:Click()
+  if allow_anchor then
+    if (button == "enter" or button == "z" or button == "x" or button == "c" or button == "space") and event == "press" then
+      if anchor == menu.ok_text then
+        menu.ok_button:Click()
+      else
+        menu.exit_button:Click()
+      end
     end
-  end
-  
-  if (button == "arrow_up" or button == "arrow_down") and event == "press" then
-    if anchor == menu.ok_text then
-      anchor = menu.exit_text
-    else
-      anchor = menu.ok_text
+    
+    if (button == "arrow_up" or button == "arrow_down") and event == "press" then
+      if anchor == menu.ok_text then
+        anchor = menu.exit_text
+      else
+        anchor = menu.ok_text
+      end
+      spt()
     end
-    spt()
   end
 end
 
