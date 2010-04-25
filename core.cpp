@@ -882,7 +882,8 @@ void luainit(int argc, const char **argv) {
         .def("UpdateSize", &FancyTextFrame::UpdateSize)
         .def("Render", &FancyTextFrame::Render)
         .def("SetText", &FancyTextFrame::SetText)
-        .def("GetText", &FancyTextFrame::GetText),
+        .def("GetText", &FancyTextFrame::GetText)
+        .def("GetHeight", &FancyTextFrame::GetHeight),
       class_<SoundSource>("SourceSource_Make")
         .def("Stop", &SoundSource::Stop),
       #ifndef IPHONE

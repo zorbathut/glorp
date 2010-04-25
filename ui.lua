@@ -469,7 +469,14 @@ end
 
 local TextMultilineOverrides = {}
 function TextMultilineOverrides:ResynchText()
-  self.text:SetText(("\1J0C%02x%02x%02x%02x\1"):format(self.tex_r * 255, self.tex_g * 255, self.tex_b * 255, self.tex_a * 255) .. self.tex_tex)
+  local col = ("\1J0C%02x%02x%02x%02x\1"):format(self.tex_r * 255, self.tex_g * 255, self.tex_b * 255, self.tex_a * 255)
+  local siz
+  if self.tex_size then
+    siz = ("\1S%f\1"):format(self.tex_size)
+  else
+    siz = ""
+  end
+  self.text:SetText(col .. siz .. self.tex_tex)
   self.update = true
 end
 function TextMultilineOverrides:SetText(text)
@@ -481,11 +488,21 @@ function TextMultilineOverrides:SetColor(r, g, b, a)
   self.tex_r, self.tex_g, self.tex_b, self.tex_a = r, g, b, a
   self:ResynchText()
 end
+function TextMultilineOverrides:SetSize(siz)
+  self.tex_size = siz
+  self:ResynchText()
+end
+function TextMultilineOverrides:ForceHeight()
+  self.text:UpdateSize(self:GetWidth(), 1000)
+  self.text:SetPosition(0, 0, 0, 0, self:GetWidth(), 1000)
+  self:SetHeight(self.text:GetHeight())
+end
 function TextMultilineOverrides:Draw()
   local l, u, r, d = self:GetBounds()
   if self.update or not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
     self.text:UpdateSize(r - l, d - u)
     self.text:SetPosition(l, u, l, u, r, d)
+    self:SetHeight(self.text:GetHeight())
     self.update = nil
   end
   self.text:Render()
@@ -708,6 +725,7 @@ end
 function AccumulateInternals(start, acu, x, y)
   if not start then start = UIParent end
   if not acu then acu = {} end
+  if not start:IsShown() then return acu end
   
   if not x then x, y = GetMouse() end
   
