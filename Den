@@ -43,6 +43,8 @@ local builddir = builddir_pre .. "/"
 
 local osd = assert(loadfile("glorp/Den_" .. platform .. ".lua")){name = params.name, longname = params.longname, midname = params.midname, glop = glop, builddir = builddir}
 
+if platform == "osx" then noluajit = true end   -- temporary hack for luajitb4
+
 -- first we build the lua
 local lua
 local lua_headers = {}
@@ -84,6 +86,7 @@ do
       ursa.token.rule{"lua_files", "!" .. path, function () return ursa.system{("cd %s && find src etc -type f"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
+        print(k)
         table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.copy{}})
       end
       
