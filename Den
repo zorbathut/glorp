@@ -86,7 +86,6 @@ do
       ursa.token.rule{"lua_files", "!" .. path, function () return ursa.system{("cd %s && find src etc -type f"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
-        print(k)
         table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.copy{}})
       end
       
