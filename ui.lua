@@ -667,7 +667,7 @@ function CreateFrame(typ, parent, name)
 end
 
 local function TraverseUpWorker(start, x, y, keyed)
-  if start.hide then return end
+  if not start:IsShown() then return end
   
   if start.children then
     local lx, ly = x, y

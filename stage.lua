@@ -104,7 +104,7 @@ minimenu_resume:SetText("Resume")
 minimenu_resume:SetSize(30)
 minimenu_resume:SetColor(1, 1, 1)
 minimenu_resume:SetPoint("CENTER", UIParent, "CENTER", 0, -50)
-local function imm_end()
+function imm_end()
   minimenu_frames:Hide()
   inminimenu = false
 end
@@ -121,6 +121,7 @@ minimenu_return:SetColor(1, 1, 1)
 minimenu_return:SetPoint("CENTER", UIParent, "CENTER", 0, 50)
 function minimenu_return_button:Click()
   print("clique")
+  imm_end()
   Handle("exit_game")
   inminimenu = false
 end
