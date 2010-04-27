@@ -8,15 +8,14 @@
 PLAT= none
 
 CC= gcc
-CFLAGS= -O2 -Wall -mno-cygwin -mwindows $(MYCFLAGS) $(COCOCFLAGS)
-LDFLAGS = -mno-cygwin -mwindows
+CFLAGS= -O2 -Wall $(MYCFLAGS) $(COCOCFLAGS)
 AR= ar rcu
 RANLIB= ranlib
 RM= rm -f
 LIBS= -lm $(MYLIBS)
 
-MYCFLAGS= -mno-cygwin -mwindows
-MYLDFLAGS= -mno-cygwin -mwindows
+MYCFLAGS=
+MYLDFLAGS=
 MYLIBS=
 
 # ++ Coco =========
@@ -121,12 +120,9 @@ macosx:
 
 mingw:
 	$(MAKE) "LUA_A=lua51.dll" "LUA_T=lua.exe" \
-	"AR=$(CC) -shared -mno-cygwin -mwindows -o " "RANLIB=strip --strip-unneeded" \
+	"AR=$(CC) -shared -o" "RANLIB=strip --strip-unneeded" \
 	"MYCFLAGS=-DLUA_BUILD_AS_DLL" "MYLIBS=" "MYLDFLAGS=-s" lua.exe
 	$(MAKE) "LUAC_T=luac.exe" luac.exe
-
-cygwin:
-	$(MAKE) all "CC=/cygdrive/c/MinGW/bin/gcc"
 
 posix:
 	$(MAKE) all MYCFLAGS=-DLUA_USE_POSIX
