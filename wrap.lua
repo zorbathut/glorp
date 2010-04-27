@@ -103,6 +103,7 @@ function generic_wrap(target, ...)
     print("gwrap failure")
     shattered = true
     barf(err)
+    fuckshit()  -- not entirely sure on the ideal logic for catching fuckshit errors but whatever doodly
     return
   else
     return err
