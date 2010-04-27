@@ -17,7 +17,7 @@ rv.lua_buildtype = "cygwin"
 
 -- runnable
 rv.create_runnable = function(dat)
-  local libpath = "glorp/Glop/Glop/source/third_party/system_cygwin/dll"
+  local libpath = "glorp/Glop/Glop/third_party/system_cygwin/dll"
   local libs = "fmodex.dll"
   local liboutpath = params.builddir
 

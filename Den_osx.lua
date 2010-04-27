@@ -36,7 +36,7 @@ rv.create_runnable = function(dat)
   
   -- copy subsidiary libraries
   for libname in ("libfmodex.dylib"):gmatch("[^%s]+") do
-    table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/%s"):format(basepath, libname), ("glorp/Glop/Glop/source/third_party/system_osx/lib/%s"):format(libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
+    table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/%s"):format(basepath, libname), ("glorp/Glop/Glop/third_party/system_osx/lib/%s"):format(libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
     --tweak_glop(("-change ./%s @executable_path/../Frameworks/%s"):format(libname, libname))
   end
   
