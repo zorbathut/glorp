@@ -616,33 +616,6 @@ void adaptaload(const string &fname) {
   }
 }
 
-void adaptaload_wrapped(const string &fname, int argc, const char **argv) {
-  int error = luaL_dostring(L, ("file_temp, file_err = loadfile(\"data/" + fname + "\"); assert(file_temp, file_err)").c_str());
-  if(error) {
-    error = luaL_dostring(L, ("file_temp, file_err = loadfile(\"glorp/" + fname + "\"); assert(file_temp, file_err)").c_str());
-  }
-  if(error) {
-    error = luaL_dostring(L, ("file_temp, file_err = loadfile(\"" + fname + "\"); assert(file_temp, file_err)").c_str());
-  }
-  
-  if(!error) {
-    lua_getglobal(L, "generic_wrap");
-    lua_getglobal(L, "file_temp");
-    lua_pushstring(L, game_platform);
-    for(int i = 0; i < argc; i++) {
-      lua_pushstring(L, argv[i]);
-    }
-    error = lua_pcall(L, 1 + argc, 0, 0);
-    if(!error) {
-      error = luaL_dostring(L, "file_temp, file_err = nil, nil");
-    }
-  }
-  
-  if(error) {
-    CHECK(0, "%s", lua_tostring(L, -1));
-  }
-}
-
 int gmx() {return input()->GetMouseX();};
 int gmy() {return input()->GetMouseY();};
 
@@ -945,16 +918,15 @@ void luainit(int argc, const char **argv) {
   adaptaload("wrap.lua");
   
   {
+    lua_getglobal(L, "generic_wrap");
     lua_getglobal(L, "wrap_init");
     lua_pushstring(L, game_platform);
     for(int i = 0; i < argc; i++) {
       lua_pushstring(L, argv[i]);
     }
-    int error = lua_pcall(L, 1 + argc, 0, 0);
+    int error = lua_pcall(L, 2 + argc, 0, 0);
     assert(!error);
   }
-  
-  adaptaload_wrapped("stage.lua", argc, argv);
   
   if(last_preserved_token.size()) {
     lua_getglobal(L, "generic_wrap");

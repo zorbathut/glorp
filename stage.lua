@@ -4,15 +4,7 @@ local platform, _, mode = ...
 function runfile_worker(file, global, optional, ...)
   assert(global)
   
-  local dat, rv = loadfile(file)
-  
-  if rv and rv:find("No such file or directory") then
-    dat, rv = loadfile("data/" .. file)
-  end
-  
-  if rv and rv:find("No such file or directory") then
-    dat, rv = loadfile("glorp/" .. file)
-  end
+  local dat, rv = loadfile_pathed(file)
   
   if rv then
     if optional and rv:find("No such file or directory") then return end
