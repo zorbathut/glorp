@@ -64,7 +64,7 @@ do
     return self.__cache[axis].size
   end
   local function getpoint_core(self, axis, point)
-    print("GPC", self)
+    --print("GPC", self)
     assert(axis)
     assert(point)
     
