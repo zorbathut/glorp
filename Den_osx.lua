@@ -64,7 +64,7 @@ function rv.installers()
   end
   
   -- copy the reporter
-  table.insert(binaries, ursa.rule{app_prefix .. "Contents/Resources/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
+  table.insert(binaries, ursa.rule{app_prefix .. "Contents/Resources/data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
 
   -- here's our bootstrapper for sane version errors
   table.insert(binaries, ursa.rule{app_prefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/SystemVersionCheck", ursa.util.system_template{"cp $SOURCE $TARGET"}})

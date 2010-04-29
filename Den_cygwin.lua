@@ -36,12 +36,9 @@ function rv.installers()
   local data = {}
 
   -- DLLs and executables
-  for _, file in ipairs({params.name .. ".exe", "reporter.exe"}) do
-    table.insert(data, ursa.rule{params.builddir .. "deploy/" .. file, params.builddir .. file, ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
-  end
-  for _, file in ipairs({"fmodex.dll"}) do
-    table.insert(data, ursa.rule{params.builddir .. "deploy/" .. file, params.builddir .. file, ursa.util.system_template{"cp $SOURCE $TARGET"}})
-  end
+  table.insert(data, ursa.rule{params.builddir .. "deploy/" .. params.name .. ".exe", params.builddir .. params.name .. ".exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
+  table.insert(data, ursa.rule{params.builddir .. "deploy/data/reporter.exe", params.builddir .. "reporter.exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
+  table.insert(data, ursa.rule{params.builddir .. "deploy/fmodex.dll", params.builddir .. "fmodex.dll", ursa.util.system_template{"cp $SOURCE $TARGET"}})
   table.insert(data, ursa.rule{params.builddir .. "deploy/licenses.txt", "glorp/resources/licenses.txt", ursa.util.system_template{"cp $SOURCE $TARGET"}})
 
   -- second we generate our actual data copies
