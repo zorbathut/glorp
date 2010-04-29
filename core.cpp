@@ -285,7 +285,7 @@ public:
   }
   
   unsigned long GetPixel(int x, int y) const {
-    assert(x >= 0 && x < tex->GetWidth() && y >= 0 && y < tex->GetHeight());
+    CHECK(x >= 0 && x < tex->GetWidth() && y >= 0 && y < tex->GetHeight());
     return *(const unsigned long*)tex->GetImage()->Get(x, y);
   }
   
@@ -528,7 +528,7 @@ public:
     int typi;
     if(typ == "VERTEX_SHADER") typi = GL_VERTEX_SHADER; else
     if(typ == "FRAGMENT_SHADER") typi = GL_FRAGMENT_SHADER; else
-      assert(0);
+      CHECK(0);
     id = glCreateShader(typi);
   }
   ~GlShader() {
@@ -704,10 +704,10 @@ bool screenshot_to(const string &fname) {
   glReadPixels(0, 0, x, y, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, &dat[0]);
   
   png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  assert(png_ptr);
+  CHECK(png_ptr);
   png_infop info_ptr = png_create_info_struct(png_ptr);
-  assert(info_ptr);
-  assert(!setjmp(png_jmpbuf(png_ptr)));
+  CHECK(info_ptr);
+  CHECK(!setjmp(png_jmpbuf(png_ptr)));
   png_init_io(png_ptr, fil);
   
   png_set_IHDR(png_ptr, info_ptr, x, y, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
@@ -791,6 +791,12 @@ void CrashHorribly() {
   *(int*)0 = 0;
 }*/
 
+int toaddress(lua_State *L) {
+  CHECK(lua_gettop(L) == 1);
+  lua_pushfstring(L, "%p", lua_topointer(L, 1));
+  return 1;
+}
+
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
 void luainit(int argc, const char **argv) {
@@ -803,10 +809,11 @@ void luainit(int argc, const char **argv) {
     luaopen_opengl_ext(L);
   #endif
   lua_register(L, "print", debug_print);
+  lua_register(L, "toaddress", toaddress);
   
   ll_subregister(L, "math", "random", math_random);
-  ll_subregister(L, "math", "randomseed", math_randomseed);
-  
+  ll_subregister(L, "math", "randomseed", math_randomseed);  
+
   {
     using namespace luabind;
     
@@ -898,8 +905,8 @@ void luainit(int argc, const char **argv) {
       def("GetConfigDirectory", &getConfigDirectory),
       def("MakeConfigDirectory", &makeConfigDirectory),
       def("Perfbar_Set", &set_perfbar),
-      def("get_stack_entry", &get_stack_entry, raw(_1)),
-      def("debugstack_annotated", &debugstack_annotated, raw(_1)),
+      def("get_stack_entry", &get_stack_entry),
+      def("debugstack_annotated", &debugstack_annotated),
       
       #ifdef IPHONE
       def("touch_getCount", &os_touch_getCount),
@@ -925,7 +932,7 @@ void luainit(int argc, const char **argv) {
       lua_pushstring(L, argv[i]);
     }
     int error = lua_pcall(L, 2 + argc, 0, 0);
-    assert(!error);
+    CHECK(!error);
   }
   
   if(last_preserved_token.size()) {
@@ -986,7 +993,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     gws.min_aspect_ratio = (float)width / height;
     gws.min_inverse_aspect_ratio = (float)height / width;
     gws.is_resizable = false;
-    ASSERT(window()->Create(width, height, false, gws));
+    CHECK(window()->Create(width, height, false, gws));
     window()->SetVSync(true);
   }
   

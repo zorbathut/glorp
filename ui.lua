@@ -21,15 +21,20 @@ do
     -- Width, split into H W
       -- Check to see if the two points are anchored, then return different
       -- If not, return the internal size_w size_h
-  local Region_Type = {}
-  local Region_Type_mt = {__index = Region_Type}
   
-  -- "gravitate towards center"? how does that work?
+  local Region_Type = {}
+  local Region_Type_mt = {__index = Region_Type, __tostring = function (self) return "<frame " .. (self.__name or "(unnammed)") .. " " .. toaddress(self) .. ">" end}
+  
+  -- bit of musing on caching
+  -- we'll have to maintain a "layout children" list, and deal with that properly on attach/detach (make it weak pointers so we can ignore it with attach/detach)
+  -- when anything is looked up, size or point, we check the cache first. when it's inserted, we insert it into the cache.
+  
+  -- "gravitate towards center"? how does that work? answer: it doesn't, let's not do that
   
   -- {"size", value}
   -- {coordinate, target, targ_coordinate, offset}
   
-  local function getsize(self, axis)
+  local function getsize_core(self, axis)
     --print("gs", self, axis)
     if self[axis] then
       if self[axis].size then
@@ -49,7 +54,17 @@ do
     
     return self.bg_r and 20 -- everything is 20, unless it actually fails to exist
   end
-  local function getpoint(self, axis, point)
+  local function getsize(self, axis)
+    if not self.__cache[axis] then
+      self.__cache[axis] = {}
+    end
+    if not self.__cache[axis].size then
+      self.__cache[axis].size = getsize_core(self, axis)
+    end
+    return self.__cache[axis].size
+  end
+  local function getpoint_core(self, axis, point)
+    print("GPC", self)
     assert(axis)
     assert(point)
     
@@ -88,11 +103,47 @@ do
     
     return point * gs
   end
-  local function reanchor(self, axis, token, ...)
-    if not self[axis] then
-      self[axis] = {[token] = {...}}
+  local function getpoint(self, axis, point)
+    if not self.__cache[axis] then
+      self.__cache[axis] = {}
+    end
+    if not self.__cache[axis][point] then
+      self.__cache[axis][point] = getpoint_core(self, axis, point)
+    end
+    return self.__cache[axis][point]
+  end
+  
+  local axisanchormeta = {__mode = 'k'}
+  local function new_axis_anchor()
+    return setmetatable({}, axisanchormeta)
+  end
+  
+  local function decache(self, axis)
+    if self.__cache[axis] then
+      self.__cache[axis] = nil
+      
+      for k in pairs(self.__anchor_children[axis]) do
+        decache(k, axis)
+      end
+    end
+  end
+  
+  local function reanchor(self, axis, token, grip, ...)
+    if not self[axis] and not grip then
+      -- we "clear", but we clear something that doesn't actually exist
+    elseif not self[axis] then
+      self[axis] = {[token] = {grip, ...}}
     elseif self[axis][token] then
-      self[axis][token] = {...}
+      if type(self[axis][token][1]) == "table" then
+        self[axis][token][1].__anchor_children[axis][self] = nil
+      end
+      if not grip then
+        self[axis][token] = nil
+      else
+        self[axis][token] = {grip, ...}
+      end
+    elseif not grip then
+      -- we "clear", but we clear something that doesn't actually exist
     else
       local ct = 0
       for _ in pairs(self[axis]) do
@@ -101,15 +152,20 @@ do
       
       if ct >= 2 then
         print("Too many anchors!")
-        print("Trying to anchor", token, ...)
+        print("Trying to anchor", token, grip, ...)
         for anc in pairs(self[axis]) do
           print("Existing anchor", anc)
         end
         assert(ct < 2)
       end
-      self[axis][token] = {...}
+      self[axis][token] = {grip, ...}
     end
     
+    if type(grip) == "table" then
+      grip.__anchor_children[axis][self] = true
+    end
+    
+    decache(self, axis)
     --getpoint(self, axis, token) -- check for circular dependencies
   end
   
@@ -192,6 +248,8 @@ do
       end
     end
     self.parent = nil
+    
+    -- Note: Technically we're still anchored. This is A-OK, we might reattach to something else later on. If we get GC'ed, well, that's why the anchor children tables are weak-keyed
   end
   function Region_Type:SetLayer(layer)
     self.layer = layer
@@ -200,13 +258,13 @@ do
   function Region_Type:resort_children()
     assert(self.children)
     table.sort(self.children, function (a, b) return (a.layer or 0) < (b.layer or 0) end)
-    
+    --[[
     if loud then
-    print("layerz")
-    for i = 1, #self.children do
-      print(self.children[i].layer)
-    end
-    end
+      print("layerz")
+      for i = 1, #self.children do
+        print(self.children[i].layer)
+      end
+    end]]
   end
   
   function Region_Type:Hide()
@@ -232,14 +290,31 @@ do
     reanchor(self, "_anchor_y", 1, target, 1, 0)
     -- grunch
   end
-  function Region_Type:ClearAllPoints(not_sizes, not_points)
-    assert(not not_points)
-    if not_sizes then
-      self["_anchor_x"] = {size = self["_anchor_x"].size}
-      self["_anchor_y"] = {size = self["_anchor_y"].size}
-    else
-      self["_anchor_x"], self["_anchor_y"] = nil, nil
+  
+  local function clear(self, axis, nsize, npoint)
+    if not self[axis] then return end
+    
+    local cle = {}
+    for k in pairs(self[axis]) do
+      if k == "size" then
+        if not nsize then
+          table.insert(cle, k)
+        end
+      else
+        if not npoint then
+          table.insert(cle, k)
+        end
+      end
     end
+    
+    for _, v in ipairs(cle) do
+      reanchor(self, axis, v, nil)
+    end
+  end
+  
+  function Region_Type:ClearAllPoints(not_sizes, not_points)
+    clear(self, "_anchor_x", not_sizes, not_points)
+    clear(self, "_anchor_y", not_sizes, not_points)
   end
   
   local function set_axis(self, x, y, target, tx, ty, ofsx, ofsy)
@@ -368,11 +443,14 @@ do
     end
   end
   
+  local weak_key_meta = {__mode = 'k'}
   function Region(parent, name, suppress)
     local reg = setmetatable({}, Region_Type_mt)
     if not parent and not suppress then parent = UIParent end
     if parent then reg:SetParent(parent) end
     reg.__name = name
+    reg.__cache = {_anchor_x = {}, _anchor_y = {}}
+    reg.__anchor_children = {_anchor_x = setmetatable({}, weak_key_meta), _anchor_y = setmetatable({}, weak_key_meta)}
     return reg
   end
 end
@@ -621,7 +699,14 @@ do
 end
 
 function CreateFrame(typ, parent, name)
-  if not name then name = get_stack_entry(2) end
+  if not name then
+    local id = 2
+    name = get_stack_entry(2)
+    while name:find("(tail call)") do
+      id = id + 1
+      name = get_stack_entry(id)
+    end
+  end
   
   if typ == "Frame" then
     return Region(parent, name)
