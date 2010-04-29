@@ -139,7 +139,7 @@ do
   
   local files = {}
   
-  ursa.token.rule{"curl_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  ursa.token.rule{"curl_files", nil, function () return ursa.system{("cd %s && (((find . -type f | grep -v CMake | grep -v docs | grep -v tests) && (find . -type f | grep Makefile)) | sed s*\\\\./** | sort | uniq)"):format(path)} end}
   for item in ursa.token{"curl_files"}:gmatch("([^\n]+)") do
     if item == "Makefile" or item == "include/curl/curlbuild.h" then
     elseif item == "Makefile.in" then
@@ -195,7 +195,7 @@ do
   
   local makefile = ursa.rule{{builddir .. "lib_build/curl/Makefile", builddir .. "lib_build/curl/include/curl/curlbuild.h"}, files, ursa.util.system_template{('cd %s/lib_build/curl && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --disable-shared --disable-dependency-tracking --disable-ftp --disable-file --disable-ldap --disable-ldaps --disable-rtsp --disable-proxy --disable-dict --disable-telnet --disable-tftp --disable-pop3 --disable-imap --disable-smtp --disable-manual --disable-ipv6 --disable-crypto-auth --disable-cookies'):format(builddir, glop.libcc, glop.libcflags, glop.libldflags)}}
   
-  local lib = ursa.rule{builddir .. "lib_build/curl/lib/.libs/libcurl.a", makefile, ('cd %slib_build/curl && make'):format(builddir)}  -- can't parallelize this, libcurl is a butt
+  local lib = ursa.rule{builddir .. "lib_build/curl/lib/.libs/libcurl.a", makefile, ('cd %slib_build/curl && make'):format(builddir)}  -- can't parallelize this, libcurl is a giant butt
   
   libs.libcurl = ursa.rule{builddir .. "lib_release/lib/libcurl.a", lib, ursa.util.copy{}}
   table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curl.h", builddir .. "lib_build/curl/include/curl/curl.h", ursa.util.copy{}})
