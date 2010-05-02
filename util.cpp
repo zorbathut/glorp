@@ -3,6 +3,8 @@
 
 #include <cmath>
 #include <sstream>
+#include <algorithm>
+#include <limits>
 
 #include <stdarg.h>
 

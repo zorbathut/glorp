@@ -6,6 +6,8 @@
 
 #include <stdarg.h>
 
+#include <algorithm>
+
 using namespace std;
 
 int frameNumber = -1;

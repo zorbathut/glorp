@@ -11,6 +11,10 @@
 #include "LuaGL_common.h"
 
 #include <assert.h>
+#include <cstring>
+#include <cstdlib>
+
+using namespace std;
 
 
 /* set field of a lua table with a number */

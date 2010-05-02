@@ -1,10 +1,7 @@
 #ifndef DNET_DEBUG
 #define DNET_DEBUG
 
-
-
-
-
+#include <stdio.h>  // we include this because it makes its own dprintf function that we cheerfully nuke
 
 #include <deque>
 #include <string>
