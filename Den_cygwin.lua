@@ -5,7 +5,7 @@ local params = ...
 local rv = {}
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-mwindows -DWIN32 -Iglorp/glop/release/cygwin/include")
+token_literal("CXXFLAGS", "-mwindows -DWIN32 -Iglorp/Glop/release/cygwin/include")
 token_literal("LDFLAGS", "-L/lib/mingw -Lglorp/Glop/release/cygwin/lib -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp")
 
 token_literal("FLAC", "/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe")
@@ -23,11 +23,10 @@ rv.create_runnable = function(dat)
 
   local dlls = {}
   for libname in (libs):gmatch("[^%s]+") do
-    table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, libname), ("%s/%s"):format(libpath, libname), ursa.util.system_template{"cp $SOURCE $TARGET"}})
+    table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, libname), ("%s/%s"):format(libpath, libname), ursa.util.copy{}})
   end
   
   return {deps = {dlls, dat.mainprog}, cli = ("%s%s.exe"):format(params.builddir, params.name)}
-  -- more to come
 end
 
 -- installers
@@ -38,8 +37,8 @@ function rv.installers()
   -- DLLs and executables
   table.insert(data, ursa.rule{params.builddir .. "deploy/" .. params.name .. ".exe", params.builddir .. params.name .. ".exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{params.builddir .. "deploy/data/reporter.exe", params.builddir .. "reporter.exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
-  table.insert(data, ursa.rule{params.builddir .. "deploy/fmodex.dll", params.builddir .. "fmodex.dll", ursa.util.system_template{"cp $SOURCE $TARGET"}})
-  table.insert(data, ursa.rule{params.builddir .. "deploy/licenses.txt", "glorp/resources/licenses.txt", ursa.util.system_template{"cp $SOURCE $TARGET"}})
+  table.insert(data, ursa.rule{params.builddir .. "deploy/fmodex.dll", params.builddir .. "fmodex.dll", ursa.util.copy{}})
+  table.insert(data, ursa.rule{params.builddir .. "deploy/licenses.txt", "glorp/resources/licenses.txt", ursa.util.copy{}})
 
   -- second we generate our actual data copies
   ursa.token.rule{"built_data", "#datafiles", function ()

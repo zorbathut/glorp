@@ -4,52 +4,37 @@ local params = ...
 
 local rv = {}
 
-loadfile("glorp/Den_util_osx.lua")(params, rv)
+ursa.token.rule{"FLAC", nil, function () return "flac" end}
+
+rv.extension = ".prog"  -- have to use something or it'll conflict
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-arch i386 -DMACOSX -I/opt/local/include -Iglorp/Glop/release/osx/include")
-token_literal("LDFLAGS", "-arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
+token_literal("CXXFLAGS", "-m32 -DLINUX -I/opt/local/include -Iglorp/Glop/release/linux/include")
+token_literal("LDFLAGS", "-m32 -lGL -lGLU")
 
-token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -arch i386")
+token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -m32")
 
-rv.lua_buildtype = "macosx"
+rv.lua_buildtype = "linux"
 
 local runnable_deps
 
 rv.create_runnable = function(dat)
-  local basepath = "build/osx/" .. params.longname .. ".app"
-  
-  local runnable = {}
-  
-  local current_glop = params.glop.lib
-  local current_glop_iteration = 0
-  
-  -- copy our main executable
-  table.insert(runnable, ursa.rule{basepath .. "/Contents/MacOS/" .. params.longname, dat.mainprog, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool -change ./libfmodex.dylib @executable_path/../Frameworks/libfmodex.dylib $TARGET"):format(cli)}})
-  
-  --[[
-  local function tweak_glop(cli)
-    current_glop_iteration = current_glop_iteration + 1
-    current_glop = ursa.rule{"build/osx/glop_lib_" .. current_glop_iteration, current_glop, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool %s $TARGET"):format(cli)}}
-    --assert(false)
-  end]]
-  
-  -- copy subsidiary libraries
-  for libname in ("libfmodex.dylib"):gmatch("[^%s]+") do
-    table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/%s"):format(basepath, libname), ("glorp/Glop/Glop/third_party/system_osx/lib/%s"):format(libname), ursa.util.copy{}})
-    --tweak_glop(("-change ./%s @executable_path/../Frameworks/%s"):format(libname, libname))
+  local libpath = "glorp/Glop/Glop/third_party/system_linux/lib"
+  local libs = "libfmodex.so"
+  local liboutpath = params.builddir
+
+  local dlls = {}
+  for libname in (libs):gmatch("[^%s]+") do
+    table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, libname), ("%s/%s"):format(libpath, libname), ursa.util.copy{}})
   end
   
-  -- copy the main glop library
-  --table.insert(runnable, ursa.rule{basepath .. "/Contents/Frameworks/Glop.framework/Glop", current_glop, ursa.util.system_template{"cp $SOURCE $TARGET"}})
-  
-  runnable_deps = runnable
-  
-  return {deps = runnable, cli = '"' .. basepath .."/Contents/MacOS/" .. params.longname .. '"'}
+  return {deps = {dlls, dat.mainprog}, cli = ("%s%s.exe"):format(params.builddir, params.name)}
 end
 
 -- installers
 function rv.installers()
+  return {}
+  --[=[
   assert(runnable_deps)
   local app_prefix = ("build/osx/deploy/%s.app/"):format(params.longname)
   
@@ -64,10 +49,10 @@ function rv.installers()
   end
   
   -- copy the reporter
-  table.insert(binaries, ursa.rule{app_prefix .. "Contents/Resources/data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
+  table.insert(binaries, ursa.rule{app_prefix .. "Contents/Resources/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
 
   -- here's our bootstrapper for sane version errors
-  table.insert(binaries, ursa.rule{app_prefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/SystemVersionCheck", ursa.util.copy{}})
+  table.insert(binaries, ursa.rule{app_prefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/SystemVersionCheck", ursa.util.system_template{"cp $SOURCE $TARGET"}})
   
   -- second we generate our actual data copies
   ursa.token.rule{"built_data", "#datafiles", function ()
@@ -121,7 +106,7 @@ function rv.installers()
   
   cull_data(app_prefix, {binaries, icon, infoplist})
   
-  return ursa.rule{("build/%s.dmg"):format(ursa.token{"outputprefix"}), {binaries, ursa.util.token_deferred{"built_data"}, "#culled_data", infoplist, icon}, ursa.util.system_template{('hdiutil create -srcfolder "build/osx/deploy/%s.app" $TARGET -ov'):format(params.longname)}}
+  return ursa.rule{("build/%s.dmg"):format(ursa.token{"outputprefix"}), {binaries, ursa.util.token_deferred{"built_data"}, "#culled_data", infoplist, icon}, ursa.util.system_template{('hdiutil create -srcfolder "build/osx/deploy/%s.app" $TARGET -ov'):format(params.longname)}}]=]
 end
 
 return rv
