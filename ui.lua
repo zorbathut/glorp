@@ -64,7 +64,7 @@ do
     return self.__cache[axis].size
   end
   local function getpoint_core(self, axis, point)
-    print("GPC", self)
+    --print("GPC", self)
     assert(axis)
     assert(point)
     
@@ -183,11 +183,11 @@ do
   
   function Region_Type:GetWidth()
     local gs = getsize(self, "_anchor_x")
-    if type(gs) == "number" then return math.abs(gs) else return gs end
+    if gs then return math.abs(gs) else return gs end
   end
   function Region_Type:GetHeight()
     local gs = getsize(self, "_anchor_y")
-    if type(gs) == "number" then return math.abs(gs) else return gs end
+    if gs then return math.abs(gs) else return gs end
   end
   
   function Region_Type:GetLeft()

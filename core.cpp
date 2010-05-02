@@ -867,7 +867,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   }
   
   {
-    dprintf("path: %s\n", getcwd(NULL, 0));
+    //dprintf("path: %s\n", getcwd(NULL, 0));
     //Font *font = ShadowFont::Load(fontname.c_str(), 0.05, 0.05);
     Font *font = Font::Load(fontname.c_str());
     if(!font) {
