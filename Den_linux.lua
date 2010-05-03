@@ -82,7 +82,7 @@ function rv.installers()
 
   local installers = {}
   
-  table.insert(installers, ursa.rule{("build/%s-%s.tgz"):format(params.midname, ursa.token{"version"}), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{("cd %sdeploy && tar -pczf ../../%s-%s.tgz \"%s\""):format(params.builddir, params.midname, ursa.token{"version"}, params.longname)}})
+  table.insert(installers, ursa.rule{("build/%s-%s.tgz"):format(params.midname, ursa.token{"version"}), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{("cd %sdeploy && tar -pczf ../../%s-%s.tgz \"%s\""):format(params.builddir, params.midname, ursa.token{"version"}, params.midname)}})
   
   return installers
 end
