@@ -131,8 +131,11 @@ for k, v in pairs(glop.libs) do
   libs[k] = v
 end
 
-local curl_headers = {}
 
+local libcflags = glop.libcflags
+local libldflags = glop.libcflags
+
+local curl_headers = {}
 do
   -- let's curl it up a notch
   local path = "glorp/libs/curl-7.20.0"
@@ -193,7 +196,7 @@ do
     end
   end
   
-  local makefile = ursa.rule{{builddir .. "lib_build/curl/Makefile", builddir .. "lib_build/curl/include/curl/curlbuild.h"}, files, ursa.util.system_template{('cd %s/lib_build/curl && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --disable-shared --disable-dependency-tracking --disable-ftp --disable-file --disable-ldap --disable-ldaps --disable-rtsp --disable-proxy --disable-dict --disable-telnet --disable-tftp --disable-pop3 --disable-imap --disable-smtp --disable-manual --disable-ipv6 --disable-crypto-auth --disable-cookies'):format(builddir, glop.libcc, glop.libcflags, glop.libldflags)}}
+  local makefile = ursa.rule{{builddir .. "lib_build/curl/Makefile", builddir .. "lib_build/curl/include/curl/curlbuild.h"}, files, ursa.util.system_template{('cd %slib_build/curl && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --disable-shared --disable-dependency-tracking --disable-ftp --disable-file --disable-ldap --disable-ldaps --disable-rtsp --disable-proxy --disable-dict --disable-telnet --disable-tftp --disable-pop3 --disable-imap --disable-smtp --disable-manual --disable-ipv6 --disable-crypto-auth --disable-cookies'):format(builddir, glop.libcc, libcflags, libldflags)}}
   
   local lib = ursa.rule{builddir .. "lib_build/curl/lib/.libs/libcurl.a", makefile, ('cd %slib_build/curl && make'):format(builddir)}  -- can't parallelize this, libcurl is a giant butt
   
@@ -204,6 +207,35 @@ do
   table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curlrules.h", builddir .. "lib_build/curl/include/curl/curlrules.h", ursa.util.copy{}})
   table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/easy.h", builddir .. "lib_build/curl/include/curl/easy.h", ursa.util.copy{}})
   table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/multi.h", builddir .. "lib_build/curl/include/curl/multi.h", ursa.util.copy{}})
+end
+
+local fltk_headers = {}
+if platform == "linux" then
+  -- now let's fltk it up a notch
+  local path = "glorp/libs/fltk-1.1.10"
+  
+  local files = {}
+  
+  ursa.token.rule{"fltk_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  for item in ursa.token{"fltk_files"}:gmatch("([^\n]+)") do
+    if item == "config.h" or item == "fltk.spec" or item == "fltk.list" or item == "fltk-config" then
+    else
+      table.insert(files, ursa.rule{builddir .. "lib_build/fltk/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
+    
+    
+    if item:match("^FL.*") then
+      table.insert(fltk_headers, ursa.rule{builddir .. "lib_release/include/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
+  end
+  
+  ursa.token.rule{"pwd", nil, function () return ursa.system{"pwd"} end}
+  
+  local makefile = ursa.rule{builddir .. "lib_build/fltk/FL/Makefile", {files, glop.headers, libs.zlib, libs.libpng, libs.libjpeg}, ursa.util.system_template{('cd %slib_build/fltk && CC="%s" CFLAGS="%s" CPPFLAGS="-I%s/glorp/Glop/release/linux/include -I%s/glorp/Glop/release/linux/include/jpeglib" LDFLAGS="%s -L%s/glorp/Glop/release/linux/lib -L/usr/lib" ./configure --disable-localjpeg --disable-localzlib --disable-localpng'):format(builddir, glop.libcc, libcflags, ursa.token{"pwd"}, ursa.token{"pwd"}, libldflags, ursa.token{"pwd"})}}
+  
+  local lib = ursa.rule{builddir .. "lib_build/fltk/lib/libfltk.a", makefile, ('cd %slib_build/fltk && make'):format(builddir)}
+  
+  libs.libfltk = ursa.rule{builddir .. "lib_release/lib/libfltk.a", lib, ursa.util.copy{}}
 end
 
 ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
@@ -234,7 +266,7 @@ end}
 
 local buildables = {
   [params.name] = {dynfiles = "main version", glorpfiles = "core core_glutil debug debug_911_on os util parse args init perfbar LuaGL_common " .. (osd.gles and "LuaGLES" or "LuaGL LuaGL_ext"), cfiles = osd.gles and "" or "glorp/GLee", mmfiles = osd.gles and "main_iphone" or "", resources = "resource", libs = "zlib libpng libjpeg libfreetype libfmodex glop"},
-  ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
+  ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl" .. (platform == "linux" and " libfltk" or ""), flags = "-DSUPPRESS_GLOP"},
 }
 
 local depsed = {}
@@ -244,6 +276,10 @@ local function build_object(src, prefix, params)
   
   -- we *should* be doing something substantially more reliable and sane here. we're not, because this is much easier
   local clurl = (src == "glorp/reporter_main.cpp") and curl_headers or {}
+  local flurl = {}
+  if prefix:find("reporter") and glop.os == "linux" then
+    flurl = fltk_headers
+  end
   
   if not depsed[src] then
     local function make_dependencies(srcfile)
@@ -262,12 +298,12 @@ local function build_object(src, prefix, params)
     
     local depend = src .. " dependencies"
     
-    ursa.token.rule{depend, {glop.headers, lua_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, clurl}, function () return make_dependencies(cpp) end}
+    ursa.token.rule{depend, {glop.headers, lua_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, clurl, flurl}, function () return make_dependencies(cpp) end}
     depsed[src] = ursa.util.token_deferred{depend}
   end
   
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o"):gsub("%.mm", ".o")
-  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src], clurl}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
+  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src], clurl, flurl}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
   return dst
 end
 

@@ -48,13 +48,16 @@ function rv.installers()
     
     local orig = "glorp/Glop/release/linux/lib/libfmodex.so"
     local new = "data/libfmodex.so"
+    assert(#new <= #orig)
     while #new < #orig do
       new = new .. "\0"
     end
     
-    local ndat = dat:gsub(orig, new)
+    local ndat = dat:gsub(orig, new, 1)
     
     assert(#dat == #ndat)
+    
+    assert(not ndat:find(orig))
     
     local out = io.open(datadir .. params.name, "wb")
     out:write(ndat)
@@ -62,7 +65,7 @@ function rv.installers()
     
     ursa.system{"chmod +x " .. datadir .. params.name}
   end})
-  --table.insert(data, ursa.rule{datadir .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
+  table.insert(data, ursa.rule{datadir .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{datadir .. "data/libfmodex.so", params.builddir .. "libfmodex.so", ursa.util.copy{}})
   table.insert(data, ursa.rule{datadir .. "data/licenses.txt", "glorp/resources/licenses.txt", ursa.util.copy{}})
 

@@ -15,6 +15,8 @@
 
 #else
 
+  #include <cstdlib>
+  
   #define CHECK(expression) ((expression) ? (void)(0) : (dprintf("Error at %s:%d - %s\n", __FILE__, __LINE__, #expression), exit(1)))
   int dprintf(const char *bort, ...);
 
