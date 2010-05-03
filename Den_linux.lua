@@ -36,7 +36,7 @@ function rv.installers()
   -- first we have to build the entire path layout
   local data = {}
   
-  local datadir = params.builddir .. "deploy/" .. params.longname .. "/"
+  local datadir = params.builddir .. "deploy/" .. params.midname .. "/"
 
   -- DLLs and executables
   local stripped = ursa.rule{params.builddir .. params.name .. ".prog.stripped", params.builddir .. params.name .. ".prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}}

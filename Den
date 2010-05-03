@@ -238,7 +238,7 @@ if platform == "linux" then
   libs.libfltk = ursa.rule{builddir .. "lib_release/lib/libfltk.a", lib, ursa.util.copy{}}
 end
 
-ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
+ursa.token.rule{"version", nil, ("git describe --always --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
 
 ursa.rule{builddir .. "glorp/version.cpp", "#version", function ()
   print("Writing file version.cpp")
