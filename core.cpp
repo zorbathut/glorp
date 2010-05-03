@@ -6,6 +6,11 @@
   #include "LuaGLES.h"
 #endif
 
+#ifndef LINUX
+  // can't include on linux because GLee includes X.h which conflicts with the Font class
+  #include "GLee.h"
+#endif
+
 #include <Glop/Base.h>
 #include <Glop/Font.h>
 #include <Glop/GlopFrame.h>
