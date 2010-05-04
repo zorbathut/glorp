@@ -996,5 +996,6 @@ SoundSample *SSLoad(const string &fname_base, float vol) {
   if(rv) return rv;
   rv = SoundSample::Load("data/" + fname_base + ".flac", false, vol);
   if(rv) return rv;
-  CHECK(0, fname_base.c_str());
+  dprintf("Cannot find sound effect %s\n", fname_base.c_str());
+  CHECK(0);
 }
