@@ -9,7 +9,7 @@ ursa.token.rule{"FLAC", nil, function () return "flac" end}
 rv.extension = ".prog"  -- have to use something or it'll conflict
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-m32 -DLINUX -I/opt/local/include -Iglorp/Glop/release/linux/include")
+token_literal("CXXFLAGS", "-m32 -DLINUX -Iglorp/Glop/release/linux/include")
 token_literal("LDFLAGS", "-m32 -lGL -lGLU")
 
 token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -m32")

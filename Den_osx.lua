@@ -7,7 +7,7 @@ local rv = {}
 loadfile("glorp/Den_util_osx.lua")(params, rv)
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-arch i386 -DMACOSX -I/opt/local/include -Iglorp/Glop/release/osx/include")
+token_literal("CXXFLAGS", "-arch i386 -DMACOSX -Iglorp/Glop/release/osx/include")
 token_literal("LDFLAGS", "-arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
 
 token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -arch i386")
