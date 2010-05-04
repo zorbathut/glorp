@@ -9,7 +9,7 @@ ursa.token.rule{"FLAC", nil, function () return "flac" end}
 rv.extension = ".prog"  -- have to use something or it'll conflict
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-m32 -DLINUX -I/opt/local/include -Iglorp/Glop/release/linux/include")
+token_literal("CXXFLAGS", "-m32 -DLINUX -Iglorp/Glop/release/linux/include")
 token_literal("LDFLAGS", "-m32 -lGL -lGLU")
 
 token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -m32")
@@ -36,7 +36,7 @@ function rv.installers()
   -- first we have to build the entire path layout
   local data = {}
   
-  local datadir = params.builddir .. "deploy/" .. params.longname .. "/"
+  local datadir = params.builddir .. "deploy/" .. params.midname .. "/"
 
   -- DLLs and executables
   local stripped = ursa.rule{params.builddir .. params.name .. ".prog.stripped", params.builddir .. params.name .. ".prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}}
@@ -82,7 +82,7 @@ function rv.installers()
 
   local installers = {}
   
-  table.insert(installers, ursa.rule{("build/%s-%s.tgz"):format(params.midname, ursa.token{"version"}), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{("cd %sdeploy && tar -pczf ../../%s-%s.tgz \"%s\""):format(params.builddir, params.midname, ursa.token{"version"}, params.longname)}})
+  table.insert(installers, ursa.rule{("build/%s-%s.tgz"):format(params.midname, ursa.token{"version"}), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{("cd %sdeploy && tar -pczf ../../%s-%s.tgz \"%s\""):format(params.builddir, params.midname, ursa.token{"version"}, params.midname)}})
   
   return installers
 end

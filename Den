@@ -68,6 +68,7 @@ do
               
               [[ -e "s/.XCFLAGS+= -DLUAJIT_DISABLE_JIT/XCFLAGS+= -DLUAJIT_DISABLE_JIT/" ]] --[[ This segment should be commented out if you want the jit to actually work! ]] ..
             [[$SOURCE > $TARGET]]):format(glop.libcc):gsub("\n", " ")}})
+        elseif k == "src/buildvm_x64.h" then
         else
           table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.copy{}})
         end
@@ -238,7 +239,7 @@ if platform == "linux" then
   libs.libfltk = ursa.rule{builddir .. "lib_release/lib/libfltk.a", lib, ursa.util.copy{}}
 end
 
-ursa.token.rule{"version", nil, ("git describe --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
+ursa.token.rule{"version", nil, ("git describe --always --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
 
 ursa.rule{builddir .. "glorp/version.cpp", "#version", function ()
   print("Writing file version.cpp")
