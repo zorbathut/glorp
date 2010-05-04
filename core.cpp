@@ -451,6 +451,9 @@ SoundSource SoundCore(const string &sname, float vol, bool loop) {
   }
   
   if(!sounds[make_pair(sname, vol)]) {
+    if(!sound_manager()->IsInitialized())
+      return SoundSource(); // welp
+    
     meltdown();
     CHECK(sounds[make_pair(sname, vol)]);
   }
@@ -997,5 +1000,9 @@ SoundSample *SSLoad(const string &fname_base, float vol) {
   rv = SoundSample::Load("data/" + fname_base + ".flac", false, vol);
   if(rv) return rv;
   dprintf("Cannot find sound effect %s\n", fname_base.c_str());
-  CHECK(0);
+  
+  if(sound_manager()->IsInitialized())
+    CHECK(0);
+  
+  return NULL;
 }
