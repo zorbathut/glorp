@@ -7,8 +7,8 @@ local rv = {}
 loadfile("glorp/Den_util_osx.lua")(params, rv)
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-arch i386 -DMACOSX -Iglorp/Glop/release/osx/include")
-token_literal("LDFLAGS", "-arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
+token_literal("CXXFLAGS", "-mmacosx-version-min=10.5 -arch i386 -DMACOSX -Iglorp/Glop/release/osx/include")
+token_literal("LDFLAGS", "-mmacosx-version-min=10.5 -arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
 
 token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -arch i386")
 
@@ -110,7 +110,7 @@ function rv.installers()
   <key>LSEnvironment</key>
   <dict>
       <key>MinimumSystemVersion</key>
-      <string>10.6.0</string>
+      <string>10.5.0</string>
   </dict>
 </dict>
 </plist>]])
