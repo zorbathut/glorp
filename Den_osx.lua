@@ -7,10 +7,10 @@ local rv = {}
 loadfile("glorp/Den_util_osx.lua")(params, rv)
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-mmacosx-version-min=10.5 -arch i386 -DMACOSX -Iglorp/Glop/release/osx/include")
-token_literal("LDFLAGS", "-mmacosx-version-min=10.5 -arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
+token_literal("CXXFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386 -DMACOSX -Iglorp/Glop/release/osx/include")
+token_literal("LDFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
 
-token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -arch i386")
+token_literal("LUA_FLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -DLUA_USE_LINUX -arch i386")
 
 rv.lua_buildtype = "macosx"
 
