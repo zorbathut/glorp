@@ -72,6 +72,9 @@ function clamp(cur, min, max)
   if cur > max then return max end
   return cur
 end
+function lerp(s, e, d)
+  return s * (1 - d) + e * d
+end
 
 function PlaySound(snd, vol)
   PlaySound_Core(snd, vol or 1)
