@@ -306,6 +306,11 @@ function glutil.Framebuffer()
   return prog
 end
 
+function glutil.Renderbuffer()
+  local prog = {id = GlRenderbuffer()}
+  return prog
+end
+
 function glutil.Texture()
   local prog = {id = GlTexture()}
   return prog
@@ -444,7 +449,11 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     end
   end
   function glutil.BindRenderbuffer(target, renderbuffer)
-    snatch.BindRenderbuffer(target, renderbuffer.id:get())
+    if renderbuffer then
+      snatch.BindRenderbuffer(target, renderbuffer.id:get())
+    else
+      snatch.BindRenderbuffer(target, 0)
+    end
   end
   function glutil.FramebufferRenderbuffer(target, attach, rbt, rb)
     snatch.FramebufferRenderbuffer(target, attach, rbt, rb.id:get())
