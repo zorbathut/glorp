@@ -261,7 +261,7 @@ ursa.rule{builddir .. "glorp/main.cpp", {"!" .. params.longname, "!" .. params.f
     int main(int argc, const char **argv) {
       glorp_init("%s", "%s", %d, %d, argc, argv);
     }
-  ]]):format(params.longname, params.font, params.resolution[1], params.resolution[2]))
+]]):format(params.longname, params.font, params.resolution[1], params.resolution[2]))
   fil:close()
 end}
 
