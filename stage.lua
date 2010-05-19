@@ -352,7 +352,6 @@ function render(...)
   overlay:Render()
 end
 function key(button, ascii, event)
-  print(button, ascii, event)
   if button == "printscreen" and event == "press" then
     print("printscr")
     

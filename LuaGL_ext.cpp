@@ -149,9 +149,9 @@ static int gl_uniform_i(lua_State *L)
 
    /* if have there's no arguments show an error message */
    if(num_args < 2)
-      luaL_error(L, "incorrect argument to function 'gl.UniformI'");
+      luaL_error(L, "incorrect argument to function 'gl.UniformI', not enough args");
    if(!(lua_isnumber(L, 1)))
-    luaL_error(L, "incorrect argument to function 'gl.UniformI'");
+    luaL_error(L, "incorrect argument to function 'gl.UniformI', first isn't number");
 
     v = (GLint *)malloc((num_args - 1) * sizeof(GLint));
 
@@ -160,7 +160,7 @@ static int gl_uniform_i(lua_State *L)
     {
        /* test arguments type */
        if(!lua_isnumber(L, index + 1))
-          luaL_error(L, "incorrect argument to function 'gl.UniformI'");
+          luaL_error(L, "incorrect argument to function 'gl.UniformI', N isn't number");
 
        /* get argument */
        v[index - 1] = (GLint)lua_tonumber(L, index + 1);
@@ -170,9 +170,9 @@ static int gl_uniform_i(lua_State *L)
    switch(min(num_args - 1, 4))
    {
       case 1:  glUniform1iv((GLint)lua_tonumber(L, 1), 1, v);  break;
-      case 2:  glUniform2iv((GLint)lua_tonumber(L, 1), 2, v);  break;
-      case 3:  glUniform3iv((GLint)lua_tonumber(L, 1), 3, v);  break;
-      case 4:  glUniform4iv((GLint)lua_tonumber(L, 1), 4, v);  break;
+      case 2:  glUniform2iv((GLint)lua_tonumber(L, 1), 1, v);  break;
+      case 3:  glUniform3iv((GLint)lua_tonumber(L, 1), 1, v);  break;
+      case 4:  glUniform4iv((GLint)lua_tonumber(L, 1), 1, v);  break;
    }
 
    free(v);

@@ -72,6 +72,23 @@ function clamp(cur, min, max)
   if cur > max then return max end
   return cur
 end
+function lerp(s, e, d)
+  return s * (1 - d) + e * d
+end
+function bezier(x0, x1, x2, x3, t)
+  local cx = 3 * (x1 - x0)
+  local bx = 3 * (x2 - x1) - cx
+  local ax = x3 - x0 - cx - bx
+  return ax * t * t * t + bx * t * t + cx * t + x0
+end
+function cubic(x0, x1, x2, x3, t)
+  local a0 = x3 - x2 - x0 + x1
+  local a1 = x0 - x1 - a0
+  local a2 = x2 - x0
+  local a3 = x1
+  
+  return a0 * t * t * t + a1 * t * t + a2 * t + a3
+end
 
 function PlaySound(snd, vol)
   PlaySound_Core(snd, vol or 1)
@@ -303,6 +320,11 @@ function glutil.Framebuffer()
   return prog
 end
 
+function glutil.Renderbuffer()
+  local prog = {id = GlRenderbuffer()}
+  return prog
+end
+
 function glutil.Texture()
   local prog = {id = GlTexture()}
   return prog
@@ -441,7 +463,11 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     end
   end
   function glutil.BindRenderbuffer(target, renderbuffer)
-    snatch.BindRenderbuffer(target, renderbuffer.id:get())
+    if renderbuffer then
+      snatch.BindRenderbuffer(target, renderbuffer.id:get())
+    else
+      snatch.BindRenderbuffer(target, 0)
+    end
   end
   function glutil.FramebufferRenderbuffer(target, attach, rbt, rb)
     snatch.FramebufferRenderbuffer(target, attach, rbt, rb.id:get())

@@ -689,6 +689,10 @@ int toaddress(lua_State *L) {
   return 1;
 }
 
+void glewp(double a, double b, double c, double d) {
+  gluPerspective(a, b, c, d);
+}
+
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
 void luainit(int argc, const char **argv) {
@@ -788,8 +792,9 @@ void luainit(int argc, const char **argv) {
       #endif
       
       def("GetScreenX", &get_screenx),
-      def("GetScreenY", &get_screeny)
+      def("GetScreenY", &get_screeny),
       
+      def("gluPerspective", &glewp)
       //def("CrashHorribly", &CrashHorribly)
     ];
     
@@ -996,5 +1001,6 @@ SoundSample *SSLoad(const string &fname_base, float vol) {
   if(rv) return rv;
   rv = SoundSample::Load("data/" + fname_base + ".flac", false, vol);
   if(rv) return rv;
-  CHECK(0, fname_base.c_str());
+  dprintf("Cannot find sound effect %s\n", fname_base.c_str());
+  CHECK(0);
 }
