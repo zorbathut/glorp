@@ -419,18 +419,17 @@ static int gl_tex_image_2d(lua_State *L)
   GLenum target = get_gl_enum(L, 1);
   GLint level = lua_tointeger(L, 2);
   GLint internalFormat;
-  if(lua_isstring(L, 3)) {
-    internalFormat = get_gl_enum(L, 3);
-  } else {
+  if(lua_isnumber(L, 3)) {
     internalFormat = lua_tointeger(L, 3);
+  } else {
+    internalFormat = get_gl_enum(L, 3);
   }
   GLsizei width = lua_tointeger(L, 4);
   GLsizei height = lua_tointeger(L, 5);
   GLint border = lua_tointeger(L, 6);
   GLenum format = get_gl_enum(L, 7);
-  GLenum type = get_gl_enum(L, 8);
   
-  if(target == ENUM_ERROR || internalFormat == ENUM_ERROR || format == ENUM_ERROR || type == ENUM_ERROR)
+  if(target == ENUM_ERROR || internalFormat == ENUM_ERROR || format == ENUM_ERROR)
     luaL_error(L, "incorrect string argument to function 'gl.TexImage'");
 
   static int shift = 0;
@@ -441,8 +440,8 @@ static int gl_tex_image_2d(lua_State *L)
   shift += 50;
   
   //glTexImage2D(target, level, internalFormat, width, height, border, format, type, x);
-  dprintf("teximage %d/%d\n", width, height);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, x);
+  dprintf("teximage %d/%d %d\n", width, height, internalFormat);
+  glTexImage2D(target, level, internalFormat, width, height, border, format, GL_UNSIGNED_BYTE, x);
   delete [] x;
   
   return 0;

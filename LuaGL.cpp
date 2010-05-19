@@ -2365,6 +2365,7 @@ static const gl_str_value gl_str[] = {
   MACRIX(ALPHA),
   MACRIX(RGB),
   MACRIX(RGBA),
+  MACRIX(BGRA),
   MACRIX(LUMINANCE),
   MACRIX(LUMINANCE_ALPHA),
   MACRIX(BITMAP),
