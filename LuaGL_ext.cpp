@@ -450,6 +450,18 @@ static int gl_tex_image_2d(lua_State *L)
 
 
 
+static int gl_ARB_fragment_shader(lua_State *L) {
+  lua_pushboolean(L, GLEE_ARB_fragment_shader);
+  
+  return 1;
+}
+
+static int gl_ARB_framebuffer_object(lua_State *L) {
+  lua_pushboolean(L, GLEE_ARB_framebuffer_object);
+  
+  return 1;
+}
+
 static const luaL_reg gllib[] = {
   {"ShaderSource", gl_shader_source},
   {"CompileShader", gl_compile_shader},
@@ -477,16 +489,15 @@ static const luaL_reg gllib[] = {
   {"FramebufferTexture2D", gl_framebuffer_texture_2d},
   {"CheckFramebufferStatus", gl_check_framebuffer_status},
   
+  {"ARB_fragment_shader", gl_ARB_fragment_shader},
+  {"ARB_framebuffer_object", gl_ARB_framebuffer_object},
+  
   {"TexImage2D", gl_tex_image_2d},
   {NULL, NULL}
 };
 
 int luaopen_opengl_ext (lua_State *L) {
   luaL_openlib(L, "gl", gllib, 0);
-  
-  dprintf("SHADER SUPPORT: %d, %d, %d\n", GLEE_ARB_fragment_shader, GLEE_NV_fragment_program, GLEE_ATI_fragment_shader);
-  dprintf("MULTITEXTURE SUPPORT: %d, %d\n", GLEE_ARB_framebuffer_object, GLEE_EXT_framebuffer_object);
-  CHECK(0);
-  
+
   return 1;
 }
