@@ -381,12 +381,6 @@ static int gl_framebuffer_texture_2d(lua_State *L)
 bool reported = false;
 static int gl_check_framebuffer_status(lua_State *L)
 {
-  if(!reported) {
-    dprintf("MULTITEXTURE SUPPORT: %d, %d\n", GLEE_ARB_framebuffer_object, GLEE_EXT_framebuffer_object);
-    CHECK(0);
-    reported = true;
-  }
-  
   GLenum a;
   
   if(!(lua_isstring(L, 1)))
@@ -489,5 +483,10 @@ static const luaL_reg gllib[] = {
 
 int luaopen_opengl_ext (lua_State *L) {
   luaL_openlib(L, "gl", gllib, 0);
+  
+  dprintf("SHADER SUPPORT: %d, %d, %d\n", GLEE_ARB_fragment_shader, GLEE_NV_fragment_program, GLEE_ATI_fragment_shader);
+  dprintf("MULTITEXTURE SUPPORT: %d, %d\n", GLEE_ARB_framebuffer_object, GLEE_EXT_framebuffer_object);
+  CHECK(0);
+  
   return 1;
 }
