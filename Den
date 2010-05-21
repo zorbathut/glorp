@@ -26,8 +26,6 @@ params.midname = params.longname:gsub("[^%w]", "")
 require "luarocks.loader"
 require "ursa"
 
-clean_dirs = {}
-
 local glop
 if true then
   glop = ursa.embed{"glorp/Glop", "Den", {{platform = params.platform}}}
@@ -460,10 +458,14 @@ end
 
 ursa.command{"package", osd.installers("datafiles")}
 
+clean_dirs = {}
+table.insert(clean_dirs, "build")
+table.insert(clean_dirs, "glorp/Glop/build")
+table.insert(clean_dirs, "glorp/Glop/release")
 ursa.command{"clean", function ()
   ursa.util.clean()
   for _, v in ipairs(clean_dirs) do
-    os.remove(v)
+    ursa.system{"rm -rf " .. v}
   end
 end}
 
