@@ -20,6 +20,8 @@ On OSX I'm using Chris Campbell's elegant little version loader to give reasonab
 
 I'm using curl for the error reporting system. You know the drill by now.
 
+My standard error reporter is based in part on the work of the FLTK project (http://www.fltk.org). That line is all they require me to say. Thanks, FLTK! Thltk.
+
 Finally, this relies on a library called Glop, which is designed by a friend and may, someday, be open-sourced. Until it is, I shall not post any license whatsoever, because I am kind of a dick that way. Ha ha. Sucker.
 
 =============== LIBOGG LICENSE
