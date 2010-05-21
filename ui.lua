@@ -590,20 +590,20 @@ TextMultilineOverrides.tex_g = 1
 TextMultilineOverrides.tex_b = 1
 TextMultilineOverrides.tex_a = 1
 
-local SpriteOverrides = {}
-function SpriteOverrides:SetTexture(tex)
+local TextureOverrides = {}
+function TextureOverrides:SetTexture(tex)
   if type(tex) == "string" then tex = Texture(tex) end
   self.tex = tex
   self:SetWidth(tex:GetWidth())
   self:SetHeight(tex:GetHeight())
 end
-function SpriteOverrides:Draw()
+function TextureOverrides:Draw()
   if self.tex then glutil.RenderBoundedSprite(self.tex, {self:GetBounds()}, self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a) end
 end
-function SpriteOverrides:SetColor(r, g, b, a)
+function TextureOverrides:SetColor(r, g, b, a)
   self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a = r, g, b, a
 end
-function SpriteOverrides:GetColor()
+function TextureOverrides:GetColor()
   return self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a
 end
 
@@ -731,9 +731,9 @@ function CreateFrame(typ, parent, name)
     rg.text = FancyTextFrame_Make("")
     rg:SetText("")
     return rg
-  elseif typ == "Sprite" then
+  elseif typ == "Texture" then
     local rg = Region(parent, name)
-    for k, v in pairs(SpriteOverrides) do
+    for k, v in pairs(TextureOverrides) do
       rg[k] = v
     end
     return rg

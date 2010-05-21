@@ -25,7 +25,7 @@ local width_full = 450
 
 local function make_achievement_badge(dat, full, parent)
   local cheev = CreateFrame("Frame", parent or overlay)
-  local icon = CreateFrame("Sprite", cheev)
+  local icon = CreateFrame("Texture", cheev)
   cheev:SetBackgroundColor(0, 0, 0, 1)
   cheev:SetWidth(full and width_full or width_small)
   cheev:SetHeight(height)
