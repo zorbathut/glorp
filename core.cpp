@@ -692,7 +692,68 @@ int toaddress(lua_State *L) {
   return 1;
 }
 
+void glewp(double a, double b, double c, double d) {
+  gluPerspective(a, b, c, d);
+}
+
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
+
+class DontKillMeBro_KillerBase;
+
+vector<DontKillMeBro_KillerBase*> to_be_killed;
+
+class DontKillMeBro_KillerBase {
+public:
+  virtual ~DontKillMeBro_KillerBase() {};
+};
+template <typename T> class DontKillMeBro_Killer : public DontKillMeBro_KillerBase {
+  T *ite;
+public:
+  DontKillMeBro_Killer<T>(T *item) {
+    ite = item;
+  }
+  ~DontKillMeBro_Killer<T>() {
+    delete ite;
+  }
+};
+
+template <typename T> class DontKillMeBro {
+public:
+  T *ite;
+  int *ct;
+  DontKillMeBro<T>(T *item) {
+    ite = item;
+    ct = new int;
+    *ct = 1;
+  }
+  ~DontKillMeBro<T>() {
+    (*ct)--;
+    if(!*ct) {
+      to_be_killed.push_back(new DontKillMeBro_Killer<T>(ite)); // defer!
+      delete ct;
+    }
+  }
+  void operator=(const DontKillMeBro<T> &x) {
+    (*ct)--;
+    if(!*ct) {
+      to_be_killed.push_back(new DontKillMeBro_Killer<T>(ite)); // defer!
+      delete ct;
+    }
+    
+    ct = x.ct;
+    ite = x.ite;
+    (*ct)++;
+  }
+  DontKillMeBro<T>(const DontKillMeBro<T> &x) {
+    ct = x.ct;
+    ite = x.ite;
+    (*ct)++;
+  }
+};
+  
+template <typename T> T *get_pointer(DontKillMeBro<T> &it) {
+  return it.ite;
+}
 
 void luainit(int argc, const char **argv) {
   L = lua_open();   /* opens Lua */
@@ -716,7 +777,7 @@ void luainit(int argc, const char **argv) {
     
     module(L)
     [
-      class_<WrappedTex>("WrappedTex_Internal")
+      class_<WrappedTex, DontKillMeBro<WrappedTex> >("WrappedTex_Internal")
         //.def(constructor<const std::string &>())
         .def("GetWidth", &WrappedTex::GetWidth)
         .def("GetHeight", &WrappedTex::GetHeight)
@@ -725,10 +786,10 @@ void luainit(int argc, const char **argv) {
         .def("SetTexture", &WrappedTex::SetTexture)
         .def("GetPixel", &WrappedTex::GetPixel)
         .def(tostring(self)),
-      class_<PerfBarManager>("Perfbar_Init")
+      class_<PerfBarManager, DontKillMeBro<PerfBarManager> >("Perfbar_Init")
         .def(constructor<float, float, float>())
         .def("Destroy", &PerfBarManager::Destroy),
-      class_<TextFrame>("TextFrame_Make")
+      class_<TextFrame, DontKillMeBro<TextFrame> >("TextFrame_Make")
         .def(constructor<const std::string &>())
         .def("GetX", &TextFrame::GetX)
         .def("GetY", &TextFrame::GetY)
@@ -745,7 +806,7 @@ void luainit(int argc, const char **argv) {
         .def("SetColor", &TextFrame::SetColor)
         .def("SetText", &TextFrame::SetText)
         .def("GetText", &TextFrame::GetText),
-      class_<FancyTextFrame>("FancyTextFrame_Make")
+      class_<FancyTextFrame, DontKillMeBro<FancyTextFrame> >("FancyTextFrame_Make")
         .def(constructor<const std::string &>())
         .def("GetX", &TextFrame::GetX)
         .def("GetY", &TextFrame::GetY)
@@ -759,7 +820,7 @@ void luainit(int argc, const char **argv) {
         .def("SetText", &FancyTextFrame::SetText)
         .def("GetText", &FancyTextFrame::GetText)
         .def("GetHeight", &FancyTextFrame::GetHeight),
-      class_<SoundSource>("SourceSource_Make")
+      class_<SoundSource, DontKillMeBro<SoundSource> >("SourceSource_Make")
         .def("Stop", &SoundSource::Stop),
       def("Texture", &GetTex),
       def("Text_SetColor", &tsc),
@@ -791,8 +852,9 @@ void luainit(int argc, const char **argv) {
       #endif
       
       def("GetScreenX", &get_screenx),
-      def("GetScreenY", &get_screeny)
+      def("GetScreenY", &get_screeny),
       
+      def("gluPerspective", &glewp)
       //def("CrashHorribly", &CrashHorribly)
     ];
     
@@ -809,7 +871,9 @@ void luainit(int argc, const char **argv) {
       lua_pushstring(L, argv[i]);
     }
     int error = lua_pcall(L, 2 + argc, 0, 0);
-    CHECK(!error);
+    if(error) {
+      CHECK(0, "%s", lua_tostring(L, -1));
+    }
   }
   
   if(last_preserved_token.size()) {
@@ -972,7 +1036,14 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
         }
       }
 
+      {
+        vector<DontKillMeBro_KillerBase*> splatter;
+        splatter.swap(to_be_killed);
+        for(int i = 0; i < splatter.size(); i++)
+          delete splatter[i];
+      }
       glorp_glutil_tick();
+      
       
       if(exiting) {
         window()->Destroy();

@@ -149,9 +149,9 @@ static int gl_uniform_i(lua_State *L)
 
    /* if have there's no arguments show an error message */
    if(num_args < 2)
-      luaL_error(L, "incorrect argument to function 'gl.UniformI'");
+      luaL_error(L, "incorrect argument to function 'gl.UniformI', not enough args");
    if(!(lua_isnumber(L, 1)))
-    luaL_error(L, "incorrect argument to function 'gl.UniformI'");
+    luaL_error(L, "incorrect argument to function 'gl.UniformI', first isn't number");
 
     v = (GLint *)malloc((num_args - 1) * sizeof(GLint));
 
@@ -160,7 +160,7 @@ static int gl_uniform_i(lua_State *L)
     {
        /* test arguments type */
        if(!lua_isnumber(L, index + 1))
-          luaL_error(L, "incorrect argument to function 'gl.UniformI'");
+          luaL_error(L, "incorrect argument to function 'gl.UniformI', N isn't number");
 
        /* get argument */
        v[index - 1] = (GLint)lua_tonumber(L, index + 1);
@@ -170,9 +170,9 @@ static int gl_uniform_i(lua_State *L)
    switch(min(num_args - 1, 4))
    {
       case 1:  glUniform1iv((GLint)lua_tonumber(L, 1), 1, v);  break;
-      case 2:  glUniform2iv((GLint)lua_tonumber(L, 1), 2, v);  break;
-      case 3:  glUniform3iv((GLint)lua_tonumber(L, 1), 3, v);  break;
-      case 4:  glUniform4iv((GLint)lua_tonumber(L, 1), 4, v);  break;
+      case 2:  glUniform2iv((GLint)lua_tonumber(L, 1), 1, v);  break;
+      case 3:  glUniform3iv((GLint)lua_tonumber(L, 1), 1, v);  break;
+      case 4:  glUniform4iv((GLint)lua_tonumber(L, 1), 1, v);  break;
    }
 
    free(v);
@@ -378,6 +378,7 @@ static int gl_framebuffer_texture_2d(lua_State *L)
   return 0;
 }
 
+bool reported = false;
 static int gl_check_framebuffer_status(lua_State *L)
 {
   GLenum a;
@@ -419,18 +420,17 @@ static int gl_tex_image_2d(lua_State *L)
   GLenum target = get_gl_enum(L, 1);
   GLint level = lua_tointeger(L, 2);
   GLint internalFormat;
-  if(lua_isstring(L, 3)) {
-    internalFormat = get_gl_enum(L, 3);
-  } else {
+  if(lua_isnumber(L, 3)) {
     internalFormat = lua_tointeger(L, 3);
+  } else {
+    internalFormat = get_gl_enum(L, 3);
   }
   GLsizei width = lua_tointeger(L, 4);
   GLsizei height = lua_tointeger(L, 5);
   GLint border = lua_tointeger(L, 6);
   GLenum format = get_gl_enum(L, 7);
-  GLenum type = get_gl_enum(L, 8);
   
-  if(target == ENUM_ERROR || internalFormat == ENUM_ERROR || format == ENUM_ERROR || type == ENUM_ERROR)
+  if(target == ENUM_ERROR || internalFormat == ENUM_ERROR || format == ENUM_ERROR)
     luaL_error(L, "incorrect string argument to function 'gl.TexImage'");
 
   static int shift = 0;
@@ -441,14 +441,26 @@ static int gl_tex_image_2d(lua_State *L)
   shift += 50;
   
   //glTexImage2D(target, level, internalFormat, width, height, border, format, type, x);
-  dprintf("teximage %d/%d\n", width, height);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, x);
+  dprintf("teximage %d/%d %d\n", width, height, internalFormat);
+  glTexImage2D(target, level, internalFormat, width, height, border, format, GL_UNSIGNED_BYTE, x);
   delete [] x;
   
   return 0;
 }
 
 
+
+static int gl_ARB_fragment_shader(lua_State *L) {
+  lua_pushboolean(L, GLEE_ARB_fragment_shader);
+  
+  return 1;
+}
+
+static int gl_ARB_framebuffer_object(lua_State *L) {
+  lua_pushboolean(L, GLEE_ARB_framebuffer_object);
+  
+  return 1;
+}
 
 static const luaL_reg gllib[] = {
   {"ShaderSource", gl_shader_source},
@@ -477,11 +489,15 @@ static const luaL_reg gllib[] = {
   {"FramebufferTexture2D", gl_framebuffer_texture_2d},
   {"CheckFramebufferStatus", gl_check_framebuffer_status},
   
+  {"ARB_fragment_shader", gl_ARB_fragment_shader},
+  {"ARB_framebuffer_object", gl_ARB_framebuffer_object},
+  
   {"TexImage2D", gl_tex_image_2d},
   {NULL, NULL}
 };
 
 int luaopen_opengl_ext (lua_State *L) {
   luaL_openlib(L, "gl", gllib, 0);
+
   return 1;
 }

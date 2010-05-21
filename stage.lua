@@ -260,7 +260,7 @@ mainmenu_ui:Hide()
 local bgbg = CreateFrame("Frame")
 bgbg:SetBackgroundColor(mainmenu.bg_r or 0, mainmenu.bg_g or 0, mainmenu.bg_b or 0)
 bgbg:SetAllPoints()
-local lojo = CreateFrame("Sprite", bgbg)
+local lojo = CreateFrame("Texture", bgbg)
 lojo:SetTexture(Texture("mandible_games", "glorp/resources/mandible_games"))
 lojo:SetPoint("CENTER", bgbg, "CENTER")
 lojo:SetColor(1, 1, 1, 0)
@@ -352,7 +352,6 @@ function render(...)
   overlay:Render()
 end
 function key(button, ascii, event)
-  print(button, ascii, event)
   if button == "printscreen" and event == "press" then
     print("printscr")
     

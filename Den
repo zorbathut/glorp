@@ -6,7 +6,7 @@ if type(params) ~= "table" then
   os.exit(1)
 end
 
-assert(params.font)
+assert(params.font, "choose a font, you dumbass")
 
 local noluajit = params.noluajit
 do
@@ -68,7 +68,7 @@ do
               
               [[ -e "s/.XCFLAGS+= -DLUAJIT_DISABLE_JIT/XCFLAGS+= -DLUAJIT_DISABLE_JIT/" ]] --[[ This segment should be commented out if you want the jit to actually work! ]] ..
             [[$SOURCE > $TARGET]]):format(glop.libcc):gsub("\n", " ")}})
-        elseif k == "src/buildvm_x64.h" then
+        elseif k:match("src/buildvm_.*%.h") then
         else
           table.insert(copied, ursa.rule{builddir .. "lib_build/lua/" .. k, path .. k, ursa.util.copy{}})
         end
@@ -261,7 +261,7 @@ ursa.rule{builddir .. "glorp/main.cpp", {"!" .. params.longname, "!" .. params.f
     int main(int argc, const char **argv) {
       glorp_init("%s", "%s", %d, %d, argc, argv);
     }
-  ]]):format(params.longname, params.font, params.resolution[1], params.resolution[2]))
+]]):format(params.longname, params.font, params.resolution[1], params.resolution[2]))
   fil:close()
 end}
 
