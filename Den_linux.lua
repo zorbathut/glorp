@@ -10,7 +10,7 @@ rv.extension = ".prog"  -- have to use something or it'll conflict
 
 token_literal("CC", params.glop.cc)
 token_literal("CXXFLAGS", "-m32 -DLINUX -Iglorp/Glop/release/linux/include")
-token_literal("LDFLAGS", "-m32 -lGL -lGLU")
+token_literal("LDFLAGS", "-m32 -lGL -lGLU -lrt")
 
 token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -m32")
 
@@ -66,7 +66,7 @@ function rv.installers()
     ursa.system{"chmod +x " .. datadir .. params.midname}
   end})
   table.insert(data, ursa.rule{datadir .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
-  table.insert(data, ursa.rule{datadir .. "data/libfmodex.so", params.builddir .. "libfmodex.so",ursa.util.system_template{"cp $SOURCE $TARGET && execstack -c $TARGET"}})
+  table.insert(data, ursa.rule{datadir .. "data/libfmodex.so", params.builddir .. "libfmodex.so",ursa.util.system_template{"cp $SOURCE $TARGET && (execstack -c $TARGET || /usr/sbin/execstack -c $TARGET)"}})
   table.insert(data, ursa.rule{datadir .. "data/licenses.txt", "glorp/resources/licenses.txt", ursa.util.copy{}})
 
   -- second we generate our actual data copies
