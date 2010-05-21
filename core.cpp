@@ -811,7 +811,9 @@ void luainit(int argc, const char **argv) {
       lua_pushstring(L, argv[i]);
     }
     int error = lua_pcall(L, 2 + argc, 0, 0);
-    CHECK(!error);
+    if(error) {
+      CHECK(0, "%s", lua_tostring(L, -1));
+    }
   }
   
   if(last_preserved_token.size()) {
