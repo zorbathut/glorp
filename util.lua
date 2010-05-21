@@ -72,7 +72,7 @@ function clamp(cur, min, max)
   if cur > max then return max end
   return cur
 end
-function lerp(s, e, d)
+function lerp(d, s, e)
   return s * (1 - d) + e * d
 end
 function bezier(x0, x1, x2, x3, t)
