@@ -6,6 +6,11 @@ if type(params) ~= "table" then
   os.exit(1)
 end
 
+require "luarocks.loader"
+require "ursa"
+
+params.targets = ursa.util.cli_parameter_parse{unpack(params.targets)}
+
 assert(params.font, "choose a font, you dumbass")
 
 local noluajit = params.noluajit
@@ -23,8 +28,6 @@ end
 
 params.midname = params.longname:gsub("[^%w]", "")
 
-require "luarocks.loader"
-require "ursa"
 
 local glop
 if true then
