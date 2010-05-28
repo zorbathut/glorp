@@ -24,7 +24,9 @@
 #include <Glop/glop3d/Mesh.h>
 #include <Glop/Sound.h>
 #include <Glop/Os.h>
-#include <Glop/Os_Hacky.h>
+#ifndef LINUX
+  #include <Glop/Os_Hacky.h>
+#endif
 
 #include <iostream>
 
@@ -45,6 +47,7 @@
 #include "version.h"
 #include "os.h"
 #include "core_glutil.h"
+#include "core_xutil.h"
 
 #include <png.h>
 
@@ -952,6 +955,10 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     #ifdef WIN32
       SendMessage(get_first_handle(), WM_SETICON, ICON_BIG, (LPARAM)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(101), IMAGE_ICON, 32, 32, 0));
       SendMessage(get_first_handle(), WM_SETICON, ICON_SMALL, (LPARAM)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(101), IMAGE_ICON, 16, 16, 0));
+    #endif
+    
+    #ifdef LINUX
+      glorp_set_icons();
     #endif
   }
   

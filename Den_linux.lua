@@ -66,8 +66,14 @@ function rv.installers()
     ursa.system{"chmod +x " .. datadir .. params.midname}
   end})
   table.insert(data, ursa.rule{datadir .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
-  table.insert(data, ursa.rule{datadir .. "data/libfmodex.so", params.builddir .. "libfmodex.so",ursa.util.system_template{"cp $SOURCE $TARGET && (execstack -c $TARGET || /usr/sbin/execstack -c $TARGET)"}})
+  table.insert(data, ursa.rule{datadir .. "data/libfmodex.so", params.builddir .. "libfmodex.so", ursa.util.system_template{"cp $SOURCE $TARGET && (execstack -c $TARGET || /usr/sbin/execstack -c $TARGET)"}})
   table.insert(data, ursa.rule{datadir .. "data/licenses.txt", "glorp/resources/licenses.txt", ursa.util.copy{}})
+  
+  local dfn = {}
+  for i = 0, 2 do
+    table.insert(dfn, datadir .. "data/mandible_icon-" .. i .. ".png")
+  end
+  table.insert(data, ursa.rule{dfn, "glorp/resources/mandicomulti.ico", ursa.util.system_template{"convert $SOURCE " .. datadir .. "data/mandible_icon.png"}})
 
   -- second we generate our actual data copies
   ursa.token.rule{"built_data", "#datafiles", function ()
