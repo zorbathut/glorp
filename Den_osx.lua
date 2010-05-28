@@ -97,6 +97,8 @@ function rv.installers()
   <string>]] .. params.longname .. [[-SystemVersionCheck</string>
   <key>CFBundleIconFile</key>
   <string>mandible.icns</string>
+  <key>CFBundleTypeIconFile</key>
+  <string>mandible.icns</string>
   <key>CFBundleIdentifier</key>
   <string>com.mandible-games.]] .. params.name .. [[</string>
   <key>CFBundleInfoDictionaryVersion</key>
