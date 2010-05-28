@@ -905,6 +905,7 @@ void fatal(const string &message) {
   CHECK(0);
 }
 
+DEFINE_bool(help, false, "Get help");
 void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
   
   #ifdef IPHONE
@@ -925,6 +926,16 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
 
   setInitFlagFile("glorp/settings");
   initProgram(&argc, const_cast<const char ***>(&argv));
+  
+  if(FLAGS_help) {
+    map<string, string> flags = getFlagDescriptions();
+    #undef printf
+    for(map<string, string>::iterator itr = flags.begin(); itr != flags.end(); itr++) {
+      dprintf("%s: %s\n", itr->first.c_str(), itr->second.c_str());
+      printf("%s: %s\n", itr->first.c_str(), itr->second.c_str());
+    }
+    return;
+  }
   
   window()->SetTitle(name);
   //window()->SetVSync(true);
