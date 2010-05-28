@@ -24,6 +24,7 @@
 #include <Glop/glop3d/Mesh.h>
 #include <Glop/Sound.h>
 #include <Glop/Os.h>
+#include <Glop/Os_Hacky.h>
 
 #include <iostream>
 
@@ -947,6 +948,11 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     gws.is_resizable = false;
     CHECK(window()->Create(width, height, false, gws));
     window()->SetVSync(true);
+    
+    #ifdef WIN32
+      SendMessage(get_first_handle(), WM_SETICON, ICON_BIG, (LPARAM)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(101), IMAGE_ICON, 32, 32, 0));
+      SendMessage(get_first_handle(), WM_SETICON, ICON_SMALL, (LPARAM)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(101), IMAGE_ICON, 16, 16, 0));
+    #endif
   }
   
   {
