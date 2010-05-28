@@ -55,6 +55,7 @@ int exesize() {
 
 #include <windows.h>
 #include <shlobj.h>
+#include <psapi.h>
 
 void outputDebugString(const string &str) {
   OutputDebugString(str.c_str());
@@ -212,6 +213,12 @@ public:
   }
 } sighandler;
 
+int memory_usage() {
+  PROCESS_MEMORY_COUNTERS pmc;
+  GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
+  return pmc.WorkingSetSize;
+}
+
 #else
 
 // OSX, iPhone, make this work better? we do want a stack trace if at all possible
@@ -228,6 +235,11 @@ public:
     signal(SIGSEGV, &signal_h);
   }
 } sighandler;
+
+int memory_usage() {
+  return 0; // worry about this later
+}
+
 #endif
 
 #ifdef __GNUG__

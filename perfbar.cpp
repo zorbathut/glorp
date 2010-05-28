@@ -1,6 +1,7 @@
 
 #include "perfbar.h"
 #include "debug.h"
+#include "os.h"
 
 #include <Glop/OpenGl.h>
 
@@ -35,7 +36,10 @@ PerfStack::PerfStack(float r, float g, float b) {
   pstack.push(make_pair(this, pch));
 }
 PerfStack::~PerfStack() {
-  CHECK(pstack.top().first == this);
+  if(pstack.top().first != this) {
+    dprintf("Horribly broken perfstack! Something is very wrong. Oh dearie, dearie me.\n");
+    return;
+  }
   PerfChunk pch = pstack.top().second;
   pstack.pop();
   pch.end = system()->GetTimeMicro();
@@ -43,7 +47,10 @@ PerfStack::~PerfStack() {
 }
 
 void startPerformanceBar() {
-  CHECK(pstack.empty());
+  if(!pstack.empty()) {
+    dprintf("Horribly broken perfstack! Something is very wrong. Oh dearie, dearie me.\n");
+    pstack = stack<pair<const PerfStack *, PerfChunk> >();
+  }
   pchunks.clear();
   start = system()->GetTimeMicro();
 }
@@ -92,6 +99,17 @@ void drawPerformanceBar() {
   glVertex2f(1, (1000000.f / 60) * scale + xwid);
   glVertex2f(xpind, (1000000.f / 60) * scale + xwid);
   glVertex2f(xpind, (1000000.f / 60) * scale);
+  
+  
+  // now let's print the mem bar as well
+  float memheight = memory_usage() / 200000000.;
+  float mems = 1 - xwid / 4;
+  float meme = 1 - xwid * 3 / 4;
+  glColor3f(1.0, 1.0, 1.0);
+  glVertex2f(mems, 0);
+  glVertex2f(meme, 0);
+  glVertex2f(meme, memheight);
+  glVertex2f(mems, memheight);
   
   glEnd();
   #endif

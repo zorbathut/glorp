@@ -26,4 +26,6 @@ void SpawnProcess(const string &program, const vector<string> &params);
 
 int exesize();
 
+int memory_usage(); // someday this will break when I have a 64-bit program.
+
 #endif
