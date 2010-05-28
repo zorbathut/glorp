@@ -17,6 +17,7 @@ SetCompressor bzip2
 !define MUI_ABORTWARNING
 !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
+!define MUI_COMPONENTSPAGE_NODESC
 
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
@@ -28,6 +29,14 @@ SetCompressor bzip2
 !insertmacro MUI_PAGE_INSTFILES
 ; Finish page
 !define MUI_FINISHPAGE_RUN "$INSTDIR\$$$EXENAME$$$"
+; Desktop shortcuttery
+Function finishpageaction
+  CreateShortCut "$DESKTOP\$$$LONGNAME$$$.lnk" "$INSTDIR\$$$EXENAME$$$"
+FunctionEnd
+!define MUI_FINISHPAGE_SHOWREADME ""
+!define MUI_FINISHPAGE_SHOWREADME_CHECKED
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "Create Desktop Shortcut"
+!define MUI_FINISHPAGE_SHOWREADME_FUNCTION finishpageaction
 !insertmacro MUI_PAGE_FINISH
 
 ; Uninstaller pages
@@ -54,7 +63,7 @@ $$$INSTALL$$$
 
   CreateDirectory "$SMPROGRAMS\$$$LONGNAME$$$"
   CreateShortCut "$SMPROGRAMS\$$$LONGNAME$$$\$$$LONGNAME$$$.lnk" "$INSTDIR\$$$EXENAME$$$"
-  CreateShortCut "$DESKTOP\$$$LONGNAME$$$.lnk" "$INSTDIR\$$$EXENAME$$$"
+  
 SectionEnd
 
 Section -AdditionalIcons
