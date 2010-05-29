@@ -519,3 +519,43 @@ end
 function math.round(x)
   return math.floor(x + 0.5)
 end
+
+function impose_standard_ai(target)
+  assert(not target.Tick)
+  local tick_ai_reservoir = {}
+  local clears = {}
+  local clear_count = 0
+  function wipe_item(item)
+    clears[item] = true
+    clear_count = clear_count + 1
+  end
+  function target:Tick()
+    for _, v in ipairs(tick_ai_reservoir) do
+      v()
+    end
+    
+    if clear_count > 0 then
+      local ntai = {}
+      for _, v in ipairs(tick_ai_reservoir) do
+        if not clears[v] then
+          table.insert(ntai, v)
+        end
+      end
+      
+      clears, clear_count = {}, 0
+      tick_ai_reservoir = ntai
+    end
+  end
+  function target:Tick_Add(func)
+    table.insert(tick_ai_reservoir, func)
+  end
+  function target:Tick_AddCoro(func)
+    local coro
+    coro = coroutine.wrap(function ()
+      func(self)
+      
+      wipe_item(coro)
+    end)
+    table.insert(tick_ai_reservoir, coro)
+  end
+end
