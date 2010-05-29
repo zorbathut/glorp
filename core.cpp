@@ -700,6 +700,10 @@ void glewp(double a, double b, double c, double d) {
   gluPerspective(a, b, c, d);
 }
 
+bool window_in_focus() {
+  return window()->IsInFocus();
+}
+
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
 class DontKillMeBro_KillerBase;
@@ -858,6 +862,7 @@ void luainit(int argc, const char **argv) {
       def("GetScreenX", &get_screenx),
       def("GetScreenY", &get_screeny),
       
+      def("WindowInFocus", &window_in_focus),
       def("gluPerspective", &glewp)
       //def("CrashHorribly", &CrashHorribly)
     ];

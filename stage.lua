@@ -331,8 +331,15 @@ function tick_loop(...)
     end
   end
 end
+local last_focus = true
 function loop(...)
   if wedothisfirst then return end
+  
+  local new_focus = WindowInFocus()
+  if not new_focus and last_focus and mainmenu.pause_on_nofocus and runninggame and not inminimenu and not mode then
+    imm_start()
+  end
+  last_focus = new_focus
   
   if not inminimenu then
     stdwrap("loop", ...)
