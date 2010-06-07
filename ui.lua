@@ -499,7 +499,6 @@ UI_Reset()
 
 
 local function Button_Key(self, button, ascii, event)
-  print(self, button, ascii, event)
   if not button then return true end
   if button ~= "mouse_left" and not button:match("finger_%d+") then return true end  -- don't know don't care
   
@@ -607,6 +606,104 @@ function TextureOverrides:GetColor()
   return self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a
 end
 
+local DragOverrides = {}
+function DragOverrides:Tick()
+  if self._dragging then
+    if not IsKeyDownFrame("mouse_left") then
+      self._dragging = false
+      if self.DragEnded then self:DragEnded() end
+    else
+      local nx, ny = GetMouse()
+      if self.Drag then self:Drag(nx - self.drag_x, ny - self.drag_y) end
+      self.drag_x, self.drag_y = nx, ny
+    end
+  end
+end
+function DragOverrides:Key(key, _, event)
+  if key == "mouse_left" and event == "press" then
+    self._dragging = true
+    self.drag_x, self.drag_y = GetMouse()
+    if self.DragStarted then self:DragStarted() end
+  end
+end
+
+local ScrollOverrides = {}
+function ScrollOverrides:Tick()
+  if self.scroll_position ~= self.scroll_position_last then
+    local scrollheight = self.scrollbar:GetHeight() - 2
+    local dataheight = self.internal:GetHeight()
+    local widgetheight
+    local widgetofs
+    
+    self.scroll_multiplier = dataheight / scrollheight
+    
+    if dataheight < scrollheight then
+      self.scroll_position = 0
+      widgetheight = scrollheight
+      widgetofs = 0
+    else
+      self.scroll_position = clamp(self.scroll_position, 0, dataheight - scrollheight)
+      widgetheight = scrollheight * scrollheight / dataheight
+      widgetofs = scrollheight * self.scroll_position / dataheight
+    end
+    
+    self.scroll_widget:SetHeight(widgetheight)
+    self.scroll_widget:SetPoint("TOP", self.scrollbar, "TOP", nil, 1 + widgetofs)
+    
+    self.internal:SetPoint("TOPLEFT", self, "TOPLEFT", nil, -self.scroll_position)
+    
+    self.scroll_position_last = self.scroll_position
+  end
+end
+function ScrollInit(self, name)
+  self.key_bounds_cull = true
+  
+  self.scrollbar = CreateFrame("Frame", self, name .. " (scrollbar)")
+  self.scrollbar:SetPoint("TOPRIGHT", self, "TOPRIGHT")
+  self.scrollbar:SetPoint("BOTTOM", self, "BOTTOM")
+  self.scrollbar:SetWidth(10)
+  self.scrollbar:SetBackgroundColor(0.2, 0.2, 0.2)
+  
+  self.scroll_widget_dragger = CreateFrame("Draggable", self.scrollbar)
+  
+  self.scroll_widget = CreateFrame("Frame", self.scroll_widget_dragger, name .. " (scroll widget)")
+  self.scroll_widget:SetPoint("LEFT", self.scrollbar, "LEFT", 1, nil)
+  self.scroll_widget:SetPoint("RIGHT", self.scrollbar, "RIGHT", -1, nil)
+  self.scroll_widget:SetBackgroundColor(0.3, 0.3, 0.3)
+  
+  self.scroll_position = 0
+  self.scroll_multiplier = 1
+  
+  function self.scroll_widget_dragger.Drag(_, dx, dy)
+    self.scroll_position = self.scroll_position + dy * self.scroll_multiplier
+  end
+  
+  function self:Key(key, _, event)
+    if key:find("mouse_wheel") and event:find("press") then
+      self.scroll_position = self.scroll_position + 20 * ((key == "mouse_wheel_up") and -1 or 1)
+    end
+  end
+  
+  self.internal = CreateFrame("Frame", self, name .. " (scroll internal frame)")
+  
+  self.internal:SetPoint("TOPLEFT", self, "TOPLEFT")
+  self.internal:SetPoint("RIGHT", self.scrollbar, "LEFT")
+  self.internal:SetPoint("BOTTOM", self, "TOPLEFT", nil, 100) -- just for a sane default
+  self.internal:SetLayer(-1000) -- this is not ideal
+  
+  function self:DrawPre()
+    gl.Enable("SCISSOR_TEST")
+    local sx, sy, ex, ey = self:GetBounds()
+    gl.Scissor(sx, UIParent:GetHeight() - ey, ex - sx, ey - sy)
+  end
+  function self:DrawPost()
+    gl.Disable("SCISSOR_TEST")
+  end
+  
+  -- just to init it
+  self.scroll_widget:SetHeight(0)
+  self.scroll_widget:SetPoint("TOP", self.scrollbar, "TOP", nil, 1)
+end
 
 local RenderSorterOverrides = {}
 do
@@ -715,6 +812,12 @@ function CreateFrame(typ, parent, name)
     rg.Key = Button_Key
     rg.MouseOut = Button_MouseOut
     return rg
+  elseif typ == "Draggable" then
+    local rg = Region(parent, name)
+    for k, v in pairs(DragOverrides) do
+      rg[k] = v
+    end
+    return rg
   elseif typ == "Text" then
     local rg = Region(parent, name)
     for k, v in pairs(TextOverrides) do
@@ -745,6 +848,13 @@ function CreateFrame(typ, parent, name)
     end
     rg.priorities = {}
     return rg
+  elseif typ == "Scroll" then
+    local rg = Region(parent, name)
+    for k, v in pairs(ScrollOverrides) do
+      rg[k] = v
+    end
+    ScrollInit(rg, name)
+    return rg
   else
     assert(false)
   end
@@ -754,6 +864,13 @@ end
 local function TraverseUpWorker(start, x, y, keyed)
   if not start:IsShown() then return end
   
+  if start.key_bounds_cull then
+    assert(start:Exists())
+    if not (x >= start:GetLeft() and x < start:GetRight() and y >= start:GetTop() and y < start:GetBottom()) then
+      return nil
+    end
+  end
+  
   if start.children then
     local lx, ly = x, y
     if start.cs_x then
@@ -761,12 +878,14 @@ local function TraverseUpWorker(start, x, y, keyed)
       -- first, figure out where we are within the coordinate space of the window
       lx = (lx - (start:GetLeft() + start:GetRight()) / 2) / start:GetWidth()
       ly = (ly - (start:GetTop() + start:GetBottom()) / 2) / start:GetWidth()
+      
       -- now we rotate (we don't rotate yet)
       
       -- then we rescale
       lx = lx * start.cs_scale + start.cs_x
       ly = ly * start.cs_scale + start.cs_y
     end
+    
     for tid = #start.children, 1, -1 do
       local k = start.children[tid]
       local rv = TraverseUpWorker(k, lx, ly, keyed or start.Key)
