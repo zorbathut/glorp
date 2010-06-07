@@ -939,6 +939,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   if(FLAGS_help) {
     map<string, string> flags = getFlagDescriptions();
     #undef printf
+    printf("note: CLI help does not really exist in any meaningful enduser fashion, sorry, but that's OK 'cause there aren't really any usable enduser parameters\n");
     for(map<string, string>::iterator itr = flags.begin(); itr != flags.end(); itr++) {
       dprintf("%s: %s\n", itr->first.c_str(), itr->second.c_str());
       printf("%s: %s\n", itr->first.c_str(), itr->second.c_str());
