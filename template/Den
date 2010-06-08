@@ -1,0 +1,10 @@
+#!/usr/local/bin/lua
+
+local name = "template"
+local longname = "Template"
+local font = nil
+local resolution = {1024, 768}
+
+local f, e = loadfile("glorp/Den")
+assert(f, e)
+f{name = name, longname = longname, font = font, resolution = resolution, targets = {...}}
