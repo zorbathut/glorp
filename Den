@@ -31,7 +31,7 @@ params.midname = params.longname:gsub("[^%w]", "")
 
 local glop
 if true then
-  glop = ursa.embed{"glorp/Glop", "Den", {{platform = params.platform}}}
+  glop = ursa.embed{"glorp/glop", "Den", {{platform = params.platform}}}
 else
   glop = {os = params.platform, headers = {}, lib = {}}
 end
@@ -238,7 +238,7 @@ if platform == "linux" then
   
   ursa.token.rule{"pwd", nil, function () return ursa.system{"pwd"} end}
   
-  local makefile = ursa.rule{builddir .. "lib_build/fltk/FL/Makefile", {files, glop.headers, libs.zlib, libs.libpng, libs.libjpeg}, ursa.util.system_template{('cd %slib_build/fltk && CC="%s" CFLAGS="%s" CPPFLAGS="-I%s/glorp/Glop/release/linux/include -I%s/glorp/Glop/release/linux/include/jpeglib" LDFLAGS="%s -L%s/glorp/Glop/release/linux/lib -L/usr/lib" ./configure --disable-localjpeg --disable-localzlib --disable-localpng'):format(builddir, glop.libcc, libcflags, ursa.token{"pwd"}, ursa.token{"pwd"}, libldflags, ursa.token{"pwd"})}}
+  local makefile = ursa.rule{builddir .. "lib_build/fltk/FL/Makefile", {files, glop.headers, libs.zlib, libs.libpng, libs.libjpeg}, ursa.util.system_template{('cd %slib_build/fltk && CC="%s" CFLAGS="%s" CPPFLAGS="-I%s/glorp/glop/release/linux/include -I%s/glorp/glop/release/linux/include/jpeglib" LDFLAGS="%s -L%s/glorp/glop/release/linux/lib -L/usr/lib" ./configure --disable-localjpeg --disable-localzlib --disable-localpng'):format(builddir, glop.libcc, libcflags, ursa.token{"pwd"}, ursa.token{"pwd"}, libldflags, ursa.token{"pwd"})}}
   
   local lib = ursa.rule{builddir .. "lib_build/fltk/lib/libfltk.a", makefile, ('cd %slib_build/fltk && make'):format(builddir)}
   
@@ -463,8 +463,8 @@ ursa.command{"package", osd.installers("datafiles")}
 
 clean_dirs = {}
 table.insert(clean_dirs, "build")
-table.insert(clean_dirs, "glorp/Glop/build")
-table.insert(clean_dirs, "glorp/Glop/release")
+table.insert(clean_dirs, "glorp/glop/build")
+table.insert(clean_dirs, "glorp/glop/release")
 ursa.command{"clean", function ()
   ursa.util.clean()
   for _, v in ipairs(clean_dirs) do
