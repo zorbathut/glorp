@@ -7,7 +7,7 @@ local rv = {}
 loadfile("glorp/Den_util_osx.lua")(params, rv)
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386 -DMACOSX -Iglorp/Glop/release/osx/include")
+token_literal("CXXFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386 -DMACOSX -Iglorp/glop/release/osx/include")
 token_literal("LDFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
 
 token_literal("LUA_FLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -DLUA_USE_LINUX -arch i386")
@@ -36,7 +36,7 @@ rv.create_runnable = function(dat)
   
   -- copy subsidiary libraries
   for libname in ("libfmodex.dylib"):gmatch("[^%s]+") do
-    table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/%s"):format(basepath, libname), ("glorp/Glop/Glop/third_party/system_osx/lib/%s"):format(libname), ursa.util.copy{}})
+    table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/%s"):format(basepath, libname), ("glorp/glop/Glop/third_party/system_osx/lib/%s"):format(libname), ursa.util.copy{}})
     --tweak_glop(("-change ./%s @executable_path/../Frameworks/%s"):format(libname, libname))
   end
   

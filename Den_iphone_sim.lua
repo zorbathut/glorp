@@ -7,8 +7,8 @@ local rv = {}
 local ipp = loadfile("glorp/Den_util_iphone.lua")(params, rv)
 
 token_literal("CC", "/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/bin/g++")
-token_literal("CXXFLAGS", ipp.cxx .. " -arch i386 -isysroot /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator3.0.sdk -mmacosx-version-min=10.5  -Fglorp/Glop/build/Glop -Iglorp/Glop/Glop/OSX")
-token_literal("LDFLAGS", ipp.ld .. " -arch i386 -isysroot /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator3.0.sdk -mmacosx-version-min=10.5 -Fglorp/Glop/build/Glop -framework AVFoundation -framework Foundation -framework UIKit -framework OpenGLES -framework QuartzCore")
+token_literal("CXXFLAGS", ipp.cxx .. " -arch i386 -isysroot /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator3.0.sdk -mmacosx-version-min=10.5  -Fglorp/glop/build/Glop -Iglorp/glop/Glop/OSX")
+token_literal("LDFLAGS", ipp.ld .. " -arch i386 -isysroot /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator3.0.sdk -mmacosx-version-min=10.5 -Fglorp/glop/build/Glop -framework AVFoundation -framework Foundation -framework UIKit -framework OpenGLES -framework QuartzCore")
 
 token_literal("LUA_FLAGS", "-arch i386 -isysroot /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator3.0.sdk -D__IPHONE_OS_VERSION_MIN_REQUIRED=30000")
 
@@ -25,7 +25,7 @@ rv.create_runnable = function(dat)
   local current_glop_iteration = 0
   
   -- copy our main executable while tweaking the path
-  table.insert(runnable, ursa.rule{basepath .. "/" .. params.longname, dat.mainprog, ursa.util.system_template{"cp $SOURCE $TARGET && install_name_tool -change build/Glop/Glop.framework/Glop @executable_path/Glop $TARGET"}})
+  table.insert(runnable, ursa.rule{basepath .. "/" .. params.longname, dat.mainprog, ursa.util.system_template{"cp $SOURCE $TARGET && install_name_tool -change build/glop/Glop.framework/Glop @executable_path/Glop $TARGET"}})
   
   -- copy the main glop library
   table.insert(runnable, ursa.rule{basepath .. "/Glop", current_glop, ursa.util.system_template{"cp $SOURCE $TARGET"}})

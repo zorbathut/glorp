@@ -9,7 +9,7 @@ ursa.token.rule{"FLAC", nil, function () return "flac" end}
 rv.extension = ".prog"  -- have to use something or it'll conflict
 
 token_literal("CC", params.glop.cc)
-token_literal("CXXFLAGS", "-m32 -DLINUX -Iglorp/Glop/release/linux/include")
+token_literal("CXXFLAGS", "-m32 -DLINUX -Iglorp/glop/release/linux/include")
 token_literal("LDFLAGS", "-m32 -lGL -lGLU -lrt")
 
 token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -m32")
@@ -19,7 +19,7 @@ rv.lua_buildtype = "linux"
 local runnable_deps
 
 rv.create_runnable = function(dat)
-  local libpath = "glorp/Glop/Glop/third_party/system_linux/lib"
+  local libpath = "glorp/glop/Glop/third_party/system_linux/lib"
   local libs = "libfmodex.so"
   local liboutpath = params.builddir
 
@@ -46,7 +46,7 @@ function rv.installers()
     local dat = ni:read("*a")
     ni:close()
     
-    local orig = "glorp/Glop/release/linux/lib/libfmodex.so"
+    local orig = "glorp/glop/release/linux/lib/libfmodex.so"
     local new = "data/libfmodex.so"
     assert(#new <= #orig)
     while #new < #orig do
