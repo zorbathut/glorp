@@ -209,6 +209,9 @@ do
   function Region_Type:GetYCenter()
     return getpoint(self, "_anchor_y", 0.5)
   end
+  function Region_Type:GetCenter()
+    return self:GetXCenter(), self:GetYCenter()
+  end
   
   function Region_Type:GetBounds()
     return self:GetLeft(), self:GetTop(), self:GetRight(), self:GetBottom()

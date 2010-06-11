@@ -667,7 +667,7 @@ void debugstack_annotated(lua_State *L) {
     lua_getlocal(L, &ar, 1);
     if(lua_istable(L, -1)) {
       lua_pushliteral(L, "__name");
-      lua_gettable(L, -2);
+      lua_rawget(L, -2);
       if(lua_isstring(L, -1)) {
         lua_pushliteral(L, " in frame (");
         lua_insert(L, -2);
