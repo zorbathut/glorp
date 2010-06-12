@@ -529,9 +529,9 @@ function impose_standard_ai(target)
     clears[item] = true
     clear_count = clear_count + 1
   end
-  function target:Tick()
+  function target:TickStandard()
     for _, v in ipairs(tick_ai_reservoir) do
-      v()
+      v(self)
     end
     
     if clear_count > 0 then
@@ -546,6 +546,7 @@ function impose_standard_ai(target)
       tick_ai_reservoir = ntai
     end
   end
+  if not target.Tick then target.Tick = target.TickStandard end
   function target:Tick_Add(func)
     table.insert(tick_ai_reservoir, func)
   end
@@ -559,3 +560,65 @@ function impose_standard_ai(target)
     table.insert(tick_ai_reservoir, coro)
   end
 end
+
+
+local function heap_left(x) return (2*x) end
+local function heap_right(x) return (2*x + 1) end
+local function heap_sane(heap)
+  local dmp = ""
+  local finishbefore = 2
+  for i = 1, #heap do
+    if i == finishbefore then
+      print(dmp)
+      dmp = ""
+      finishbefore = finishbefore * 2
+    end
+    dmp = dmp .. string.format("%f ", heap[i].c)
+  end
+  print(dmp)
+  print("")
+  for i = 1, #heap do
+    --[[ assert(not heap[heap_left(i)] or heap[i].c <= heap[heap_left(i)].c) ]]
+    --[[ assert(not heap[heap_right(i)] or heap[i].c <= heap[heap_right(i)].c) ]]
+  end
+end
+function heap_insert(heap, item)
+  --[[ assert(item) ]]
+  table.insert(heap, item)
+  local pt = #heap
+  while pt > 1 do
+    local ptd2 = math.floor(pt / 2)
+    if heap[ptd2].c <= heap[pt].c then
+      break
+    end
+    local tmp = heap[pt]
+    heap[pt] = heap[ptd2]
+    heap[ptd2] = tmp
+    pt = ptd2
+  end
+  --heap_sane(heap)
+end
+function heap_extract(heap)
+  local rv = heap[1]
+  if #heap == 1 then table.remove(heap) return rv end
+  heap[1] = table.remove(heap)
+  local idx = 1
+  while idx < #heap do
+    local minix = idx
+    --local hl, hr = heap_left(idx), heap_right(idx)
+    local hl, hr = 2*idx, 2*idx+1 -- these had better be equivalent to the line above one
+    if heap[hl] and heap[hl].c < heap[minix].c then minix = hl end
+    if heap[hr] and heap[hr].c < heap[minix].c then minix = hr end
+    if minix ~= idx then
+      local tx = heap[minix]
+      heap[minix] = heap[idx]
+      heap[idx] = tx
+      idx = minix
+    else
+      break
+    end
+  end
+  --heap_sane(heap)
+  return rv
+end
+

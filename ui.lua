@@ -180,6 +180,11 @@ do
   function Region_Type:SetHeight(height)
     reanchor(self, "_anchor_y", "size", height)
   end
+  function Region_Type:SetSize(width, height)
+    if not height then height = width end
+    self:SetWidth(width)
+    self:SetHeight(height)
+  end
   
   function Region_Type:GetWidth()
     local gs = getsize(self, "_anchor_x")
@@ -211,6 +216,9 @@ do
   end
   function Region_Type:GetCenter()
     return self:GetXCenter(), self:GetYCenter()
+  end
+  function Region_Type:GetTopLeft()
+    return self:GetLeft(), self:GetTop()
   end
   
   function Region_Type:GetBounds()
@@ -864,6 +872,23 @@ function CreateFrame(typ, parent, name)
   assert(false)
 end
 
+local function ScreenToLocal(frame, lx, ly)
+  if frame.cs_x then
+    -- now we have to do some transformations
+    -- first, figure out where we are within the coordinate space of the window
+    lx = (lx - (frame:GetLeft() + frame:GetRight()) / 2) / frame:GetWidth()
+    ly = (ly - (frame:GetTop() + frame:GetBottom()) / 2) / frame:GetWidth()
+    
+    -- now we rotate (we don't rotate yet)
+    
+    -- then we rescale
+    lx = lx * frame.cs_scale + frame.cs_x
+    ly = ly * frame.cs_scale + frame.cs_y
+  end
+  
+  return lx, ly
+end
+
 local function TraverseUpWorker(start, x, y, keyed)
   if not start:IsShown() then return end
   
@@ -875,19 +900,7 @@ local function TraverseUpWorker(start, x, y, keyed)
   end
   
   if start.children then
-    local lx, ly = x, y
-    if start.cs_x then
-      -- now we have to do some transformations
-      -- first, figure out where we are within the coordinate space of the window
-      lx = (lx - (start:GetLeft() + start:GetRight()) / 2) / start:GetWidth()
-      ly = (ly - (start:GetTop() + start:GetBottom()) / 2) / start:GetWidth()
-      
-      -- now we rotate (we don't rotate yet)
-      
-      -- then we rescale
-      lx = lx * start.cs_scale + start.cs_x
-      ly = ly * start.cs_scale + start.cs_y
-    end
+    local lx, ly = ScreenToLocal(start, x, y)
     
     for tid = #start.children, 1, -1 do
       local k = start.children[tid]
@@ -937,8 +950,10 @@ function AccumulateInternals(start, acu, x, y)
   if not x then x, y = GetMouse() end
   
   if start.children then
+    local lx, ly = ScreenToLocal(start, x, y)
+      
     for _, k in ipairs(start.children) do
-      AccumulateInternals(k, acu, x, y)
+      AccumulateInternals(k, acu, lx, ly)
     end
   end
   
