@@ -1,4 +1,4 @@
-package.path = package.path .. ";data/?.lua;glorp/?.lua;glorp/resources/?.lua"
+package.path = package.path .. "data/?.lua;glorp/?.lua;glorp/resources/?.lua"
 
 collectgarbage("stop")
 
@@ -11,21 +11,22 @@ function assert(parm, ...)
   end
 end]]
 
-
-function loadfile_pathed(file)
-  local dat, rv = loadfile(file)
+local lf = loadfile
+function loadfile(file)
+  local dat, rv = lf(file)
   
   if rv and rv:find("No such file or directory") then
-    dat, rv = loadfile("data/" .. file)
+    dat, rv = lf("data/" .. file)
   end
   
   if rv and rv:find("No such file or directory") then
-    dat, rv = loadfile("glorp/" .. file)
+    dat, rv = lf("glorp/" .. file)
   end
   
   --print("lfp:", filename, dat, rv)
   return dat, rv
 end
+
 
 
 local plat, mode
@@ -35,7 +36,7 @@ function wrap_init(platform, filename, mode_in, ...)
   wrap_init = nil
   
   local stt 
-  assert(loadfile_pathed("stage.lua"))(platform, filename, mode_in, ...)
+  assert(loadfile("stage.lua"))(platform, filename, mode_in, ...)
 end
 
 local function barf(err)
