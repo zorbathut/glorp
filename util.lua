@@ -47,6 +47,7 @@ function io.dump(filename, contents)
 end
 function io.snatch(filename)
   t = io.open(filename, "rb")
+  if not t then t = io.open("data/" .. filename, "rb") end
   if not t then return end
   local dat = t:read("*all")
   t:close()
