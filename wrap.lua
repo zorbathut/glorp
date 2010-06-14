@@ -31,7 +31,7 @@ end
 
 local plat, mode
 function wrap_init(platform, filename, mode_in, ...)
-  if mode_in:find("_") then mode_in = nil end -- this is not a mode, this is an abomination
+  if mode_in and mode_in:find("_") then mode_in = nil end -- this is not a mode, this is an abomination
   plat, mode = platform, mode_in
   print(plat, mode)
   wrap_init = nil
