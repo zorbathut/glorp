@@ -68,13 +68,13 @@ function rv.installers()
       
       local install, uninstall = "", ""
       
-      for line in dir:gmatch("[^%s]+") do
+      for line in dir:gmatch("[^\n]+") do
         line = line:gsub("/", "\\")
         install = install .. ('CreateDirectory "$INSTDIR\\%s"\n'):format(line)
         uninstall = ('RMDir "$INSTDIR\\%s"\n'):format(line) .. uninstall
       end
       
-      for line in files:gmatch("[^%s]+") do
+      for line in files:gmatch("[^\n]+") do
         line = line:gsub("/", "\\")
         install = install .. ('File "/oname=%s" "%s"\n'):format(line, "deploy\\" .. line)
         uninstall = ('Delete "$INSTDIR\\%s"\n'):format(line) .. uninstall

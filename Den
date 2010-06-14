@@ -390,7 +390,7 @@ do
   local function copy_a_lot(token, destprefix, sourceprefix)
     ursa.token.rule{token .. "_copy", "#" .. token .. "_files", function ()
         local data_items = {}
-        for k in ursa.token{token .. "_files"}:gmatch("[^%s]+") do
+        for k in ursa.token{token .. "_files"}:gmatch("[^\n]+") do
           local ext = k:match("^.*%.([^%.]+)$")
           
           local dst = destprefix .. k
@@ -429,7 +429,7 @@ do
   table.insert(data_deps, copy_a_lot("luaglorp", "data/", "glorp/"))
 
   -- Lua files and font files in our core
-  ursa.token.rule{"core_files", nil, "ls *.lua *.ttf | grep -v crashmelt | grep -v playtest.lev.lua", always_rebuild = true}
+  ursa.token.rule{"core_files", nil, "ls *.lua *.ttf *.otf | grep -v crashmelt | grep -v playtest.lev.lua", always_rebuild = true}
   table.insert(data_deps, copy_a_lot("core", "data/", ""))
 
   ursa.token.rule{"datafiles", data_deps, function ()
