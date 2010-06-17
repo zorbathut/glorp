@@ -761,12 +761,9 @@ template <typename T> T *get_pointer(DontKillMeBro<T> &it) {
 void luainit(int argc, const char **argv) {
   L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
-  #ifdef IPHONE
-    luaopen_opengles(L);
-  #else
-    luaopen_opengl(L);
-    luaopen_opengl_ext(L);
-  #endif
+  
+  luaopen_lgl(L);
+  
   lua_register(L, "print", debug_print);
   lua_register(L, "toaddress", toaddress);
   
