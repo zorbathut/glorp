@@ -1,10 +1,5 @@
 
-#ifndef IPHONE
-  #include "LuaGL.h"
-  #include "LuaGL_ext.h"
-#else
-  #include "LuaGLES.h"
-#endif
+#include "lgl.h"
 
 #ifndef LINUX
   // can't include on linux because GLee includes X.h which conflicts with the Font class

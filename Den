@@ -36,6 +36,7 @@ else
   glop = {os = params.platform, headers = {}, lib = {}}
 end
 
+
 local platform = params.platform or glop.os
 
 local builddir_pre = "build/" .. platform
@@ -271,15 +272,25 @@ ursa.rule{builddir .. "glorp/main.cpp", {"!" .. params.longname, "!" .. params.f
   fil:close()
 end}
 
+-- lgl build
+local lgl_deps
+do
+  local lgl = ursa.embed{"glorp/lgl", "Den", {{}}}
+  
+  lgl.generate(ursa.absolute_from{builddir .. "glorp/lgl.cpp"}, "")
+  
+  lgl_deps = ursa.rule{builddir .. "glorp/lgl.h", lgl.header, ursa.util.copy{}}
+end
+
 local buildables = {
-  [params.name] = {dynfiles = "main version", glorpfiles = "core core_glutil core_xutil debug debug_911_on os util parse args init perfbar LuaGL_common " .. (osd.gles and "LuaGLES" or "LuaGL LuaGL_ext"), cfiles = osd.gles and "" or "glorp/GLee", mmfiles = osd.gles and "main_iphone" or "", resources = "resource", libs = "zlib libpng libjpeg libfreetype libfmodex glop"},
+  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os util parse args init perfbar", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or "", resources = "resource", libs = "zlib libpng libjpeg libfreetype libfmodex glop"},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl" .. (platform == "linux" and " libfltk" or ""), flags = "-DSUPPRESS_GLOP"},
 }
 
 local depsed = {}
 
 local function build_object(src, prefix, params)
-  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp/.. -Iglorp/libs/boost -I%slib_release/include %s %s "):format(params.compiler or ursa.token{"CC"}, params.flags or "", builddir, ursa.token{"CXXFLAGS"}, src)
+  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp -Iglorp/.. -Iglorp/libs/boost -I%sglorp -I%slib_release/include %s %s "):format(params.compiler or ursa.token{"CC"}, params.flags or "", builddir, builddir, ursa.token{"CXXFLAGS"}, src)
   
   -- we *should* be doing something substantially more reliable and sane here. we're not, because this is much easier
   local clurl = (src == "glorp/reporter_main.cpp") and curl_headers or {}
@@ -305,12 +316,12 @@ local function build_object(src, prefix, params)
     
     local depend = src .. " dependencies"
     
-    ursa.token.rule{depend, {glop.headers, lua_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, clurl, flurl}, function () return make_dependencies(cpp) end}
+    ursa.token.rule{depend, {glop.headers, lua_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, clurl, flurl, lgl_deps}, function () return make_dependencies(cpp) end}
     depsed[src] = ursa.util.token_deferred{depend}
   end
   
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o"):gsub("%.mm", ".o")
-  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src], clurl, flurl}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
+  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src], clurl, flurl, lgl_deps}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
   return dst
 end
 
