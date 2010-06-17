@@ -219,7 +219,7 @@ end
 
 
 
-print(gl.Get("MAX_PROJECTION_STACK_DEPTH"))
+--print(gl.Get("MAX_PROJECTION_STACK_DEPTH"))
 
 --local log = io.open("gl.txt", "w")
 
@@ -331,6 +331,7 @@ function glutil.Texture()
   return prog
 end
 
+--[=[
 print(platform)
 if platform ~= "iphone" and platform ~= "iphone_sim" then
   local snatch = {
@@ -490,19 +491,20 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     gl[k] = nil -- yoink
   end
 end
+]=]
 
 function glutil.RenderArray(mode, vertex_size, vertices, color_size, color, texture_size, texture)
   gl.EnableClientState("VERTEX_ARRAY")
-  gl.VertexPointer(vertices, vertex_size)
+  gl.VertexPointer(vertex_size, "FLOAT", vertices)
   if color_size then
     assert(#color / color_size == #vertices / vertex_size)
     gl.EnableClientState("COLOR_ARRAY")
-    gl.ColorPointer(color, color_size)
+    gl.ColorPointer(color_size, "FLOAT", color)
   end
   if texture_size then
     assert(#texture / texture_size == #vertices / vertex_size)
     gl.EnableClientState("TEXTURE_COORD_ARRAY")
-    gl.TexCoordPointer(texture, texture_size)
+    gl.TexCoordPointer(texture_size, "FLOAT", texture)
   end
   
   gl.DrawArrays(mode, 0, #vertices / vertex_size)
