@@ -67,7 +67,6 @@ function rv.installers()
   end})
   table.insert(data, ursa.rule{datadir .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{datadir .. "data/libfmodex.so", params.builddir .. "libfmodex.so", ursa.util.system_template{"cp $SOURCE $TARGET && (execstack -c $TARGET || /usr/sbin/execstack -c $TARGET)"}})
-  table.insert(data, ursa.rule{datadir .. "data/licenses.txt", "glorp/resources/licenses.txt", ursa.util.copy{}})
   
   local dfn = {}
   for i = 0, 2 do
