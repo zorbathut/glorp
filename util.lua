@@ -331,7 +331,8 @@ function glutil.Texture()
   return prog
 end
 
---[=[
+gl.UniformI = gl.Uniform
+gl.UniformF = gl.Uniform
 print(platform)
 if platform ~= "iphone" and platform ~= "iphone_sim" then
   local snatch = {
@@ -351,7 +352,7 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     GetUniformLocation = true,
     
     --UniformI = true,
-    VertexAttribF = true,
+    VertexAttrib = true,
     GetAttribLocation = true,
     
     BindFramebuffer = true,
@@ -363,7 +364,7 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
   }
   for k in pairs(snatch) do
     snatch[k] = gl[k]
-    assert(snatch[k])
+    assert(snatch[k], k)
   end
 
   local attrib_lookup = {}
@@ -451,7 +452,7 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     if attrib_lookup[pid][text] == -1 then
       print("WARNING: Attribute " .. text .. " is unused", pid)
     else
-      snatch.VertexAttribF(attrib_lookup[pid][text], ...)
+      snatch.VertexAttrib(attrib_lookup[pid][text], ...)
     end
   end
 
@@ -491,7 +492,7 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     gl[k] = nil -- yoink
   end
 end
-]=]
+
 
 function glutil.RenderArray(mode, vertex_size, vertices, color_size, color, texture_size, texture)
   gl.EnableClientState("VERTEX_ARRAY")
