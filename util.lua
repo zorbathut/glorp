@@ -331,8 +331,6 @@ function glutil.Texture()
   return prog
 end
 
-gl.UniformI = gl.Uniform
-gl.UniformF = gl.Uniform
 print(platform)
 if platform ~= "iphone" and platform ~= "iphone_sim" then
   local snatch = {

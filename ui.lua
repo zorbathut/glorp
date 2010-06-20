@@ -719,7 +719,7 @@ end
 local RenderSorterOverrides = {}
 do
   local function GetMatrix(typ)
-    return {gl.Get(typ .. "_MATRIX")}
+    return gl.Get(typ .. "_MATRIX")
   end
   local function SetMatrix(typ, dat)
     gl.MatrixMode(typ)
