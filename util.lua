@@ -371,7 +371,7 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
   local uniform_lookup = {}
 
   function glutil.ShaderSource(shader, source)
-    snatch.ShaderSource(shader.id:get(), source)
+    snatch.ShaderSource(shader.id:get(), {source})
   end
   function glutil.CompileShader(shader)
     snatch.CompileShader(shader.id:get())
