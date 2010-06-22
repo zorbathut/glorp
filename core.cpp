@@ -50,6 +50,10 @@
 #include "main_iphone.h"
 #endif
 
+#ifdef GLORP_BOX2D
+#include "box2d.h"
+#endif
+
 using namespace std;
 
 lua_State *L;
@@ -860,6 +864,10 @@ void luainit(int argc, const char **argv) {
     ];
     
     glorp_glutil_init(L);
+    
+    #ifdef GLORP_BOX2D
+    glorp_box2d_init(L);
+    #endif
   }
   
   adaptaload("wrap.lua");

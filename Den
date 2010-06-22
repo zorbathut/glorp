@@ -315,16 +315,21 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os util parse args init perfbar", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or "", resources = "resource", libs = "zlib libpng libjpeg libfreetype libfmodex glop" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os util parse args init perfbar box2d", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or "", resources = "resource", libs = "zlib libpng libjpeg libfreetype libfmodex glop" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl" .. (platform == "linux" and " libfltk" or ""), flags = "-DSUPPRESS_GLOP"},
 }
 
 local depsed = {}
 
+local buildflags = ""
+if params.box2d then
+  buildflags = buildflags .. " -DGLORP_BOX2D"
+end
+
 local function build_object(src, prefix, params)
   local compiler = ursa.token{"CC"}
   if params.compiler then compiler = compiler:gsub("g%+%+", params.compiler) end
-  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp -Iglorp/.. -Iglorp/libs/boost -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", builddir, builddir, ursa.token{"CXXFLAGS"}, src)
+  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, src)
   
   -- we *should* be doing something substantially more reliable and sane here. we're not, because this is much easier
   local clurl = (src == "glorp/reporter_main.cpp") and curl_headers or {}
