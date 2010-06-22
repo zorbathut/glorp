@@ -30,6 +30,7 @@
 #include <luabind/luabind.hpp>
 #include <luabind/operator.hpp>
 #include <luabind/discard_result_policy.hpp>
+#include <luabind/adopt_policy.hpp>
 
 #include <boost/random.hpp>
 
@@ -705,6 +706,39 @@ bool window_in_focus() {
 
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
+template <typename T, typename Derived> class auto_ptr_customized {
+public:
+  T *ite;
+  auto_ptr_customized<T, Derived>(T *item) {
+    ite = item;
+  }
+  ~auto_ptr_customized<T, Derived>() {
+    if(ite) {
+      Derived::cleanup(ite);
+    }
+  }
+  void operator=(const auto_ptr_customized<T, Derived> &x) {
+    if(&x == this) return;
+    
+    if(ite) {
+      Derived::cleanup(ite);
+    }
+    
+    ite = x.ite;
+    x.ite = NULL;
+  }
+  auto_ptr_customized<T, Derived>(auto_ptr_customized<T, Derived> &x) {
+    ite = x.ite;
+    x.ite = NULL;
+  }
+};
+  
+template <typename T, typename U> T *get_pointer(auto_ptr_customized<T, U> &it) {
+  return it.ite;
+}
+
+
+
 class DontKillMeBro_KillerBase;
 
 vector<DontKillMeBro_KillerBase*> to_be_killed;
@@ -724,43 +758,14 @@ public:
   }
 };
 
-template <typename T> class DontKillMeBro {
+template<typename T> class DontKillMeBro : public auto_ptr_customized<T, DontKillMeBro<T> > {
 public:
-  T *ite;
-  int *ct;
-  DontKillMeBro<T>(T *item) {
-    ite = item;
-    ct = new int;
-    *ct = 1;
-  }
-  ~DontKillMeBro<T>() {
-    (*ct)--;
-    if(!*ct) {
-      to_be_killed.push_back(new DontKillMeBro_Killer<T>(ite)); // defer!
-      delete ct;
-    }
-  }
-  void operator=(const DontKillMeBro<T> &x) {
-    (*ct)--;
-    if(!*ct) {
-      to_be_killed.push_back(new DontKillMeBro_Killer<T>(ite)); // defer!
-      delete ct;
-    }
-    
-    ct = x.ct;
-    ite = x.ite;
-    (*ct)++;
-  }
-  DontKillMeBro<T>(const DontKillMeBro<T> &x) {
-    ct = x.ct;
-    ite = x.ite;
-    (*ct)++;
+  
+  DontKillMeBro<T>(T *item) : auto_ptr_customized<T, DontKillMeBro<T> >(item) { };
+  static void cleanup(T *item) {
+    to_be_killed.push_back(new DontKillMeBro_Killer<T>(item));
   }
 };
-  
-template <typename T> T *get_pointer(DontKillMeBro<T> &it) {
-  return it.ite;
-}
 
 void luainit(int argc, const char **argv) {
   L = lua_open();   /* opens Lua */
@@ -782,7 +787,6 @@ void luainit(int argc, const char **argv) {
     module(L)
     [
       class_<WrappedTex, DontKillMeBro<WrappedTex> >("WrappedTex_Internal")
-        //.def(constructor<const std::string &>())
         .def("GetWidth", &WrappedTex::GetWidth)
         .def("GetHeight", &WrappedTex::GetHeight)
         .def("GetInternalWidth", &WrappedTex::GetInternalWidth)
@@ -826,7 +830,7 @@ void luainit(int argc, const char **argv) {
         .def("GetHeight", &FancyTextFrame::GetHeight),
       class_<SoundSource, DontKillMeBro<SoundSource> >("SourceSource_Make")
         .def("Stop", &SoundSource::Stop),
-      def("Texture", &GetTex),
+      def("Texture", &GetTex, adopt(result)),
       def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
