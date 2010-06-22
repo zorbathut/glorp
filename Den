@@ -290,7 +290,9 @@ local buildables = {
 local depsed = {}
 
 local function build_object(src, prefix, params)
-  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp -Iglorp/.. -Iglorp/libs/boost -I%sglorp -I%slib_release/include %s %s "):format(params.compiler or ursa.token{"CC"}, params.flags or "", builddir, builddir, ursa.token{"CXXFLAGS"}, src)
+  local compiler = ursa.token{"CC"}
+  if params.compiler then compiler = compiler:gsub("g%+%+", params.compiler) end
+  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP -Iglorp -Iglorp/.. -Iglorp/libs/boost -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", builddir, builddir, ursa.token{"CXXFLAGS"}, src)
   
   -- we *should* be doing something substantially more reliable and sane here. we're not, because this is much easier
   local clurl = (src == "glorp/reporter_main.cpp") and curl_headers or {}
