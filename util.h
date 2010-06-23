@@ -97,4 +97,51 @@ float lerp(float lhs, float rhs, float dist);
 void addErrorMessage(const string &str);
 vector<string> returnErrorMessages();
 
+template <typename T, typename Derived> class auto_ptr_customized_ref {
+public:
+  auto_ptr_customized_ref<T, Derived>(T *item) {
+    ite = item;
+  }
+  T *ite;
+};
+template <typename T, typename Derived> class auto_ptr_customized {
+public:
+  T *ite;
+  auto_ptr_customized<T, Derived>(T *item) {
+    ite = item;
+  }
+  auto_ptr_customized<T, Derived>(auto_ptr_customized<T, Derived> &x) {
+    ite = x.ite;
+    x.ite = NULL;
+  }
+  auto_ptr_customized<T, Derived>(const auto_ptr_customized_ref<T, Derived> &x) {
+    ite = x.ite;
+  }
+  ~auto_ptr_customized<T, Derived>() {
+    if(ite) {
+      Derived::cleanup(ite);
+    }
+  }
+  void operator=(const auto_ptr_customized<T, Derived> &x) {
+    if(&x == this) return;
+    
+    if(ite) {
+      Derived::cleanup(ite);
+    }
+    
+    ite = x.ite;
+    x.ite = NULL;
+  }
+
+  operator auto_ptr_customized_ref<T, Derived>() {
+    T *tmp = ite;
+    ite = NULL;
+    return auto_ptr_customized_ref<T, Derived>(tmp);
+  }
+};
+  
+template <typename T, typename U> T *get_pointer(const auto_ptr_customized<T, U> &it) {
+  return it.ite;
+}
+
 #endif

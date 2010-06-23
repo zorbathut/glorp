@@ -706,37 +706,6 @@ bool window_in_focus() {
 
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
-template <typename T, typename Derived> class auto_ptr_customized {
-public:
-  T *ite;
-  auto_ptr_customized<T, Derived>(T *item) {
-    ite = item;
-  }
-  ~auto_ptr_customized<T, Derived>() {
-    if(ite) {
-      Derived::cleanup(ite);
-    }
-  }
-  void operator=(const auto_ptr_customized<T, Derived> &x) {
-    if(&x == this) return;
-    
-    if(ite) {
-      Derived::cleanup(ite);
-    }
-    
-    ite = x.ite;
-    x.ite = NULL;
-  }
-  auto_ptr_customized<T, Derived>(auto_ptr_customized<T, Derived> &x) {
-    ite = x.ite;
-    x.ite = NULL;
-  }
-};
-  
-template <typename T, typename U> T *get_pointer(auto_ptr_customized<T, U> &it) {
-  return it.ite;
-}
-
 
 
 class DontKillMeBro_KillerBase;
