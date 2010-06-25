@@ -229,6 +229,7 @@ function runuifile(file, ...)
   env.CreateFrame = function (type, parent) return CreateFrame(type, parent or env.UIParent) end
   env.GlorpController = Handle
   env.loadfile = function (...)
+    print("envlf")
     local dat, rv = loadfile(...)
     if dat then setfenv(dat, env) end
     return dat, rv
