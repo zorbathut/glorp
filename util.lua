@@ -624,3 +624,17 @@ function heap_extract(heap)
   return rv
 end
 
+
+
+
+do
+  local sms = ShowMouseCursor
+  local shown = true
+  function ShowMouseCursor(flag)
+    sms(flag)
+    shown = flag
+  end
+  function MouseCursorShown()
+    return shown
+  end
+end

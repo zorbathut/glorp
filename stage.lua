@@ -119,11 +119,11 @@ function minimenu_return_button:Click()
 end
 
 minimenu_left = CreateFrame("Text", minimenu_frames)
-minimenu_left:SetText(">")
+minimenu_left:SetText("--")
 minimenu_left:SetSize(30)
 minimenu_left:SetColor(1, 1, 1)
 minimenu_right = CreateFrame("Text", minimenu_frames)
-minimenu_right:SetText("<")
+minimenu_right:SetText("--")
 minimenu_right:SetSize(30)
 minimenu_right:SetColor(1, 1, 1)
 
