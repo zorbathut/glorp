@@ -110,8 +110,7 @@ function glutil.SetScreen(sx, sy, ex, ey)
   
   gl.MatrixMode("PROJECTION")
   gl.LoadIdentity()
-  gl.Ortho(sx, ex, ey, sy, -1, 1)
-  --gl.Ortho(-dx / 2, dx / 2, dy / 2, -dy / 2, -1, 1)
+  gl.Ortho(sx, ex, ey, sy, -100, 100)
   
   gl.MatrixMode("MODELVIEW")
   gl.LoadIdentity()

@@ -350,11 +350,15 @@ function render(...)
   gl.Clear("COLOR_BUFFER_BIT")
   gl.Disable("CULL_FACE") -- ffffffff
   
+  glutil.ResetScreen()
+  
   if wedothisfirst then bgbg:Render() return end
   
   stdwrap("render", ...)
   local context = runninggame or mainmenu
   context.UIRoot:Render()
+  
+  glutil.ResetScreen()
   
   if inminimenu then
     imm_render()
