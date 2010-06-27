@@ -375,8 +375,9 @@ if platform ~= "iphone" and platform ~= "iphone_sim" then
     local infolog = snatch.GetShaderInfoLog(shader.id:get())
     print(infolog)
     print(mode)
-    if (infolog ~= "" and mode) or glutil.GetShader(shader, "COMPILE_STATUS") ~= "TRUE" then
-      print("Failed to build shader", glutil.GetShader(shader, "COMPILE_STATUS"))
+    local compstatus = glutil.GetShader(shader, "COMPILE_STATUS")
+    if (infolog ~= "" and mode) or compstatus ~= "TRUE" then
+      print("Failed to build shader", compstatus)
       assert(false)
     end
   end
