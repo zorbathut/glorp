@@ -208,6 +208,7 @@ overlay = CreateFrame("Frame")
 overlay:SetLayer(1000000)
 overlay:SetAllPoints()
 
+local rui
 function runuifile(file, ...)
   local env = {}
   for k, v in pairs(_G) do
@@ -237,6 +238,13 @@ function runuifile(file, ...)
     if dat then setfenv(dat, env) end
     return dat, rv
   end
+  env.runuifile = function (...)
+    local oldenv = getfenv(rui)
+    setfenv(rui, env)
+    local re, ru = rui(...)
+    setfenv(rui, oldenv)
+    return re, ru
+  end
   
   env.tick_loop = nil
   env.loop = nil
@@ -249,6 +257,7 @@ function runuifile(file, ...)
   
   return env, uip
 end
+rui = runuifile
 reset_menu()
 
 function stdwrap(token, ...)
@@ -431,6 +440,7 @@ if mode == "debug" then
   Handle("start_game")
 end
 if mode == "editor" then
+  Perfbar_Set(true)
   wedothisfirst = nil
   Handle("start_game")
 end
