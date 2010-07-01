@@ -306,7 +306,7 @@ ursa.rule{builddir .. "glorp/version.cpp", "#version", function ()
   fil:write(([[extern const char game_platform[] = "%s";]]):format(platform) .. "\n")
   fil:close()
 end}
-ursa.rule{builddir .. "glorp/constants.lua", "", function ()
+ursa.rule{builddir .. "glorp/constants.lua", "!" .. params.gl_version_expected, function ()
   print("Writing file constants.lua")
   local fil = io.open(builddir .. "glorp/constants.lua", "w")
   fil:write(([[gl_version_expected = %f]]):format(params.gl_version_expected) .. "\n")
