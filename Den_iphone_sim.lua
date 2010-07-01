@@ -75,7 +75,7 @@ rv.create_runnable = function(dat)
   
   runnable_deps = runnable
   
-  return {deps = {runnable, ursa.util.token_deferred{"built_data"}}, cli = 'killall "iPhone Simulator" ; glorp/resources/iphonesim launch `pwd`"/' .. basepath .. '"'}
+  return {deps = {runnable, ursa.util.token_deferred{"built_data"}, "build/iphone_sim/glorp/constants.lua"}, cli = 'killall "iPhone Simulator" ; glorp/resources/iphonesim launch `pwd`"/' .. basepath .. '"'}
 end
 
 -- doesn't even make sense for the iphone sim

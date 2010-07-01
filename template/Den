@@ -5,6 +5,10 @@ local longname = "Template"
 local font = nil
 local resolution = {1024, 768}
 
+local box2d = false
+
+local gl_version_expected = 1.0
+
 local f, e = loadfile("glorp/Den")
 assert(f, e)
 f{name = name, longname = longname, font = font, resolution = resolution, targets = {...}}

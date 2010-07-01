@@ -1,6 +1,8 @@
 
 local platform, _, mode = ...
 
+set_wrap_platform(platform)
+
 function runfile_worker(file, global, optional, ...)
   assert(global)
   
@@ -24,6 +26,8 @@ end
 function runfile_optional(file, global, ...)
   runfile_worker(file, global, true, ...)
 end
+
+runfile("constants.lua", _G)
 
 runfile("util.lua", _G)
 runfile("ui.lua", _G)

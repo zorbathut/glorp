@@ -17,6 +17,7 @@ function assert(parm, ...)
   end
 end]]
 
+local platform
 local lf = loadfile
 function loadfile(file)
   local dat, rv = lf(file)
@@ -29,8 +30,16 @@ function loadfile(file)
     dat, rv = lf("glorp/" .. file)
   end
   
+  if rv and rv:find("No such file or directory") then
+    dat, rv = lf("build/" .. platform .. "/glorp/" .. file)
+  end
+  
   --print("lfp:", filename, dat, rv)
   return dat, rv
+end
+function set_wrap_platform(plat)
+  platform = plat
+  set_wrap_platform = nil -- sigh
 end
 
 
