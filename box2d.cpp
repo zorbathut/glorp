@@ -99,15 +99,15 @@ void glorp_box2d_init(lua_State *L) {
       .def("Normalize", &b2Vec2::Normalize)
       .def(tostring(self)),
     class_<b2Body>("Body")
-      .def("CreateFixture", &CreateFixtureFromDef, adopt_container<FixtureWrapper>(result) | dependency(result, _1))
-      .def("CreateFixture", &CreateFixtureFromShape, adopt_container<FixtureWrapper>(result) | dependency(result, _1))
-      .def("CreateFixture", &CreateFixtureFromShapeDensity, adopt_container<FixtureWrapper>(result) | dependency(result, _1))
+      .def("CreateFixture", &CreateFixtureFromDef, adopt_container<FixtureWrapper>(result) | dependency(result, _1) | dependency(_1, result))
+      .def("CreateFixture", &CreateFixtureFromShape, adopt_container<FixtureWrapper>(result) | dependency(result, _1) | dependency(_1, result))
+      .def("CreateFixture", &CreateFixtureFromShapeDensity, adopt_container<FixtureWrapper>(result) | dependency(result, _1) | dependency(_1, result))
       .property("position", &b2Body::GetPosition)
       .property("angle", &b2Body::GetAngle)
       .def(tostring(self)),
     class_<b2World>("World")
       .def(constructor<b2Vec2, bool>())
-      .def("CreateBody", &CreateBody, adopt_container<BodyWrapper>(result) | dependency(result, _1))
+      .def("CreateBody", &CreateBody, adopt_container<BodyWrapper>(result) | dependency(result, _1) | dependency(_1, result))
       .def("Step", &b2World::Step)
       .def("ClearForces", &b2World::ClearForces)
       .def(tostring(self)),

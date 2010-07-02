@@ -4,6 +4,23 @@
 
 UIParent = {} -- faaaake
 
+local function ScreenToLocal(frame, lx, ly)
+  if frame.cs_x then
+    -- now we have to do some transformations
+    -- first, figure out where we are within the coordinate space of the window
+    lx = (lx - (frame:GetLeft() + frame:GetRight()) / 2) / frame:GetWidth()
+    ly = (ly - (frame:GetTop() + frame:GetBottom()) / 2) / frame:GetWidth()
+    
+    -- now we rotate (we don't rotate yet)
+    
+    -- then we rescale
+    lx = lx * frame.cs_scale + frame.cs_x
+    ly = ly * frame.cs_scale + frame.cs_y
+  end
+  
+  return lx, ly
+end
+
 -- Width and height: unless set, they're the default size (currently 5).
 -- If the region is width-locked or height-locked thanks to anchor points, then trying to set the width or height is an error.
 -- Setting up any kind of a circular dependency is also an error, although note that surprisingly few things are circular - "circular dependencies" that touch different anchor axes may not actually be circular. For example,
@@ -169,6 +186,10 @@ do
     --getpoint(self, axis, token) -- check for circular dependencies
   end
   
+  -- hmm is this a good idea?
+  function Region_Type:GetRelativeMousePosition()
+    return ScreenToLocal(self, self.parent:GetRelativeMousePosition())
+  end
 
   function Region_Type:Exists()
     return self:GetWidth() and self:GetHeight()
@@ -492,6 +513,9 @@ function UI_CreateParent(width, height)
   function parent:GetPointOnAxis(axis, pt)
     if axis == "x" or axis == "_anchor_x" then return pt * self:GetWidth() end
     if axis == "y" or axis == "_anchor_y" then return pt * self:GetHeight() end
+  end
+  function parent:GetRelativeMousePosition()
+    return GetMouse()
   end
   parent.parent = nil
   table.insert(parents, {parent = parent, width = width, height = height})
@@ -870,23 +894,6 @@ function CreateFrame(typ, parent, name)
     assert(false)
   end
   assert(false)
-end
-
-local function ScreenToLocal(frame, lx, ly)
-  if frame.cs_x then
-    -- now we have to do some transformations
-    -- first, figure out where we are within the coordinate space of the window
-    lx = (lx - (frame:GetLeft() + frame:GetRight()) / 2) / frame:GetWidth()
-    ly = (ly - (frame:GetTop() + frame:GetBottom()) / 2) / frame:GetWidth()
-    
-    -- now we rotate (we don't rotate yet)
-    
-    -- then we rescale
-    lx = lx * frame.cs_scale + frame.cs_x
-    ly = ly * frame.cs_scale + frame.cs_y
-  end
-  
-  return lx, ly
 end
 
 local function TraverseUpWorker(start, x, y, keyed)
