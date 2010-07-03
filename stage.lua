@@ -208,6 +208,7 @@ overlay = CreateFrame("Frame")
 overlay:SetLayer(1000000)
 overlay:SetAllPoints()
 
+local rui
 function runuifile(file, ...)
   local env = {}
   for k, v in pairs(_G) do
@@ -230,12 +231,19 @@ function runuifile(file, ...)
   end
 
   
-  env.CreateFrame = function (type, parent) return CreateFrame(type, parent or env.UIParent) end
+  env.CreateFrame = function (type, parent, name) return CreateFrame(type, parent or env.UIParent, name) end
   env.GlorpController = Handle
   env.loadfile = function (...)
     local dat, rv = loadfile(...)
     if dat then setfenv(dat, env) end
     return dat, rv
+  end
+  env.runuifile = function (...)
+    local oldenv = getfenv(rui)
+    setfenv(rui, env)
+    local re, ru = rui(...)
+    setfenv(rui, oldenv)
+    return re, ru
   end
   
   env.tick_loop = nil
@@ -249,6 +257,7 @@ function runuifile(file, ...)
   
   return env, uip
 end
+rui = runuifile
 reset_menu()
 
 function stdwrap(token, ...)
@@ -349,6 +358,7 @@ function loop(...)
     stdwrap("loop", ...)
   end
 end
+local last_perf_dump = os.time()
 function render(...)
   gl.ClearColor(0, 0, 0, 1)
   gl.Clear("COLOR_BUFFER_BIT")
@@ -369,6 +379,11 @@ function render(...)
   end
   
   overlay:Render()
+  
+  if last_perf_dump + 5 <= os.time() then
+    UI_cache_statistics()
+    last_perf_dump = os.time()
+  end
 end
 function key(button, ascii, event)
   if button == "printscreen" and event == "press" then
@@ -431,6 +446,7 @@ if mode == "debug" then
   Handle("start_game")
 end
 if mode == "editor" then
+  Perfbar_Set(true)
   wedothisfirst = nil
   Handle("start_game")
 end

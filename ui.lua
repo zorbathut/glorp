@@ -4,6 +4,20 @@
 
 UIParent = {} -- faaaake
 
+--[[local cache_statistics = {}
+function UI_cache_statistics()
+  local boil = {}
+  for k, v in pairs(cache_statistics) do
+    table.insert(boil, {k = k, v = v})
+  end
+  table.sort(boil, function (a, b) return a.v > b.v end)
+  for _, v in ipairs(boil) do
+    print(v.v, v.k)
+  end
+  cache_statistics = {}
+end]]
+
+
 local function ScreenToLocal(frame, lx, ly)
   if frame.cs_x then
     -- now we have to do some transformations
@@ -76,9 +90,12 @@ do
       self.__cache[axis] = {}
     end
     if not self.__cache[axis].size then
-      self.__cache[axis].size = getsize_core(self, axis)
+      self.__cache[axis].size = getsize_core(self, axis) or "nil"
+      --[[if cache_statistics then
+        cache_statistics[self.__name] = (cache_statistics[self.__name] or 0) + 1
+      end]]
     end
-    return self.__cache[axis].size
+    return tonumber(self.__cache[axis].size)
   end
   local function getpoint_core(self, axis, point)
     --print("GPC", self)
@@ -125,9 +142,12 @@ do
       self.__cache[axis] = {}
     end
     if not self.__cache[axis][point] then
-      self.__cache[axis][point] = getpoint_core(self, axis, point)
+      self.__cache[axis][point] = getpoint_core(self, axis, point) or "nil"
+      --[[if cache_statistics then
+        cache_statistics[self.__name] = (cache_statistics[self.__name] or 0) + 1
+      end]]
     end
-    return self.__cache[axis][point]
+    return tonumber(self.__cache[axis][point])
   end
   
   local axisanchormeta = {__mode = 'k'}
@@ -145,22 +165,28 @@ do
     end
   end
   
-  local function reanchor(self, axis, token, grip, ...)
+  local function reanchor(self, axis, token, grip, p1, p2)
     if not self[axis] and not grip then
       -- we "clear", but we clear something that doesn't actually exist
     elseif not self[axis] then
-      self[axis] = {[token] = {grip, ...}}
+      self[axis] = {[token] = {grip, p1, p2}}
     elseif self[axis][token] then
+      if self[axis][token][1] == grip and self[axis][token][2] == p1 and self[axis][token][3] == p2 then
+        -- it is being set to the same thing! let's just do nothing
+        return  -- skip the decaching
+      end
+      
       if type(self[axis][token][1]) == "table" then
         self[axis][token][1].__anchor_children[axis][self] = nil
       end
       if not grip then
         self[axis][token] = nil
       else
-        self[axis][token] = {grip, ...}
+        self[axis][token] = {grip, p1, p2}
       end
     elseif not grip then
       -- we "clear", but we clear something that doesn't actually exist
+      return  -- skip the decaching
     else
       local ct = 0
       for _ in pairs(self[axis]) do
@@ -169,13 +195,13 @@ do
       
       if ct >= 2 then
         print("Too many anchors!")
-        print("Trying to anchor", token, grip, ...)
+        print("Trying to anchor", token, grip, p1, p2)
         for anc in pairs(self[axis]) do
           print("Existing anchor", anc)
         end
         assert(ct < 2)
       end
-      self[axis][token] = {grip, ...}
+      self[axis][token] = {grip, p1, p2}
     end
     
     if type(grip) == "table" then
@@ -625,11 +651,13 @@ TextMultilineOverrides.tex_b = 1
 TextMultilineOverrides.tex_a = 1
 
 local TextureOverrides = {}
-function TextureOverrides:SetTexture(tex)
+function TextureOverrides:SetTexture(tex, preserve_dimensions)
   if type(tex) == "string" then tex = Texture(tex) end
   self.tex = tex
-  self:SetWidth(tex:GetWidth())
-  self:SetHeight(tex:GetHeight())
+  if not preserve_dimensions then
+    self:SetWidth(tex:GetWidth())
+    self:SetHeight(tex:GetHeight())
+  end
 end
 function TextureOverrides:Draw()
   if self.tex then glutil.RenderBoundedSprite(self.tex, {self:GetBounds()}, self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a) end
