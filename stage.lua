@@ -381,7 +381,7 @@ function render(...)
   overlay:Render()
   
   if last_perf_dump + 5 <= os.time() then
-    UI_cache_statistics()
+    if UI_cache_statistics then UI_cache_statistics() end
     last_perf_dump = os.time()
   end
 end
