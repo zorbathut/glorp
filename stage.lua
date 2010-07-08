@@ -35,6 +35,10 @@ runfile("ui.lua", _G)
 runfile("stage_persistence.lua", _G)
 runfile("stage_achievements.lua", _G)
 
+if b2 then
+  runfile("box2d.lua", _G)
+end
+
 if not jit and mode == "debug" then
   runfile("pepperfish.lua", _G)
   pepperfish_profiler = newProfiler()

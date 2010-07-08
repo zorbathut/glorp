@@ -10,6 +10,18 @@
 #include <luabind/adopt_policy.hpp>
 
 #include <boost/static_assert.hpp>
+#include <boost/noncopyable.hpp>
+
+class Vec2Array : boost::noncopyable{
+public:
+  vector<b2Vec2> elements;
+
+  Vec2Array(int len) : elements(len) { };
+
+  b2Vec2 &element(int id) {
+    return elements[id - 1];
+  }
+};
 
 map<b2Body *, b2World *> bodyassociations;
 class BodyWrapper : public auto_ptr_customized<b2Body, BodyWrapper> {
@@ -59,6 +71,11 @@ b2Fixture *CreateFixtureFromShapeDensity(b2Body *body, b2Shape *def, float densi
   return n;
 }
 
+void PolygonShapeSetFromVec2Array(b2PolygonShape *b2ps, Vec2Array *v2a) {
+  dprintf("in pssetc\n");
+  b2ps->Set(&v2a->elements[0], v2a->elements.size());
+  dprintf("done pssetc\n");
+}
 
 const b2Shape *FixtureDefGetShape(const b2FixtureDef *a) {
   return a->shape;
@@ -98,16 +115,19 @@ void glorp_box2d_init(lua_State *L) {
       .def("LengthSquared", &b2Vec2::LengthSquared)
       .def("Normalize", &b2Vec2::Normalize)
       .def(tostring(self)),
+    class_<Vec2Array>("Vec2Array")
+      .def(constructor<int>())
+      .def("element", &Vec2Array::element),
     class_<b2Body>("Body")
-      .def("CreateFixture", &CreateFixtureFromDef, adopt_container<FixtureWrapper>(result) | dependency(result, _1) | dependency(_1, result))
-      .def("CreateFixture", &CreateFixtureFromShape, adopt_container<FixtureWrapper>(result) | dependency(result, _1) | dependency(_1, result))
-      .def("CreateFixture", &CreateFixtureFromShapeDensity, adopt_container<FixtureWrapper>(result) | dependency(result, _1) | dependency(_1, result))
+      .def("CreateFixture", &CreateFixtureFromDef)
+      .def("CreateFixture", &CreateFixtureFromShape)
+      .def("CreateFixture", &CreateFixtureFromShapeDensity)
       .property("position", &b2Body::GetPosition)
       .property("angle", &b2Body::GetAngle)
       .def(tostring(self)),
     class_<b2World>("World")
       .def(constructor<b2Vec2, bool>())
-      .def("CreateBody", &CreateBody, adopt_container<BodyWrapper>(result) | dependency(result, _1) | dependency(_1, result))
+      .def("CreateBody", &CreateBody, adopt_container<BodyWrapper>(result))
       .def("Step", &b2World::Step)
       .def("ClearForces", &b2World::ClearForces)
       .def(tostring(self)),
@@ -122,6 +142,7 @@ void glorp_box2d_init(lua_State *L) {
       .def(constructor<>())
       .def("SetAsBox", (void (b2PolygonShape::*)(float, float))&b2PolygonShape::SetAsBox)
       .def("SetAsBox", (void (b2PolygonShape::*)(float, float, const b2Vec2 &, float))&b2PolygonShape::SetAsBox)
+      .def("Set", &PolygonShapeSetFromVec2Array)
       .def(tostring(self)),
     class_<b2Fixture>("Fixture")
       .def(tostring(self)),
@@ -132,6 +153,11 @@ void glorp_box2d_init(lua_State *L) {
       .def_readwrite("friction", &b2FixtureDef::friction)
       .def(tostring(self))
   ];
+  
+  lua_getglobal(L, "b2");
+  lua_pushnumber(L, b2_maxPolygonVertices);
+  lua_setfield(L, -2, "maxPolygonVertices");
+  lua_pop(L, 1);
 };
 
 #endif

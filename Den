@@ -496,8 +496,14 @@ do
   table.insert(data_deps, copy_a_lot("stock", "data/", "glorp/resources/"))
 
   -- Lua files in Glorp
-  ursa.token.rule{"luaglorp_files", nil, "cd glorp && ls *.lua | grep -v Den"}
+  ursa.token.rule{"luaglorp_files", nil, "cd glorp && ls *.lua | grep -v Den | grep -v box2d"}
   table.insert(data_deps, copy_a_lot("luaglorp", "data/", "glorp/"))
+  
+  -- Box2d lua files
+  if params.box2d then
+    ursa.token.rule{"luabox2d_files", nil, "cd glorp && ls *.lua | grep box2d"}
+    table.insert(data_deps, copy_a_lot("luabox2d", "data/", "glorp/"))
+  end
 
   -- Lua files and font files in our core
   ursa.token.rule{"core_files", nil, "ls *.lua *.ttf *.otf | grep -v crashmelt | grep -v playtest.lev.lua", always_rebuild = true}
