@@ -96,6 +96,8 @@ std::ostream &operator<<(std::ostream &ostr, const b2Shape &vec) {
   ostr << "[b2Shape " << &vec << "]"; return ostr; }
 std::ostream &operator<<(std::ostream &ostr, const b2PolygonShape &vec) {
   ostr << "[b2PolygonShape " << &vec << "]"; return ostr; }
+std::ostream &operator<<(std::ostream &ostr, const b2CircleShape &vec) {
+  ostr << "[b2CircleShape " << &vec << "]"; return ostr; }
 std::ostream &operator<<(std::ostream &ostr, const b2Fixture &vec) {
   ostr << "[b2Fixture " << &vec << "]"; return ostr; }
 std::ostream &operator<<(std::ostream &ostr, const b2FixtureDef &vec) {
@@ -143,6 +145,11 @@ void glorp_box2d_init(lua_State *L) {
       .def("SetAsBox", (void (b2PolygonShape::*)(float, float))&b2PolygonShape::SetAsBox)
       .def("SetAsBox", (void (b2PolygonShape::*)(float, float, const b2Vec2 &, float))&b2PolygonShape::SetAsBox)
       .def("Set", &PolygonShapeSetFromVec2Array)
+      .def(tostring(self)),
+    class_<b2CircleShape, b2Shape>("CircleShape")
+      .def(constructor<>())
+      .def_readwrite("m_p", &b2CircleShape::m_p)
+      .def_readwrite("m_radius", &b2CircleShape::m_radius)
       .def(tostring(self)),
     class_<b2Fixture>("Fixture")
       .def(tostring(self)),
