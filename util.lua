@@ -17,7 +17,6 @@ function export_items_rw(tab, items)
   
   return setmetatable({}, {__index = function(_, k) return lookup[k] and tab[k] or nil end, __newindex = function(t, k, a) if lookup[k] then tab[k] = a else t[k] = a end end})
 end
-
 function export_items_ro(tab, items)
   local lookup = {}
   for _, v in pairs(items) do
@@ -31,14 +30,11 @@ function export_items_ro(tab, items)
   return setmetatable({}, {__index = lookup})
 end
 
-
 function perfbar(r, g, b, func, ...)
   local pb = Perfbar_Init(r, g, b)
   func(...)
   pb:Destroy()
 end
-
-
 
 function io.dump(filename, contents)
   t = io.open(filename, "wb")
@@ -52,6 +48,13 @@ function io.snatch(filename)
   local dat = t:read("*all")
   t:close()
   return dat
+end
+function table.wipe(tab)
+  while true do
+    local x = next(tab)
+    if not x then break end
+    tab[x] = nil
+  end
 end
 
 
@@ -89,6 +92,17 @@ function cubic(x0, x1, x2, x3, t)
   local a3 = x1
   
   return a0 * t * t * t + a1 * t * t + a2 * t + a3
+end
+
+function line_intersect(sa, ea, sb, eb)
+  local x1, x2, x3, x4, y1, y2, y3, y4 = sa[1], ea[1], sb[1], eb[1], sa[2], ea[2], sb[2], eb[2]
+  local denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+  if denom == 0 then
+    return false
+  end
+  local ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom
+  local ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom
+  return ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1
 end
 
 function PlaySound(snd, vol)
