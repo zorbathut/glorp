@@ -123,6 +123,24 @@ FixtureWrapper::~FixtureWrapper() {
   }
 }
 
+void DestroyFixture(BodyWrapper *bwrap, FixtureWrapper *fwrap) {
+  CHECK(bwrap->body);
+  CHECK(fwrap->fixture);
+  
+  // first, clear all instances of that fixture
+  b2Fixture *fixt = fwrap->fixture;
+  const set<FixtureWrapper*> &st = fwrapper_owned[fixt];
+  for(set<FixtureWrapper*>::iterator itr = st.begin(); itr != st.end(); itr++) {
+    (*itr)->fixture = NULL;
+  }
+  
+  fwrapper_owned.erase(fixt);
+  
+  bwrap->body->DestroyFixture(fixt);
+  
+  // yays?
+}
+
 
 
 void PolygonShapeSetFromVec2Array(b2PolygonShape *b2ps, Vec2Array *v2a) {
@@ -182,6 +200,7 @@ void glorp_box2d_init(lua_State *L) {
       .def("CreateFixture", &CreateFixtureFromDef)
       .def("CreateFixture", &CreateFixtureFromShape)
       .def("CreateFixture", &CreateFixtureFromShapeDensity)
+      .def("DestroyFixture", &DestroyFixture)
       .property("position", &BodyWrapper::GetPosition)
       .property("angle", &BodyWrapper::GetAngle)
       .def(tostring(self)),
