@@ -96,7 +96,7 @@ map<b2Fixture *, set<FixtureWrapper *> > fwrapper_owned;
 
 
 FixtureWrapper *WrapFixture(b2Fixture *newfixt) {
-  CHECK(!fwrapper_owned.count(newfixt));
+  CHECK(!fwrapper_owned.count(newfixt), "%d", fwrapper_owned.find(newfixt)->second.size());
   FixtureWrapper *fwrap = new FixtureWrapper();
   fwrap->fixture = newfixt;
   fwrapper_owned[newfixt].insert(fwrap);
@@ -118,10 +118,15 @@ FixtureWrapper::~FixtureWrapper() {
   if(fixture) {
     CHECK(fwrapper_owned[fixture].count(this));
     fwrapper_owned[fixture].erase(this);
-    if(!fwrapper_owned[fixture].size())
+    if(!fwrapper_owned[fixture].size()) {
       fwrapper_owned.erase(fixture);
+    }
   }
 }
+
+/******************************
+            DESTROYMENT FUNCTIONS
+*******************************/
 
 void DestroyFixture(BodyWrapper *bwrap, FixtureWrapper *fwrap) {
   CHECK(bwrap->body);
@@ -133,12 +138,36 @@ void DestroyFixture(BodyWrapper *bwrap, FixtureWrapper *fwrap) {
   for(set<FixtureWrapper*>::iterator itr = st.begin(); itr != st.end(); itr++) {
     (*itr)->fixture = NULL;
   }
-  
   fwrapper_owned.erase(fixt);
   
   bwrap->body->DestroyFixture(fixt);
+}
+
+void DestroyBody(b2World *world, BodyWrapper *bwrap) {
+  CHECK(bwrap->body);
   
-  // yays?
+  b2Body *body = bwrap->body;
+  
+  // we need to wipe all the fixtures associated with the body, first
+  b2Fixture *cfxt = body->GetFixtureList();
+  while(cfxt) {
+    const set<FixtureWrapper*> &st = fwrapper_owned[cfxt];
+    for(set<FixtureWrapper*>::iterator itr = st.begin(); itr != st.end(); itr++) {
+      (*itr)->fixture = NULL;
+    }
+    fwrapper_owned.erase(cfxt);
+    
+    cfxt = cfxt->GetNext();
+  }
+  
+  // wipe all the instances of this body
+  const set<BodyWrapper*> &st = bwrapper_owned[body];
+  for(set<BodyWrapper*>::iterator itr = st.begin(); itr != st.end(); itr++) {
+    (*itr)->body = NULL;
+  }
+  bwrapper_owned.erase(body);
+  
+  world->DestroyBody(body);
 }
 
 
@@ -197,16 +226,17 @@ void glorp_box2d_init(lua_State *L) {
       .def(constructor<int>())
       .def("element", &Vec2Array::element),
     class_<BodyWrapper>("Body")
-      .def("CreateFixture", &CreateFixtureFromDef)
-      .def("CreateFixture", &CreateFixtureFromShape)
-      .def("CreateFixture", &CreateFixtureFromShapeDensity)
+      .def("CreateFixture", &CreateFixtureFromDef, adopt(result))
+      .def("CreateFixture", &CreateFixtureFromShape, adopt(result))
+      .def("CreateFixture", &CreateFixtureFromShapeDensity, adopt(result))
       .def("DestroyFixture", &DestroyFixture)
       .property("position", &BodyWrapper::GetPosition)
       .property("angle", &BodyWrapper::GetAngle)
       .def(tostring(self)),
     class_<b2World>("World")
       .def(constructor<b2Vec2, bool>())
-      .def("CreateBody", &CreateBody)
+      .def("CreateBody", &CreateBody, adopt(result))
+      .def("DestroyBody", &DestroyBody, adopt(result))
       .def("Step", &b2World::Step)
       .def("ClearForces", &b2World::ClearForces)
       .def(tostring(self)),
