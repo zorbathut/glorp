@@ -173,9 +173,7 @@ void DestroyBody(b2World *world, BodyWrapper *bwrap) {
 
 
 void PolygonShapeSetFromVec2Array(b2PolygonShape *b2ps, Vec2Array *v2a) {
-  dprintf("in pssetc\n");
   b2ps->Set(&v2a->elements[0], v2a->elements.size());
-  dprintf("done pssetc\n");
 }
 
 const b2Shape *FixtureDefGetShape(const b2FixtureDef *a) {
