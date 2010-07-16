@@ -11,4 +11,4 @@ local gl_version_expected = 1.0
 
 local f, e = loadfile("glorp/Den")
 assert(f, e)
-f{name = name, longname = longname, font = font, resolution = resolution, targets = {...}}
+f{name = name, longname = longname, font = font, resolution = resolution, box2d = box2d, gl_version_expected = gl_version_expected, targets = {...}}
