@@ -64,6 +64,10 @@ public:
     CHECK(body);
     return body->GetLinearVelocity();
   }
+  void SetLinearVelocity(const b2Vec2 &lv) {
+    CHECK(body);
+    body->SetLinearVelocity(lv);
+  }
   
   ~BodyWrapper();
 };
@@ -235,7 +239,7 @@ void glorp_box2d_init(lua_State *L) {
       .def("DestroyFixture", &DestroyFixture)
       .property("position", &BodyWrapper::GetPosition)
       .property("angle", &BodyWrapper::GetAngle)
-      .property("linearvelocity", &BodyWrapper::GetLinearVelocity)
+      .property("linearvelocity", &BodyWrapper::GetLinearVelocity, &BodyWrapper::SetLinearVelocity)
       .def(tostring(self)),
     class_<b2World>("World")
       .def(constructor<b2Vec2, bool>())
