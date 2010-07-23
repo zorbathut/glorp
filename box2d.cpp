@@ -69,6 +69,15 @@ public:
     body->SetLinearVelocity(lv);
   }
   
+  float GetAngularVelocity() const {
+    CHECK(body);
+    return body->GetAngularVelocity();
+  }
+  void SetAngularVelocity(float lv) {
+    CHECK(body);
+    body->SetAngularVelocity(lv);
+  }
+  
   ~BodyWrapper();
 };
 map<b2Body *, set<BodyWrapper *> > bwrapper_owned;
@@ -240,6 +249,7 @@ void glorp_box2d_init(lua_State *L) {
       .property("position", &BodyWrapper::GetPosition)
       .property("angle", &BodyWrapper::GetAngle)
       .property("linearvelocity", &BodyWrapper::GetLinearVelocity, &BodyWrapper::SetLinearVelocity)
+      .property("angularvelocity", &BodyWrapper::GetAngularVelocity, &BodyWrapper::SetAngularVelocity)
       .def(tostring(self)),
     class_<b2World>("World")
       .def(constructor<b2Vec2, bool>())
