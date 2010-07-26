@@ -92,6 +92,9 @@ public:
 map<b2Body *, set<BodyWrapper *> > bwrapper_owned;
 
 BodyWrapper *CreateBody(b2World *world, b2BodyDef *def) {
+  CHECK(world);
+  CHECK(def);
+  
   b2Body *newbody = world->CreateBody(def);
   CHECK(!bwrapper_owned.count(newbody));
   BodyWrapper *bwrap = new BodyWrapper();
@@ -130,14 +133,20 @@ FixtureWrapper *WrapFixture(b2Fixture *newfixt) {
   return fwrap;
 }
 FixtureWrapper *CreateFixtureFromDef(BodyWrapper *body, b2FixtureDef *def) {
+  CHECK(body);
+  CHECK(def);
   CHECK(body->body);
   return WrapFixture(body->body->CreateFixture(def));
 }
 FixtureWrapper *CreateFixtureFromShape(BodyWrapper *body, b2Shape *def) {
+  CHECK(body);
+  CHECK(def);
   CHECK(body->body);
   return WrapFixture(body->body->CreateFixture(def, 0));
 }
 FixtureWrapper *CreateFixtureFromShapeDensity(BodyWrapper *body, b2Shape *def, float density) {
+  CHECK(body);
+  CHECK(def);
   CHECK(body->body);
   return WrapFixture(body->body->CreateFixture(def, density));
 }
@@ -149,6 +158,20 @@ FixtureWrapper::~FixtureWrapper() {
       fwrapper_owned.erase(fixture);
     }
   }
+}
+
+/******************************
+            JOINT FUNCTIONS
+*******************************/
+
+void RevoluteJointDefInitialize(b2RevoluteJointDef *rjd, BodyWrapper *a, BodyWrapper *b, const b2Vec2 &anchor) {
+  CHECK(a->body);
+  CHECK(b->body);
+  
+  rjd->Initialize(a->body, b->body, anchor);
+}
+void CreateJoint(b2World *b2w, b2JointDef *b2jd) {
+  b2w->CreateJoint(b2jd);
 }
 
 /******************************
@@ -232,6 +255,8 @@ std::ostream &operator<<(std::ostream &ostr, const FixtureWrapper &vec) {
   ostr << "[b2FixtureWrapper " << vec.fixture << "]"; return ostr; }
 std::ostream &operator<<(std::ostream &ostr, const b2FixtureDef &vec) {
   ostr << "[b2FixtureDef " << &vec << "]"; return ostr; }
+std::ostream &operator<<(std::ostream &ostr, const b2RevoluteJointDef &vec) {
+  ostr << "[b2RevoluteJointDef " << &vec << "]"; return ostr; }
 
 void glorp_box2d_init(lua_State *L) {
   using namespace luabind;
@@ -265,6 +290,7 @@ void glorp_box2d_init(lua_State *L) {
       .def(constructor<b2Vec2, bool>())
       .def("CreateBody", &CreateBody, adopt(result))
       .def("DestroyBody", &DestroyBody, adopt(result))
+      .def("CreateJoint", &CreateJoint) // we ignore return value right now
       .def("Step", &b2World::Step)
       .def("ClearForces", &b2World::ClearForces)
       .def(tostring(self)),
@@ -293,6 +319,16 @@ void glorp_box2d_init(lua_State *L) {
       .property("shape", &FixtureDefGetShape, &FixtureDefSetShape)
       .def_readwrite("density", &b2FixtureDef::density)
       .def_readwrite("friction", &b2FixtureDef::friction)
+      .def_readwrite("filter", &b2FixtureDef::filter)
+      .def(tostring(self)),
+    class_<b2Filter>("Filter")
+      .def_readwrite("categoryBits", &b2Filter::categoryBits)
+      .def_readwrite("maskBits", &b2Filter::maskBits)
+      .def_readwrite("groupIndex", &b2Filter::groupIndex),
+    class_<b2JointDef>("JointDef"),
+    class_<b2RevoluteJointDef, b2JointDef>("RevoluteJointDef")
+      .def(constructor<>())
+      .def("Initialize", RevoluteJointDefInitialize)
       .def(tostring(self))
   ];
   
