@@ -230,304 +230,305 @@ function sign(x)
 end
 
 
+if gl then
 
+  --print(gl.Get("MAX_PROJECTION_STACK_DEPTH"))
 
---print(gl.Get("MAX_PROJECTION_STACK_DEPTH"))
+  --local log = io.open("gl.txt", "w")
 
---local log = io.open("gl.txt", "w")
-
--- hurrr
-if true then
-  local shutup = false
-  function testerror(bef, nam)
-    if shutup then return end
-    local err = gl.GetError()
-    if err ~= "NO_ERROR" then
-      print("GL ERROR: ", err, bef, nam)
-      if mode then assert(err == "NO_ERROR", err ..  "   " .. bef .. " " .. nam) end -- fuckyou
+  -- hurrr
+  if true then
+    local shutup = false
+    function testerror(bef, nam)
+      if shutup then return end
+      local err = gl.GetError()
+      if err ~= "NO_ERROR" then
+        print("GL ERROR: ", err, bef, nam)
+        if mode then assert(err == "NO_ERROR", err ..  "   " .. bef .. " " .. nam) end -- fuckyou
+      end
     end
-  end
-  for k, v in pairs(gl) do
-    local tk = k
-    if tk ~= "GetError" then
-      gl[tk] = function (...)
-        testerror("before", k)
-        return (function (...)
-          if tk == "Begin" then
-            assert(not shutup)
-            shutup = true
-          elseif tk == "End" then
-            assert(shutup)
-            shutup = false
-          end
-          testerror("after", k)
-          return ...
-        end)(v(...))
+    for k, v in pairs(gl) do
+      local tk = k
+      if tk ~= "GetError" then
+        gl[tk] = function (...)
+          testerror("before", k)
+          return (function (...)
+            if tk == "Begin" then
+              assert(not shutup)
+              shutup = true
+            elseif tk == "End" then
+              assert(shutup)
+              shutup = false
+            end
+            testerror("after", k)
+            return ...
+          end)(v(...))
+        end
       end
     end
   end
-end
 
---[[
-for k, v in pairs(gl) do
-  gl[k] = function (...)
-    print("before", k)
-    return (function (...)
-      print("after", k)
-      return ...
-    end)(v(...))
-  end
-end
-]]
-
-
-
-do
-  local List_params = {}
-  
-  function List_params:Create()
-    gl.NewList(self.listid:get(), "COMPILE")
-  end
-  function List_params:End()
-    gl.EndList()
-  end
-  
-  function List_params:Call()
-    gl.CallList(self.listid:get())
-  end
-  -- we don't yet support deleting
-  
-  function glutil.List()
-    local ite = setmetatable({}, {__index = List_params})
-    ite.listid = GlListID()
-    
-    return ite
-  end
-end
-function glutil.Autolist(target, name, process)
-  if not target[name] then
-    target[name] = glutil.List()
-    target[name]:Create()
-    
-    process()
-    
-    target[name]:End()
-  end
-  
-  target[name]:Call()
-end
-
-function glutil.Shader(typ, program)
-  local shader = {id = GlShader(typ .. "_SHADER")}
-  glutil.ShaderSource(shader, program)
-  glutil.CompileShader(shader)
-  return shader
-end
-
-function glutil.Program()
-  local prog = {id = GlProgram()}
-  return prog
-end
-
-function glutil.Framebuffer()
-  local prog = {id = GlFramebuffer()}
-  return prog
-end
-
-function glutil.Renderbuffer()
-  local prog = {id = GlRenderbuffer()}
-  return prog
-end
-
-function glutil.Texture()
-  local prog = {id = GlTexture()}
-  return prog
-end
-
-print(platform)
-if platform ~= "iphone" and platform ~= "iphone_sim" then
-  local snatch = {
-    ShaderSource = true,
-    CompileShader = true,
-    AttachShader = true,
-    LinkProgram = true,
-    UseProgram = true,
-    
-    GetShaderInfoLog = true,
-    GetProgramInfoLog = true,
-    GetShader = true,
-    GetProgram = true,
-    
-    UniformI = true,
-    UniformF = true,
-    GetUniformLocation = true,
-    
-    --UniformI = true,
-    VertexAttrib = true,
-    GetAttribLocation = true,
-    
-    BindFramebuffer = true,
-    BindRenderbuffer = true,
-    FramebufferRenderbuffer = true,
-    FramebufferTexture2D = true,
-    
-    BindTexture = true,
-  }
-  for k in pairs(snatch) do
-    snatch[k] = gl[k]
-    assert(snatch[k], k)
-  end
-
-  local attrib_lookup = {}
-  local uniform_lookup = {}
-
-  function glutil.ShaderSource(shader, source)
-    snatch.ShaderSource(shader.id:get(), {source})
-  end
-  function glutil.CompileShader(shader)
-    snatch.CompileShader(shader.id:get())
-    local infolog = snatch.GetShaderInfoLog(shader.id:get())
-    print(infolog)
-    print(mode)
-    local compstatus = glutil.GetShader(shader, "COMPILE_STATUS")
-    if (infolog ~= "" and mode) or compstatus ~= "TRUE" then
-      print("Failed to build shader", compstatus)
-      assert(false)
+  --[[
+  for k, v in pairs(gl) do
+    gl[k] = function (...)
+      print("before", k)
+      return (function (...)
+        print("after", k)
+        return ...
+      end)(v(...))
     end
   end
-  function glutil.AttachShader(program, shader)
-    snatch.AttachShader(program.id:get(), shader.id:get())
-  end
-  function glutil.LinkProgram(program)
-    snatch.LinkProgram(program.id:get())
-    attrib_lookup[program.id:get()] = nil
-    uniform_lookup[program.id:get()] = nil
-  end
-  function glutil.UseProgram(program)
-    snatch.UseProgram(program and program.id:get() or 0)
-  end
+  ]]
 
-  function glutil.GetShader(shader, flag)
-    return snatch.GetShader(shader.id:get(), flag)
-  end
-  function glutil.GetProgram(shader, flag)
-    return snatch.GetProgram(shader.id:get(), flag)
-  end
 
-  function glutil.UniformI(program, text, ...)
-    local pid = program.id:get()
-    if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
-    local loca = uniform_lookup[pid][text]
-    if not loca then
-      uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
-      loca = uniform_lookup[pid][text]
+
+  do
+    local List_params = {}
+    
+    function List_params:Create()
+      gl.NewList(self.listid:get(), "COMPILE")
+    end
+    function List_params:End()
+      gl.EndList()
     end
     
-    if loca == -1 then
-      print("WARNING: Uniform " .. text .. " is unused")
-    else
-      snatch.UniformI(loca, ...)
+    function List_params:Call()
+      gl.CallList(self.listid:get())
+    end
+    -- we don't yet support deleting
+    
+    function glutil.List()
+      local ite = setmetatable({}, {__index = List_params})
+      ite.listid = GlListID()
+      
+      return ite
     end
   end
-  function glutil.UniformF(program, text, ...)
-    local pid = program.id:get()
-    if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
-    local loca = uniform_lookup[pid][text]
-    if not loca then
-      uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
-      loca = uniform_lookup[pid][text]
+  function glutil.Autolist(target, name, process)
+    if not target[name] then
+      target[name] = glutil.List()
+      target[name]:Create()
+      
+      process()
+      
+      target[name]:End()
     end
     
-    if loca == -1 then
-      print("WARNING: Uniform " .. text .. " is unused")
-    else
-      snatch.UniformF(loca, ...)
+    target[name]:Call()
+  end
+
+  function glutil.Shader(typ, program)
+    local shader = {id = GlShader(typ .. "_SHADER")}
+    glutil.ShaderSource(shader, program)
+    glutil.CompileShader(shader)
+    return shader
+  end
+
+  function glutil.Program()
+    local prog = {id = GlProgram()}
+    return prog
+  end
+
+  function glutil.Framebuffer()
+    local prog = {id = GlFramebuffer()}
+    return prog
+  end
+
+  function glutil.Renderbuffer()
+    local prog = {id = GlRenderbuffer()}
+    return prog
+  end
+
+  function glutil.Texture()
+    local prog = {id = GlTexture()}
+    return prog
+  end
+
+  print(platform)
+  if platform ~= "iphone" and platform ~= "iphone_sim" then
+    local snatch = {
+      ShaderSource = true,
+      CompileShader = true,
+      AttachShader = true,
+      LinkProgram = true,
+      UseProgram = true,
+      
+      GetShaderInfoLog = true,
+      GetProgramInfoLog = true,
+      GetShader = true,
+      GetProgram = true,
+      
+      UniformI = true,
+      UniformF = true,
+      GetUniformLocation = true,
+      
+      --UniformI = true,
+      VertexAttrib = true,
+      GetAttribLocation = true,
+      
+      BindFramebuffer = true,
+      BindRenderbuffer = true,
+      FramebufferRenderbuffer = true,
+      FramebufferTexture2D = true,
+      
+      BindTexture = true,
+    }
+    for k in pairs(snatch) do
+      snatch[k] = gl[k]
+      assert(snatch[k], k)
+    end
+
+    local attrib_lookup = {}
+    local uniform_lookup = {}
+
+    function glutil.ShaderSource(shader, source)
+      snatch.ShaderSource(shader.id:get(), {source})
+    end
+    function glutil.CompileShader(shader)
+      snatch.CompileShader(shader.id:get())
+      local infolog = snatch.GetShaderInfoLog(shader.id:get())
+      print(infolog)
+      print(mode)
+      local compstatus = glutil.GetShader(shader, "COMPILE_STATUS")
+      if (infolog ~= "" and mode) or compstatus ~= "TRUE" then
+        print("Failed to build shader", compstatus)
+        assert(false)
+      end
+    end
+    function glutil.AttachShader(program, shader)
+      snatch.AttachShader(program.id:get(), shader.id:get())
+    end
+    function glutil.LinkProgram(program)
+      snatch.LinkProgram(program.id:get())
+      attrib_lookup[program.id:get()] = nil
+      uniform_lookup[program.id:get()] = nil
+    end
+    function glutil.UseProgram(program)
+      snatch.UseProgram(program and program.id:get() or 0)
+    end
+
+    function glutil.GetShader(shader, flag)
+      return snatch.GetShader(shader.id:get(), flag)
+    end
+    function glutil.GetProgram(shader, flag)
+      return snatch.GetProgram(shader.id:get(), flag)
+    end
+
+    function glutil.UniformI(program, text, ...)
+      local pid = program.id:get()
+      if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
+      local loca = uniform_lookup[pid][text]
+      if not loca then
+        uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
+        loca = uniform_lookup[pid][text]
+      end
+      
+      if loca == -1 then
+        print("WARNING: Uniform " .. text .. " is unused")
+      else
+        snatch.UniformI(loca, ...)
+      end
+    end
+    function glutil.UniformF(program, text, ...)
+      local pid = program.id:get()
+      if not uniform_lookup[pid] then uniform_lookup[pid] = {} end
+      local loca = uniform_lookup[pid][text]
+      if not loca then
+        uniform_lookup[pid][text] = snatch.GetUniformLocation(pid, text)
+        loca = uniform_lookup[pid][text]
+      end
+      
+      if loca == -1 then
+        print("WARNING: Uniform " .. text .. " is unused")
+      else
+        snatch.UniformF(loca, ...)
+      end
+    end
+
+    function glutil.VertexAttribInit(program, text)
+      local pid = program.id:get()
+      if not attrib_lookup[pid] then attrib_lookup[pid] = {} end
+      local loca = snatch.GetAttribLocation(pid, text)
+      assert(loca)
+      print("ALOOKUP", pid, text, loca)
+      attrib_lookup[pid][text] = loca
+    end
+    --[[function glutil.VertexAttribI(program, text, ...)
+      local pid = program.id:get()
+      assert(attrib_lookup[pid] and attrib_lookup[pid][text])
+      snatch.VertexAttribI(attrib_lookup[pid][text], ...)
+    end]]
+    function glutil.VertexAttrib(program, text, ...)
+      local pid = program.id:get()
+      assert(attrib_lookup[pid] and attrib_lookup[pid][text])
+      if attrib_lookup[pid][text] == -1 then
+        print("WARNING: Attribute " .. text .. " is unused", pid)
+      else
+        snatch.VertexAttrib(attrib_lookup[pid][text], ...)
+      end
+    end
+
+    local lastfb
+    function glutil.BindFramebuffer(target, framebuffer)
+      lastfb = framebuffer
+      if framebuffer then
+        snatch.BindFramebuffer(target, framebuffer.id:get())
+      else
+        snatch.BindFramebuffer(target, 0)
+      end
+    end
+    function glutil.BindRenderbuffer(target, renderbuffer)
+      if renderbuffer then
+        snatch.BindRenderbuffer(target, renderbuffer.id:get())
+      else
+        snatch.BindRenderbuffer(target, 0)
+      end
+    end
+    function glutil.FramebufferRenderbuffer(target, attach, rbt, rb)
+      snatch.FramebufferRenderbuffer(target, attach, rbt, rb.id:get())
+    end
+    function glutil.FramebufferTexture2D(target, attach, textarg, tex, level)
+      lastfb[attach] = tex  -- we do this to keep it from being garbage collected
+      snatch.FramebufferTexture2D(target, attach, textarg, tex.id:get(), level)
+    end
+    
+    function glutil.BindTexture(typ, tex)
+      if tex then
+        snatch.BindTexture(typ, tex.id:get())
+      else
+        snatch.BindTexture(typ, 0)
+      end
+    end
+
+    for k in pairs(snatch) do
+      gl[k] = nil -- yoink
     end
   end
 
-  function glutil.VertexAttribInit(program, text)
-    local pid = program.id:get()
-    if not attrib_lookup[pid] then attrib_lookup[pid] = {} end
-    local loca = snatch.GetAttribLocation(pid, text)
-    assert(loca)
-    print("ALOOKUP", pid, text, loca)
-    attrib_lookup[pid][text] = loca
-  end
-  --[[function glutil.VertexAttribI(program, text, ...)
-    local pid = program.id:get()
-    assert(attrib_lookup[pid] and attrib_lookup[pid][text])
-    snatch.VertexAttribI(attrib_lookup[pid][text], ...)
-  end]]
-  function glutil.VertexAttrib(program, text, ...)
-    local pid = program.id:get()
-    assert(attrib_lookup[pid] and attrib_lookup[pid][text])
-    if attrib_lookup[pid][text] == -1 then
-      print("WARNING: Attribute " .. text .. " is unused", pid)
-    else
-      snatch.VertexAttrib(attrib_lookup[pid][text], ...)
-    end
-  end
 
-  local lastfb
-  function glutil.BindFramebuffer(target, framebuffer)
-    lastfb = framebuffer
-    if framebuffer then
-      snatch.BindFramebuffer(target, framebuffer.id:get())
-    else
-      snatch.BindFramebuffer(target, 0)
+  function glutil.RenderArray(mode, vertex_size, vertices, color_size, color, texture_size, texture)
+    gl.EnableClientState("VERTEX_ARRAY")
+    gl.VertexPointer(vertex_size, "FLOAT", vertices)
+    if color_size then
+      assert(#color / color_size == #vertices / vertex_size)
+      gl.EnableClientState("COLOR_ARRAY")
+      gl.ColorPointer(color_size, "FLOAT", color)
     end
-  end
-  function glutil.BindRenderbuffer(target, renderbuffer)
-    if renderbuffer then
-      snatch.BindRenderbuffer(target, renderbuffer.id:get())
-    else
-      snatch.BindRenderbuffer(target, 0)
+    if texture_size then
+      assert(#texture / texture_size == #vertices / vertex_size)
+      gl.EnableClientState("TEXTURE_COORD_ARRAY")
+      gl.TexCoordPointer(texture_size, "FLOAT", texture)
     end
-  end
-  function glutil.FramebufferRenderbuffer(target, attach, rbt, rb)
-    snatch.FramebufferRenderbuffer(target, attach, rbt, rb.id:get())
-  end
-  function glutil.FramebufferTexture2D(target, attach, textarg, tex, level)
-    lastfb[attach] = tex  -- we do this to keep it from being garbage collected
-    snatch.FramebufferTexture2D(target, attach, textarg, tex.id:get(), level)
-  end
-  
-  function glutil.BindTexture(typ, tex)
-    if tex then
-      snatch.BindTexture(typ, tex.id:get())
-    else
-      snatch.BindTexture(typ, 0)
+    
+    gl.DrawArrays(mode, 0, #vertices / vertex_size)
+    
+    gl.DisableClientState("VERTEX_ARRAY")
+    if color_size then
+      gl.DisableClientState("COLOR_ARRAY")
     end
-  end
-
-  for k in pairs(snatch) do
-    gl[k] = nil -- yoink
-  end
-end
-
-
-function glutil.RenderArray(mode, vertex_size, vertices, color_size, color, texture_size, texture)
-  gl.EnableClientState("VERTEX_ARRAY")
-  gl.VertexPointer(vertex_size, "FLOAT", vertices)
-  if color_size then
-    assert(#color / color_size == #vertices / vertex_size)
-    gl.EnableClientState("COLOR_ARRAY")
-    gl.ColorPointer(color_size, "FLOAT", color)
-  end
-  if texture_size then
-    assert(#texture / texture_size == #vertices / vertex_size)
-    gl.EnableClientState("TEXTURE_COORD_ARRAY")
-    gl.TexCoordPointer(texture_size, "FLOAT", texture)
-  end
-  
-  gl.DrawArrays(mode, 0, #vertices / vertex_size)
-  
-  gl.DisableClientState("VERTEX_ARRAY")
-  if color_size then
-    gl.DisableClientState("COLOR_ARRAY")
-  end
-  if texture_size then
-    gl.DisableClientState("TEXTURE_COORD_ARRAY")
+    if texture_size then
+      gl.DisableClientState("TEXTURE_COORD_ARRAY")
+    end
   end
 end
 

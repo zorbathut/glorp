@@ -22,6 +22,8 @@ I'm using curl for the error reporting system. You know the drill by now.
 
 My standard error reporter is based in part on the work of the FLTK project (http://www.fltk.org). That line is all they require me to say. Thanks, FLTK! Thltk.
 
+This may or may not include box2d. If it does, license below. If it doesn't, license below anyway.
+
 This relies on several of my own libraries, including lgl, glorp, and glop. It was built using ursa. All of these are available using extremely permissive licenses, either BSD or the standard Lua license. Check them out at http://github.com/zorbathut .
 
 =============== LIBOGG LICENSE
@@ -176,3 +178,24 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 Except as contained in this notice, the name of a copyright holder shall not
 be used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization of the copyright holder.
+
+=============== BOX2D LICENSE
+
+Copyright (c) 2006-2010 Erin Catto http://www.gphysics.com
+
+This software is provided 'as-is', without any express or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+claim that you wrote the original software. If you use this software
+in a product, an acknowledgment in the product documentation would be
+appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+

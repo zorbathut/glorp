@@ -1,24 +1,38 @@
 
 local mode = ...
 
-MakeConfigDirectory()
-local pfile = GetConfigDirectory() .. "saved.lua"
 
 persistence = {}
 
 local loaded_from = nil
-if mode ~= "debug" then
-  local r, v = loadfile(pfile)
-  if r then
-    loaded_from = r()
+local pfile
+if GetConfigDirectory then
+  pfile = GetConfigDirectory() .. "saved.lua"
+end
+
+local made = false
+local function CheckConfigDirectory()
+  if not made then
+    MakeConfigDirectory()
   end
 end
 
-if not loaded_from then
-  loaded_from = {}
-end
-
 function persistence.load(token)
+  if not loaded_from then
+    CheckConfigDirectory()
+    
+    if mode ~= "debug" then
+      local r, v = loadfile(pfile)
+      if r then
+        loaded_from = r()
+      end
+    end
+
+    if not loaded_from then
+      loaded_from = {}
+    end
+  end
+
   if not loaded_from[token] then
     loaded_from[token] = {}
   end
@@ -28,6 +42,8 @@ function persistence.load(token)
   return loaded_from[token]
 end
 function persistence.save()
+  CheckConfigDirectory()
+  
   local fil = io.open(pfile, "wb")
   assert(fil)
   fil:write("return " .. persistence.stringize(loaded_from))
