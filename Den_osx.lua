@@ -46,8 +46,8 @@ rv.create_runnable = function(dat)
   return {deps = {runnable, "build/osx/glorp/constants.lua"}, cli = '"' .. basepath .."/Contents/MacOS/" .. params.longname .. '"'}
 end
 
-rv.app_prefix = ("build/osx/deploy/%s.app/"):format(params.longname)
-rv.dataprefix = app_prefix .. "Contents/Resources/"
+rv.appprefix = ("build/osx/deploy/%s.app/"):format(params.longname)
+rv.dataprefix = rv.appprefix .. "Contents/Resources/"
 
 -- installers
 function rv.installers()
@@ -60,20 +60,20 @@ function rv.installers()
     local sufix = v:match(("build/osx/[-%s '.]*.app/(.*)"):format(params.longname))
     assert(sufix)
     
-    table.insert(binaries, ursa.rule{app_prefix .. sufix, v, ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
+    table.insert(binaries, ursa.rule{rv.appprefix .. sufix, v, ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
   end
   
   -- copy the reporter
-  table.insert(binaries, ursa.rule{app_prefix .. "Contents/Resources/data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
+  table.insert(binaries, ursa.rule{rv.appprefix .. "Contents/Resources/data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
 
   -- here's our bootstrapper for sane version errors
-  table.insert(binaries, ursa.rule{app_prefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/SystemVersionCheck", ursa.util.copy{}})
+  table.insert(binaries, ursa.rule{rv.appprefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/SystemVersionCheck", ursa.util.copy{}})
 
-  local icon = ursa.rule{app_prefix .. "Contents/Resources/mandible.icns", "glorp/resources/mandicon.png", ursa.util.system_template{("glorp/resources/makeicns -in $SOURCE -out $TARGET")}}
+  local icon = ursa.rule{rv.appprefix .. "Contents/Resources/mandible.icns", "glorp/resources/mandicon.png", ursa.util.system_template{("glorp/resources/makeicns -in $SOURCE -out $TARGET")}}
   
-  local infoplist = ursa.rule{app_prefix .. "Contents/Info.plist", "#version", function ()
+  local infoplist = ursa.rule{rv.appprefix .. "Contents/Info.plist", "#version", function ()
     print("Writing info.plist")
-    local pl = io.open(app_prefix .. "Contents/Info.plist", "w")
+    local pl = io.open(rv.appprefix .. "Contents/Info.plist", "w")
     
     pl:write([[
 <?xml version="1.0" encoding="UTF-8"?>

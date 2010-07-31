@@ -293,7 +293,7 @@ if params.box2d then
     sedreplace = " && " .. ("sed -i -e s@/usr/bin/gcc.exe@%s@g -e s@/usr/bin/c++.exe@%s@g -e s@/cygdrive/c@c:@g `find . -type f`"):format(glop.libcc, glop.libcc)
   end
   
-  local lib = ursa.rule{builddir .. "lib_build/box2d/Build/Box2D/libBox2D.a", {files}, ursa.util.system_template{('cd %slib_build/box2d/Build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DBOX2D_INSTALL=OFF -DBOX2D_INSTALL_DOC=OFF -DBOX2D_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release ..' .. sedreplace .. ' && make && rmdir c\\:'):format(builddir, libcflags, libcflags, libldflags)}}
+  local lib = ursa.rule{builddir .. "lib_build/box2d/Build/Box2D/libBox2D.a", {files}, ursa.util.system_template{('cd %slib_build/box2d/Build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DBOX2D_INSTALL=OFF -DBOX2D_INSTALL_DOC=OFF -DBOX2D_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, libcflags, libcflags, libldflags)}}
   
   libs.box2d = ursa.rule{builddir .. "lib_release/lib/libbox2d.a", lib, ursa.util.copy{}}
 end
@@ -544,8 +544,8 @@ do
       local dst = osd.dataprefix .. v.dst
       
       local cli = v.cli
-      if not cli:find("$SOURCES") then cli = cli:gsub("$SOURCE", v.src) end
-      if not cli:find("$TARGETS") then cli = cli:gsub("$TARGET", dst) end
+      if not cli:find("$SOURCES") then cli = cli:gsub("$SOURCE", '"' .. v.src .. '"') end
+      if not cli:find("$TARGETS") then cli = cli:gsub("$TARGET", '"' .. dst .. '"') end
       
       table.insert(items, ursa.rule{dst, {v.src, v.deps or {}}, ursa.util.system_template{cli}})
     end
