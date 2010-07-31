@@ -1,5 +1,3 @@
-require "glorp/Den_util"
-
 local params = ...
 
 local rv = {}
@@ -29,6 +27,9 @@ rv.create_runnable = function(dat)
   return {deps = {dlls, dat.mainprog, "build/cygwin/glorp/constants.lua"}, cli = ("%s%s.exe"):format(params.builddir, params.name)}
 end
 
+rv.appprefix = params.builddir .. "deploy/"
+rv.dataprefix = rv.appprefix
+
 -- installers
 function rv.installers()
   -- first we have to build the entire path layout
@@ -38,17 +39,8 @@ function rv.installers()
   table.insert(data, ursa.rule{params.builddir .. "deploy/" .. params.name .. ".exe", params.builddir .. params.name .. ".exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{params.builddir .. "deploy/data/reporter.exe", params.builddir .. "reporter.exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{params.builddir .. "deploy/fmodex.dll", params.builddir .. "fmodex.dll", ursa.util.copy{}})
-
-  -- second we generate our actual data copies
-  ursa.token.rule{"built_data", "#datafiles", function ()
-    local items = {}
-    for _, v in pairs(ursa.token{"datafiles"}) do
-      table.insert(items, ursa.rule{(params.builddir .. "deploy/%s"):format(v.dst), v.src, ursa.util.system_template{v.cli}})
-    end
-    return items
-  end, always_rebuild = true}
   
-  cull_data(params.builddir .. "deploy/", {data})
+  cull_data({data})
 
   ursa.token.rule{"installers", {data, "#built_data", "#culled_data", "#version"}, function ()
     local v = ursa.token{"version"}

@@ -9,6 +9,10 @@ end
 require "luarocks.loader"
 require "ursa"
 
+function token_literal(name, data)
+  ursa.token.rule{name, "!" .. data, function () return data end}
+end
+
 params.targets = ursa.util.cli_parameter_parse{unpack(params.targets)}
 
 assert(params.font, "choose a font, you dumbass")
@@ -461,26 +465,34 @@ do
     ursa.token.rule{token .. "_copy", "#" .. token .. "_files", function ()
         local data_items = {}
         for k in ursa.token{token .. "_files"}:gmatch("[^\n]+") do
-          local ext = k:match("^.*%.([^%.]+)$")
-          
-          local dst = destprefix .. k
-          local src = sourceprefix .. k
-          
-          local odst = dst
-          
-          local cli
-          
-          if converts[ext] then
-            cli, dst = converts[ext](dst)
+          -- narsty hack for level_.lev.lua
+          if params.box2d and k:match("^level_.*%.lev%.lua$") then
+            local dst = destprefix .. k
+            local src = sourceprefix .. k
+            
+            table.insert(data_items, {src = src, deps = {"glorp/tool/level_bake.lua", "glorp/util.lua", "glorp/stage_persistence.lua", "scaffold.lua", "terra.lua", "worldparams.lua"}, dst = dst, cli = "lua glorp/tool/level_bake.lua $SOURCE $TARGET 8"})
+          else
+            local ext = k:match("^.*%.([^%.]+)$")
+            
+            local dst = destprefix .. k
+            local src = sourceprefix .. k
+            
+            local odst = dst
+            
+            local cli
+            
+            if converts[ext] then
+              cli, dst = converts[ext](dst)
+            end
+            
+            dst = dst or odst
+            
+            if not cli then
+              cli = "cp $SOURCE $TARGET"
+            end
+            
+            table.insert(data_items, {src = src, dst = dst, cli = cli})
           end
-          
-          dst = dst or odst
-          
-          if not cli then
-            cli = "cp $SOURCE $TARGET"
-          end
-          
-          table.insert(data_items, {src = src, dst = dst, cli = cli})
         end
         return data_items
       end}
@@ -523,6 +535,46 @@ do
     return chunks
   end}
   
+  -- generate our actual data copies
+  ursa.token.rule{"built_data", "#datafiles", function ()
+    local items = {}
+    for _, v in pairs(ursa.token{"datafiles"}) do
+      local dst = osd.dataprefix .. v.dst
+      
+      local cli = v.cli
+      if not cli:find("$SOURCES") then cli = cli:gsub("$SOURCE", v.src) end
+      if not cli:find("$TARGETS") then cli = cli:gsub("$TARGET", dst) end
+      
+      table.insert(items, ursa.rule{dst, {v.src, v.deps or {}}, ursa.util.system_template{cli}})
+    end
+    return items
+  end, always_rebuild = true}
+  
+  function cull_data(dat)
+    local path = osd.appprefix
+    ursa.token.rule{"culled_data", {"#built_data"}, function ()
+      local valids = {}
+      for _, v in pairs(ursa.relative_from{{dat, ursa.token{"built_data"}}}) do
+        local val = v:match(path:gsub("%-", "%%-") .. "(.*)")
+        if not val then
+          print(val, v, path:gsub("%-", "%%-") .. "(.*)")
+        end
+        assert(val)
+        valids[val] = true
+      end
+      
+      for f in ursa.system{("cd \"%s\" && find . -type f || true"):format(path)}:gmatch("([^\n]+)") do
+        local fi = f:match("%./(.*)")
+        if not valids[fi] then
+          print("======== REMOVING", fi)
+          ursa.system{"rm \"" .. path .. fi .. "\""}
+        end
+      end
+      
+      return "" -- alright we return nothing this is just a command basically. I need a better way to handle this.
+    end, always_rebuild = true}
+  end
+
   ursa.token.rule{"outputprefix", "#version", function ()
     return ("%s-%s"):format(params.midname, ursa.token{"version"})
   end}

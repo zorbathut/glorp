@@ -1,5 +1,3 @@
-require "glorp/Den_util"
-
 local params = ...
 
 local rv = {}
@@ -31,16 +29,17 @@ rv.create_runnable = function(dat)
   return {deps = {dlls, dat.mainprog, "build/linux/glorp/constants.lua"}, cli = ("%s%s.prog"):format(params.builddir, params.name)}
 end
 
+rv.appprefix = params.builddir .. "deploy/" .. params.midname .. "/"
+rv.dataprefix = rv.appprefix
+  
 -- installers
 function rv.installers()
   -- first we have to build the entire path layout
   local data = {}
-  
-  local datadir = params.builddir .. "deploy/" .. params.midname .. "/"
 
   -- DLLs and executables
   local stripped = ursa.rule{params.builddir .. params.name .. ".prog.stripped", params.builddir .. params.name .. ".prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}}
-  table.insert(data, ursa.rule{datadir .. params.midname, stripped, function ()
+  table.insert(data, ursa.rule{rv.dataprefix .. params.midname, stripped, function ()
     print("install_name_tool fakeout ugliness")
     local ni = io.open(params.builddir .. params.name .. ".prog.stripped", "rb")
     local dat = ni:read("*a")
@@ -59,31 +58,22 @@ function rv.installers()
     
     assert(not ndat:find(orig))
     
-    local out = io.open(datadir .. params.midname, "wb")
+    local out = io.open(rv.dataprefix .. params.midname, "wb")
     out:write(ndat)
     out:close()
     
-    ursa.system{"chmod +x " .. datadir .. params.midname}
+    ursa.system{"chmod +x " .. rv.dataprefix .. params.midname}
   end})
-  table.insert(data, ursa.rule{datadir .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
-  table.insert(data, ursa.rule{datadir .. "data/libfmodex.so", params.builddir .. "libfmodex.so", ursa.util.system_template{"cp $SOURCE $TARGET && (execstack -c $TARGET || /usr/sbin/execstack -c $TARGET)"}})
+  table.insert(data, ursa.rule{rv.dataprefix .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
+  table.insert(data, ursa.rule{rv.dataprefix .. "data/libfmodex.so", params.builddir .. "libfmodex.so", ursa.util.system_template{"cp $SOURCE $TARGET && (execstack -c $TARGET || /usr/sbin/execstack -c $TARGET)"}})
   
   local dfn = {}
   for i = 0, 2 do
-    table.insert(dfn, datadir .. "data/mandible_icon-" .. i .. ".png")
+    table.insert(dfn, rv.dataprefix .. "data/mandible_icon-" .. i .. ".png")
   end
-  table.insert(data, ursa.rule{dfn, "glorp/resources/mandicomulti.ico", ursa.util.system_template{"convert $SOURCE " .. datadir .. "data/mandible_icon.png"}})
-
-  -- second we generate our actual data copies
-  ursa.token.rule{"built_data", "#datafiles", function ()
-    local items = {}
-    for _, v in pairs(ursa.token{"datafiles"}) do
-      table.insert(items, ursa.rule{(datadir .. "%s"):format(v.dst), v.src, ursa.util.system_template{v.cli}})
-    end
-    return items
-  end, always_rebuild = true}
+  table.insert(data, ursa.rule{dfn, "glorp/resources/mandicomulti.ico", ursa.util.system_template{"convert $SOURCE " .. rv.dataprefix .. "data/mandible_icon.png"}})
   
-  cull_data(datadir, {data})
+  cull_data({data})
 
   local installers = {}
   

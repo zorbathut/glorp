@@ -1,5 +1,3 @@
-require "glorp/Den_util"
-
 local params = ...
 
 local rv = {}
@@ -14,11 +12,12 @@ token_literal("LUA_FLAGS", "-arch i386 -isysroot /Developer/Platforms/iPhoneSimu
 
 rv.no_cli_params = true
 
+rv.appprefix = "build/iphone_sim/" .. params.longname .. ".app/"
+rv.dataprefix = rv.appprefix
+
 local runnable_deps
 
 rv.create_runnable = function(dat)
-  local basepath = "build/iphone_sim/" .. params.longname .. ".app"
-  
   local runnable = {}
   
   local current_glop = params.glop.lib
@@ -63,15 +62,7 @@ rv.create_runnable = function(dat)
     
   end})
   
-  -- we need to do data copies in the build for this target. TODO: some kind of low-build high-build option?
-  ursa.token.rule{"built_data", "#datafiles", function ()
-    local items = {}
-    for _, v in pairs(ursa.token{"datafiles"}) do
-      table.insert(items, ursa.rule{basepath .. "/" .. v.dst, v.src, ursa.util.system_template{v.cli}})
-    end
-    --assert(false)
-    return items
-  end, always_rebuild = true}
+  cull_data({runnable})
   
   runnable_deps = runnable
   

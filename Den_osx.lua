@@ -1,5 +1,3 @@
-require "glorp/Den_util"
-
 local params = ...
 
 local rv = {}
@@ -48,10 +46,12 @@ rv.create_runnable = function(dat)
   return {deps = {runnable, "build/osx/glorp/constants.lua"}, cli = '"' .. basepath .."/Contents/MacOS/" .. params.longname .. '"'}
 end
 
+rv.app_prefix = ("build/osx/deploy/%s.app/"):format(params.longname)
+rv.dataprefix = app_prefix .. "Contents/Resources/"
+
 -- installers
 function rv.installers()
   assert(runnable_deps)
-  local app_prefix = ("build/osx/deploy/%s.app/"):format(params.longname)
   
   local binaries = {}
   
@@ -68,18 +68,7 @@ function rv.installers()
 
   -- here's our bootstrapper for sane version errors
   table.insert(binaries, ursa.rule{app_prefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/SystemVersionCheck", ursa.util.copy{}})
-  
-  -- second we generate our actual data copies
-  ursa.token.rule{"built_data", "#datafiles", function ()
-    local items = {}
-    for _, v in pairs(ursa.token{"datafiles"}) do
-      table.insert(items, ursa.rule{app_prefix .. "Contents/Resources/" .. v.dst, v.src, ursa.util.system_template{v.cli}})
-    end
-    --assert(false)
-    return items
-  end, always_rebuild = true}
 
-  
   local icon = ursa.rule{app_prefix .. "Contents/Resources/mandible.icns", "glorp/resources/mandicon.png", ursa.util.system_template{("glorp/resources/makeicns -in $SOURCE -out $TARGET")}}
   
   local infoplist = ursa.rule{app_prefix .. "Contents/Info.plist", "#version", function ()
@@ -121,7 +110,7 @@ function rv.installers()
     
   end}
   
-  cull_data(app_prefix, {binaries, icon, infoplist})
+  cull_data({binaries, icon, infoplist})
   
   return ursa.rule{("build/%s.dmg"):format(ursa.token{"outputprefix"}), {binaries, ursa.util.token_deferred{"built_data"}, "#culled_data", infoplist, icon}, ursa.util.system_template{('hdiutil create -srcfolder "build/osx/deploy/%s.app" $TARGET -ov'):format(params.longname)}}
 end
