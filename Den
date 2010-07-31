@@ -300,6 +300,8 @@ end
 
 ursa.token.rule{"version", nil, ("git describe --always --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
 
+local genlua = {}
+
 ursa.rule{builddir .. "glorp/version.cpp", "#version", function ()
   print("Writing file version.cpp")
   local fil = io.open(builddir .. "glorp/version.cpp", "w")
@@ -310,12 +312,12 @@ ursa.rule{builddir .. "glorp/version.cpp", "#version", function ()
   fil:write(([[extern const char game_platform[] = "%s";]]):format(platform) .. "\n")
   fil:close()
 end}
-ursa.rule{builddir .. "glorp/constants.lua", "!" .. params.gl_version_expected, function ()
+table.insert(genlua, ursa.rule{builddir .. "glorp/constants.lua", "!" .. params.gl_version_expected, function ()
   print("Writing file constants.lua")
   local fil = io.open(builddir .. "glorp/constants.lua", "w")
   fil:write(([[gl_version_expected = %f]]):format(params.gl_version_expected) .. "\n")
   fil:close()
-end}
+end})
 ursa.rule{builddir .. "glorp/main.cpp", {"!" .. params.longname, "!" .. params.font, "!" .. params.resolution[1], "!" .. params.resolution[2]}, function ()
   print("Writing file main.cpp")
   local fil = io.open(builddir .. "glorp/main.cpp", "w")
@@ -522,7 +524,7 @@ do
   table.insert(data_deps, copy_a_lot("core", "data/", ""))
   
   -- generated lua files
-  ursa.token.rule{"generated_lua_files", nil, ("cd build/%s/glorp && ls *.lua"):format(platform)}
+  ursa.token.rule{"generated_lua_files", genlua, ("cd build/%s/glorp && ls *.lua"):format(platform)}
   table.insert(data_deps, copy_a_lot("generated_lua", "data/", ("build/%s/glorp/"):format(platform)))
 
   ursa.token.rule{"datafiles", data_deps, function ()
@@ -550,6 +552,7 @@ do
     return items
   end, always_rebuild = true}
   
+  -- NOTE: this function should probably be renamed to register_cull_exceptions or something of that like, and then we actually do the culling later. right now it's sort of strange.
   function cull_data(dat)
     local path = osd.appprefix
     ursa.token.rule{"culled_data", {"#built_data"}, function ()
