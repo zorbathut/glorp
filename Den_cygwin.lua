@@ -42,7 +42,7 @@ function rv.installers()
   
   cull_data({data})
 
-  ursa.token.rule{"installers", {data, "#built_data", "#culled_data", "#version"}, function ()
+  ursa.token.rule{"installers", "#version", function ()
     local v = ursa.token{"version"}
     
     local exesuffix = ("%s-%s.exe"):format(params.midname, v)
