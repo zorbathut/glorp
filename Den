@@ -63,6 +63,7 @@ local libldflags = glop.libcflags
 
 -- first we build the lua
 local lua_headers = {}
+local lua_exec
 do
   do
     if not osd.noluajit and not noluajit then
@@ -89,7 +90,12 @@ do
         end
       end
       
-      ursa.rule{builddir .. "lib_build/lua/src/libluajit.a", copied, ursa.util.system_template{("cd %slib_build/lua && make -j5"):format(builddir)}}
+      lua_exec = builddir .. "lib_build/lua/src/luajit"
+      if platform == "cygwin" then
+        lua_exec = lua_exec .. ".exe"
+      end
+      
+      ursa.rule{{builddir .. "lib_build/lua/src/libluajit.a", lua_exec}, copied, ursa.util.system_template{("cd %slib_build/lua && make -j5"):format(builddir)}}
       ursa.rule{builddir .. "lib_release/lib/liblua.a", builddir .. "lib_build/lua/src/libluajit.a", ursa.util.copy{}}
       
       -- luajit includes it in src
@@ -109,7 +115,9 @@ do
       for k in files:gmatch("([^ ]+)") do  -- yes okay hardcoded shut up
         table.insert(luaobjects, ursa.rule{builddir .. "lib_build/lua/src/" .. k .. ".o", copied, ursa.util.system_template{"#CC -O3 -fomit-frame-pointer #LUA_FLAGS -I#builddir/lib_build/lua/dynasm -Wall -x c -c -o $TARGET #builddir/lib_build/lua/src/" .. k .. ".c"}})
       end
-
+      
+      lua_exec = "lua" -- isn't actually our copy of lua, we'll make this work better later I suppose
+      
       ursa.rule{builddir .. "lib_release/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- wonder if this'll work right under cygwin
       
       -- base lua includes it in etc
@@ -472,7 +480,7 @@ do
             local dst = destprefix .. k
             local src = sourceprefix .. k
             
-            table.insert(data_items, {src = src, deps = {"glorp/tool/level_bake.lua", "glorp/util.lua", "glorp/stage_persistence.lua", "scaffold.lua", "terra.lua", "worldparams.lua"}, dst = dst, cli = "lua glorp/tool/level_bake.lua $SOURCE $TARGET 8"})
+            table.insert(data_items, {src = src, deps = {"glorp/tool/level_bake.lua", "glorp/util.lua", "glorp/stage_persistence.lua", "scaffold.lua", "terra.lua", "worldparams.lua", lua_exec}, dst = dst, cli = lua_exec .. " glorp/tool/level_bake.lua $SOURCE $TARGET 8"})
           else
             local ext = k:match("^.*%.([^%.]+)$")
             
