@@ -6,6 +6,7 @@
 // wx
 
 // line height
+// dist-per-pixel
 
 #include "init.h"
 #include "debug.h"
@@ -19,7 +20,15 @@
 #include <vector>
 #include <algorithm>
 
+#include <cmath>
+
 using namespace std;
+
+const int pixheight = 48;
+const int supersample = 32;
+const int distmult = 64;  // this is "one pixel in the final version equals 64 difference". reduce this number to increase the "blur" radius, increase it to make things "sharper"
+
+const int maxsearch = (128 * supersample + distmult - 1) / distmult;
 
 struct Image {
   vector<vector<unsigned char> > dat;
@@ -45,13 +54,30 @@ bool operator<(const Image &lhs, const Image &rhs) {
   return lhs.dat.size() * lhs.dat[0].size() > rhs.dat.size() * rhs.dat[0].size();
 }
 
-struct Bucket {
-  vector<pair<Image, int> > items;
+struct Data {
+  // item ID
+  int id;
   
-  void AddItem(int id, const Image &img) {
-    items.push_back(make_pair(img, id));
+  // dimensions of its spot in the world
+  int sx, sy, ex, ey;
+  
+  // offset from the origin
+  float ox, oy;
+  
+  // distance to move the origin forward
+  float wx;
+};
+bool operator<(const Data &lhs, const Data &rhs) {
+  return lhs.id < rhs.id; // should be unique
+}
+
+struct Bucket {
+  vector<pair<Image, Data> > items;
+  
+  void AddItem(const Image &img, const Data &dat) {
+    items.push_back(make_pair(img, dat));
   }
-  void Resolve() {
+  vector<Data> Resolve() {
     const int wid = 512;
     
     Image masq;
@@ -88,6 +114,12 @@ struct Bucket {
             dest.copyfrom(items[i].first, tx, ty);
             masq.set(tx, ty, tx + idx, ty + idy, 255);
             
+            items[i].second.sx = tx;
+            items[i].second.sy = ty;
+            
+            items[i].second.ex = tx + idx;
+            items[i].second.ey = ty + idy;
+            
             found = true;
             
             dprintf("Placed %d at %dx%d-%dx%d\n", items[i].second, tx, ty, tx + idx, ty + idy);
@@ -122,6 +154,38 @@ struct Bucket {
     png_write_end(png_ptr, NULL);
     
     png_destroy_write_struct(&png_ptr, &info_ptr);
+    
+    vector<Data> dats;
+    for(int i = 0; i < items.size(); i++)
+      dats.push_back(items[i].second);
+    return dats;
+  }
+};
+
+struct Closest {
+  FT_Bitmap bmp;
+  
+  Closest(FT_Bitmap bmp) : bmp(bmp) { }
+  
+  float find_closest(int x, int y, char search) {
+    int best = 1 << 30;
+    for(int i = 1; i <= maxsearch; i++) {
+      if(i * i >= best)
+        break;
+      for(int f = -i; f < i; f++) {
+        int dist = i * i + f * f;
+        if(dist >= best) continue;
+        
+        if(safe_access(x + i, y + f) == search || safe_access(x - f, y + i) == search || safe_access(x - i, y - f) == search || safe_access(x + f, y - i) == search)
+          best = dist;
+      }
+    }
+    return sqrt(best);
+  }
+  char safe_access(int x, int y) {
+    if(x < 0 || y < 0 || x >= bmp.width || y >= bmp.rows)
+      return 0;
+    return bmp.buffer[x + y * bmp.width];
   }
 };
 
@@ -142,7 +206,7 @@ int main(int argc, char **argv) {
   
   dprintf("%d glyphs, %08x flags, %d units, %d strikes\n", font->num_glyphs, font->face_flags, font->units_per_EM, font->num_fixed_sizes);
   
-  CHECK(FT_Set_Pixel_Sizes(font, 0, 48) == 0);
+  CHECK(FT_Set_Pixel_Sizes(font, 0, pixheight * supersample) == 0);
   
   for(int kar = 32; kar < 128; kar++) {
     CHECK(FT_Load_Char(font, kar, FT_LOAD_RENDER|FT_LOAD_MONOCHROME) == 0);
@@ -153,24 +217,70 @@ int main(int argc, char **argv) {
       FT_Bitmap_New(&tempbitmap);
       FT_Bitmap_Convert(freetype, &font->glyph->bitmap, &tempbitmap, 1);
       
-      Image img;
-      img.resize(tempbitmap.width + 2, tempbitmap.rows + 2);
+      Closest closest(tempbitmap);
       
-      for(int y = 0; y < tempbitmap.rows; y++) {
-        string ro;
-        for(int x = 0; x < tempbitmap.width; x++) {
-          ro += (tempbitmap.buffer[x + y * tempbitmap.width] ? "#" : " ");
-          img.dat[y + 1][x + 1] = tempbitmap.buffer[x + y * tempbitmap.width] ? 255 : 0;
+      int bord = (128 + distmult - 1) / distmult + 1;
+      
+      Image img;
+      img.resize((tempbitmap.width + supersample - 1) / supersample + bord * 2, (tempbitmap.rows + supersample - 1) / supersample + bord * 2);
+      
+      int lmx = img.dat[0].size();
+      int lmy = img.dat.size();
+      
+      for(int y = 0; y < lmy; y++) {
+        int cty = (y - bord) * supersample + supersample / 2;
+        for(int x = 0; x < lmx; x++) {
+          int ctx = (x - bord) * supersample + supersample / 2;
+          float dist;
+          if(closest.safe_access(ctx, cty)) {
+            dist = closest.find_closest(ctx, cty, 0);
+          } else {
+            dist = -closest.find_closest(ctx, cty, 1);
+          }
+          
+          dist = dist / supersample * distmult + 128;
+          
+          dist = floor(dist + 0.5);
+          
+          if(dist < 0) dist = 0;
+          if(dist > 255) dist = 255;
+          
+          img.dat[y][x] = (unsigned char)dist;
         }
-        dprintf("%s\n", ro.c_str());
       }
       
-      bucket.AddItem(kar, img);
+      Data dat;
+      
+      dat.id = kar;
+      
+      dat.sx = 0;
+      dat.sy = 0;
+      dat.ex = img.dat[0].size();
+      dat.ey = img.dat.size();
+      
+      dat.ox = (float)font->glyph->metrics.horiBearingX / 64 / supersample - bord;
+      dat.oy = -(float)font->glyph->metrics.horiBearingY / 64 / supersample - bord;
+      
+      dat.wx = (float)font->glyph->metrics.horiAdvance / 64 / supersample;
+      
+      bucket.AddItem(img, dat);
        
       FT_Bitmap_Done(freetype, &tempbitmap);
     }
   }
   
   dprintf("resolve\n");
-  bucket.Resolve();
+  vector<Data> results = bucket.Resolve();
+  
+  sort(results.begin(), results.end());
+  
+  FILE *fil = fopen("font.lua", "wb");
+  fprintf(fil, "height = %f\n", -1.f);
+  fprintf(fil, "baseline = %f\n", -1.f);
+  fprintf(fil, "distslope = %f\n", -1.f);
+  fprintf(fil, "characters = {}\n");
+  for(int i = 0; i < results.size(); i++) {
+    fprintf(fil, "characters[%d] = {sx = %d, sy = %d, ex = %d, ey = %d, ox = %f, oy = %f, w = %f}\n", results[i].id, results[i].sx, results[i].sy, results[i].ex, results[i].ey, results[i].ox, results[i].oy, results[i].wx);
+  }
+  fclose(fil);
 }
