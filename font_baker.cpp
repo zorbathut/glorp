@@ -14,6 +14,8 @@
 #include FT_FREETYPE_H 
 #include <freetype/ftbitmap.h>
 
+#include <png.h>
+
 #include <vector>
 #include <algorithm>
 
@@ -94,7 +96,32 @@ struct Bucket {
       }
     }
     
-    // save images here
+    FILE *fil = fopen("font.png", "wb");
+    
+    png_structp  png_ptr;
+    png_infop  info_ptr;
+  
+    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    CHECK(png_ptr);
+  
+    info_ptr = png_create_info_struct(png_ptr);
+    CHECK(info_ptr);
+
+    png_init_io(png_ptr, fil);
+    
+    png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
+    
+    png_set_IHDR(png_ptr, info_ptr, dest.dat[0].size(), dest.dat.size(), 8, PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+    
+    png_write_info(png_ptr, info_ptr);
+    
+    for(int y = 0; y < dest.dat.size(); y++) {
+      png_write_row(png_ptr, &dest.dat[y][0]);
+    }
+    
+    png_write_end(png_ptr, NULL);
+    
+    png_destroy_write_struct(&png_ptr, &info_ptr);
   }
 };
 
@@ -115,7 +142,7 @@ int main(int argc, char **argv) {
   
   dprintf("%d glyphs, %08x flags, %d units, %d strikes\n", font->num_glyphs, font->face_flags, font->units_per_EM, font->num_fixed_sizes);
   
-  CHECK(FT_Set_Pixel_Sizes(font, 0, 32) == 0);
+  CHECK(FT_Set_Pixel_Sizes(font, 0, 48) == 0);
   
   for(int kar = 32; kar < 128; kar++) {
     CHECK(FT_Load_Char(font, kar, FT_LOAD_RENDER|FT_LOAD_MONOCHROME) == 0);
@@ -133,7 +160,7 @@ int main(int argc, char **argv) {
         string ro;
         for(int x = 0; x < tempbitmap.width; x++) {
           ro += (tempbitmap.buffer[x + y * tempbitmap.width] ? "#" : " ");
-          img.dat[y + 1][x + 1] = tempbitmap.buffer[x + y * tempbitmap.width];
+          img.dat[y + 1][x + 1] = tempbitmap.buffer[x + y * tempbitmap.width] ? 255 : 0;
         }
         dprintf("%s\n", ro.c_str());
       }
