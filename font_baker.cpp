@@ -71,6 +71,8 @@ bool operator<(const Data &lhs, const Data &rhs) {
   return lhs.id < rhs.id; // should be unique
 }
 
+string out_prefix;
+
 struct Bucket {
   vector<pair<Image, Data> > items;
   
@@ -128,7 +130,7 @@ struct Bucket {
       }
     }
     
-    FILE *fil = fopen("font.png", "wb");
+    FILE *fil = fopen((out_prefix + "font.png").c_str(), "wb");
     
     png_structp  png_ptr;
     png_infop  info_ptr;
@@ -194,9 +196,10 @@ int main(int argc, char **argv) {
   
   Bucket bucket;
   
-  CHECK(argc == 2);
+  CHECK(argc == 3);
   
   dprintf("%s\n", argv[1]);
+  out_prefix = argv[2];
   
   FT_Library freetype;
   CHECK(FT_Init_FreeType(&freetype) == 0);
@@ -238,7 +241,7 @@ int main(int argc, char **argv) {
             dist = -closest.find_closest(ctx, cty, 1);
           }
           
-          dist = dist / supersample * distmult + 128;
+          dist = dist / supersample * distmult + 127;
           
           dist = floor(dist + 0.5);
           
@@ -274,7 +277,7 @@ int main(int argc, char **argv) {
   
   sort(results.begin(), results.end());
   
-  FILE *fil = fopen("font.lua", "wb");
+  FILE *fil = fopen((out_prefix + "font.lua").c_str(), "wb");
   fprintf(fil, "height = %f\n", -1.f);
   fprintf(fil, "baseline = %f\n", -1.f);
   fprintf(fil, "distslope = %f\n", -1.f);

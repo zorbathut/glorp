@@ -325,6 +325,7 @@ WrappedTex *GetTex(const string &image) {
   if(!tex) tex = Image::Load("data/" + image + ".jpg");
   if(!tex) tex = Image::Load(image + ".png");
   if(!tex) tex = Image::Load(image + ".jpg");
+  if(!tex) tex = Image::Load(string("build/") + game_platform + "/glorp/" + image + ".png");
   if(!tex) return NULL;
   
   return new WrappedTex(tex, image);

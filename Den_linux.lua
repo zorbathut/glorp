@@ -26,7 +26,7 @@ rv.create_runnable = function(dat)
     table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, libname), ("%s/%s"):format(libpath, libname), ursa.util.copy{}})
   end
   
-  return {deps = {dlls, dat.mainprog, "build/linux/glorp/constants.lua"}, cli = ("%s%s.prog"):format(params.builddir, params.name)}
+  return {deps = {dlls, dat.mainprog}, cli = ("%s%s.prog"):format(params.builddir, params.name)}
 end
 
 rv.appprefix = params.builddir .. "deploy/" .. params.midname .. "/"

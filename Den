@@ -308,7 +308,7 @@ end
 
 ursa.token.rule{"version", nil, ("git describe --always --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
 
-local genlua = {}
+local genfiles = {}
 
 ursa.rule{builddir .. "glorp/version.cpp", "#version", function ()
   print("Writing file version.cpp")
@@ -320,7 +320,7 @@ ursa.rule{builddir .. "glorp/version.cpp", "#version", function ()
   fil:write(([[extern const char game_platform[] = "%s";]]):format(platform) .. "\n")
   fil:close()
 end}
-table.insert(genlua, ursa.rule{builddir .. "glorp/constants.lua", "!" .. params.gl_version_expected, function ()
+table.insert(genfiles, ursa.rule{builddir .. "glorp/constants.lua", "!" .. params.gl_version_expected, function ()
   print("Writing file constants.lua")
   local fil = io.open(builddir .. "glorp/constants.lua", "w")
   fil:write(([[gl_version_expected = %f]]):format(params.gl_version_expected) .. "\n")
@@ -405,7 +405,7 @@ local function build_program(name)
   local item = buildables[name]
   assert(item)
   
-  local prefix = builddir .. name
+  local prefix = builddir .. name .. "_objs"
   
   local objs = {}
   
@@ -449,8 +449,9 @@ end
 
 local mainprog = build_program(params.name)
 local reporter = build_program("reporter")
+local font_baker = build_program("font_baker")
 
-ursa.command{"font_baker", build_program("font_baker")}
+table.insert(genfiles, ursa.rule{{builddir .. "glorp/font.lua", builddir .. "glorp/font.png"}, {font_baker, params.font}, string.format("build/%s/font_baker %s build/%s/glorp/", platform, params.font, platform)})
 
 ursa.token.rule{"oggquality", "!6", function () return "6" end}  -- heh.
 
@@ -534,9 +535,9 @@ do
   ursa.token.rule{"core_files", nil, "ls *.lua *.ttf *.otf | grep -v crashmelt | grep -v playtest.lev.lua", always_rebuild = true}
   table.insert(data_deps, copy_a_lot("core", "data/", ""))
   
-  -- generated lua files
-  ursa.token.rule{"generated_lua_files", genlua, ("cd build/%s/glorp && ls *.lua"):format(platform)}
-  table.insert(data_deps, copy_a_lot("generated_lua", "data/", ("build/%s/glorp/"):format(platform)))
+  -- generated files
+  ursa.token.rule{"generated_files", genfiles, ("cd build/%s/glorp && ls *.lua *.png"):format(platform)}
+  table.insert(data_deps, copy_a_lot("generated", "data/", ("build/%s/glorp/"):format(platform)))
 
   ursa.token.rule{"datafiles", data_deps, function ()
     local chunks = {}
@@ -596,14 +597,14 @@ end
 
 local runnable = osd.create_runnable{mainprog = mainprog, reporter = reporter}
 
-ursa.command{ursa.command.default, runnable.deps}
+ursa.command{ursa.command.default, {runnable.deps, genfiles}}
 
 if osd.no_cli_params then
-  ursa.command{"run", runnable.deps, runnable.cli}
+  ursa.command{"run", {runnable.deps, genfiles}, runnable.cli}
 else
-  ursa.command{"run", runnable.deps, runnable.cli .. " debug"}
-  ursa.command{"editor", runnable.deps, runnable.cli .. " editor"}
-  ursa.command{"runclean", runnable.deps, runnable.cli}
+  ursa.command{"run", {runnable.deps, genfiles}, runnable.cli .. " debug"}
+  ursa.command{"editor", {runnable.deps, genfiles}, runnable.cli .. " editor"}
+  ursa.command{"runclean", {runnable.deps, genfiles}, runnable.cli}
 end
 
 ursa.command{"package", osd.installers("datafiles")}

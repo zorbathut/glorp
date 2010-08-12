@@ -4,7 +4,7 @@ print("VENDOR:", gl.GetString("VENDOR"))
 print("RENDERER:", gl.GetString("RENDERER"))
 print("VERSION:", gl.GetString("VERSION"))
 
-package.path = package.path .. "data/?.lua;glorp/?.lua;glorp/resources/?.lua"
+package.path = package.path .. ";data/?.lua;glorp/?.lua;glorp/resources/?.lua"
 
 collectgarbage("stop")
 
@@ -50,6 +50,8 @@ function wrap_init(platform, filename, mode_in, ...)
   plat, mode = platform, mode_in
   print(plat, mode)
   wrap_init = nil
+  
+  package.path = package.path .. ";build/" .. platform .. "/glorp"
   
   local stt 
   assert(loadfile("stage.lua"))(platform, filename, mode_in, ...)

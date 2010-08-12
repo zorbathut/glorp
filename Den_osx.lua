@@ -43,7 +43,7 @@ rv.create_runnable = function(dat)
   
   runnable_deps = runnable
   
-  return {deps = {runnable, "build/osx/glorp/constants.lua"}, cli = '"' .. basepath .."/Contents/MacOS/" .. params.longname .. '"'}
+  return {deps = {runnable}, cli = '"' .. basepath .."/Contents/MacOS/" .. params.longname .. '"'}
 end
 
 rv.appprefix = ("build/osx/deploy/%s.app/"):format(params.longname)
