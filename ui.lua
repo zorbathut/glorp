@@ -661,6 +661,40 @@ function FrameTypes.TextMultiline:_Init()
   self:SetText("")
 end
 
+
+local function LoadFont(name)
+  local tex = Texture(name)
+  local fil = loadfile(name .. ".lua")
+  
+  local env = {}
+  setfenv(fil, env)
+  
+  fil()
+  
+  return {tex = tex, dat = env}
+end
+local TextDistanceFont = LoadFont("font")
+print(TextDistanceFont.tex, TextDistanceFont.dat)
+--assert(false)
+
+FrameTypes.TextDistance = {}
+function FrameTypes.TextDistance:SetText(text)
+  self.text = text
+  self:RecalculateBounds()
+end
+function FrameTypes.TextDistance:SetSize(size)
+  self.size = size
+  self:RecalculateBounds()  -- technically just a multiplication, but lazy
+end
+function FrameTypes.TextDistance:RecalculateBounds()
+end
+function FrameTypes.TextDistance:SetColor(r, g, b, a)
+  self.r, self.g, self.b, self.a = r, g, b, a
+end
+function FrameTypes.TextDistance:Draw()
+  -- yupyupyup
+end
+
 FrameTypes.Texture = {}
 function FrameTypes.Texture:SetTexture(tex, preserve_dimensions)
   if type(tex) == "string" then tex = Texture(tex) end
