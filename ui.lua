@@ -558,8 +558,12 @@ function UI_Reset()
 end
 UI_Reset()
 
+local FrameTypes = {}
 
-local function Button_Key(self, button, ascii, event)
+FrameTypes.Frame = {}
+
+FrameTypes.Button = {}
+function FrameTypes.Button:Key(button, ascii, event)
   if not button then return true end
   if button ~= "mouse_left" and not button:match("finger_%d+") then return true end  -- don't know don't care
   
@@ -574,28 +578,28 @@ local function Button_Key(self, button, ascii, event)
     if self.Repeat then self:Repeat() end
   end
 end
-local function Button_MouseOut(self)
+function FrameTypes.Button:MouseOut()
   self.button_down = false
 end
 
-local TextOverrides = {}
-function TextOverrides:AssimilateBounds()
+FrameTypes.Text = {}
+function FrameTypes.Text:AssimilateBounds()
   self.text:UpdateSize(0, 0)
   self:SetWidth(self.text:GetWidth())
   self:SetHeight(self.text:GetHeight())
 end
-function TextOverrides:SetSize(size)
+function FrameTypes.Text:SetSize(size)
   self.text:SetTextSize(size / GetScreenX())
   self:AssimilateBounds()
 end
-function TextOverrides:SetColor(r, g, b, a)
+function FrameTypes.Text:SetColor(r, g, b, a)
   Text_SetColor(self.text, r, g, b, a or 1)
 end
-function TextOverrides:SetText(text)
+function FrameTypes.Text:SetText(text)
   self.text:SetText(text)
   self:AssimilateBounds()
 end
-function TextOverrides:Draw()
+function FrameTypes.Text:Draw()
   local l, u, r, d = self:GetBounds()
   if not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
     self.text:SetPosition(l, u, l, u, r, d)
@@ -603,10 +607,13 @@ function TextOverrides:Draw()
   end
   self.text:Render()
 end
+function FrameTypes.Text:_Init()
+  self.text = TextFrame_Make("")
+  self:SetText("")
+end
 
-
-local TextMultilineOverrides = {}
-function TextMultilineOverrides:ResynchText()
+FrameTypes.TextMultiline = {}
+function FrameTypes.TextMultiline:ResynchText()
   local col = ("\1J0C%02x%02x%02x%02x\1"):format(self.tex_r * 255, self.tex_g * 255, self.tex_b * 255, self.tex_a * 255)
   local siz
   if self.tex_size then
@@ -617,25 +624,25 @@ function TextMultilineOverrides:ResynchText()
   self.text:SetText(col .. siz .. self.tex_tex)
   self.update = true
 end
-function TextMultilineOverrides:SetText(text)
+function FrameTypes.TextMultiline:SetText(text)
   self.tex_tex = text
   self:ResynchText()
 end
-function TextMultilineOverrides:SetColor(r, g, b, a)
+function FrameTypes.TextMultiline:SetColor(r, g, b, a)
   if not a then a = 1 end
   self.tex_r, self.tex_g, self.tex_b, self.tex_a = r, g, b, a
   self:ResynchText()
 end
-function TextMultilineOverrides:SetSize(siz)
+function FrameTypes.TextMultiline:SetSize(siz)
   self.tex_size = siz
   self:ResynchText()
 end
-function TextMultilineOverrides:ForceHeight()
+function FrameTypes.TextMultiline:ForceHeight()
   self.text:UpdateSize(self:GetWidth(), 1000)
   self.text:SetPosition(0, 0, 0, 0, self:GetWidth(), 1000)
   self:SetHeight(self.text:GetHeight())
 end
-function TextMultilineOverrides:Draw()
+function FrameTypes.TextMultiline:Draw()
   local l, u, r, d = self:GetBounds()
   if self.update or not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
     self.text:UpdateSize(r - l, d - u)
@@ -645,13 +652,17 @@ function TextMultilineOverrides:Draw()
   end
   self.text:Render()
 end
-TextMultilineOverrides.tex_r = 1
-TextMultilineOverrides.tex_g = 1
-TextMultilineOverrides.tex_b = 1
-TextMultilineOverrides.tex_a = 1
+FrameTypes.TextMultiline.tex_r = 1
+FrameTypes.TextMultiline.tex_g = 1
+FrameTypes.TextMultiline.tex_b = 1
+FrameTypes.TextMultiline.tex_a = 1
+function FrameTypes.TextMultiline:_Init()
+  self.text = FancyTextFrame_Make("")
+  self:SetText("")
+end
 
-local TextureOverrides = {}
-function TextureOverrides:SetTexture(tex, preserve_dimensions)
+FrameTypes.Texture = {}
+function FrameTypes.Texture:SetTexture(tex, preserve_dimensions)
   if type(tex) == "string" then tex = Texture(tex) end
   self.tex = tex
   if not preserve_dimensions then
@@ -659,18 +670,18 @@ function TextureOverrides:SetTexture(tex, preserve_dimensions)
     self:SetHeight(tex:GetHeight())
   end
 end
-function TextureOverrides:Draw()
+function FrameTypes.Texture:Draw()
   if self.tex then glutil.RenderBoundedSprite(self.tex, {self:GetBounds()}, self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a) end
 end
-function TextureOverrides:SetColor(r, g, b, a)
+function FrameTypes.Texture:SetColor(r, g, b, a)
   self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a = r, g, b, a
 end
-function TextureOverrides:GetColor()
+function FrameTypes.Texture:GetColor()
   return self._sprite_r, self._sprite_g, self._sprite_b, self._sprite_a
 end
 
-local DragOverrides = {}
-function DragOverrides:Tick()
+FrameTypes.Drag = {}
+function FrameTypes.Drag:Tick()
   if self._dragging then
     if not IsKeyDownFrame("mouse_left") then
       self._dragging = false
@@ -682,7 +693,7 @@ function DragOverrides:Tick()
     end
   end
 end
-function DragOverrides:Key(key, _, event)
+function FrameTypes.Drag:Key(key, _, event)
   if key == "mouse_left" and event == "press" then
     self._dragging = true
     self.drag_x, self.drag_y = GetMouse()
@@ -690,8 +701,8 @@ function DragOverrides:Key(key, _, event)
   end
 end
 
-local ScrollOverrides = {}
-function ScrollOverrides:Tick()
+FrameTypes.Scroll = {}
+function FrameTypes.Scroll:Tick()
   if self.scroll_position ~= self.scroll_position_last then
     local scrollheight = self.scrollbar:GetHeight() - 2
     local dataheight = self.internal:GetHeight()
@@ -718,7 +729,7 @@ function ScrollOverrides:Tick()
     self.scroll_position_last = self.scroll_position
   end
 end
-function ScrollInit(self, name)
+function FrameTypes.Scroll:_Init(name)
   self.key_bounds_cull = true
   
   self.scrollbar = CreateFrame("Frame", self, name .. " (scrollbar)")
@@ -768,7 +779,7 @@ function ScrollInit(self, name)
   self.scroll_widget:SetPoint("TOP", self.scrollbar, "TOP", nil, 1)
 end
 
-local RenderSorterOverrides = {}
+FrameTypes.RenderSorter = {}
 do
   local function GetMatrix(typ)
     return gl.Get(typ .. "_MATRIX")
@@ -801,13 +812,13 @@ do
     f.render()
   end
   
-  function RenderSorterOverrides:Render(...)
+  function FrameTypes.RenderSorter:Render_New(...)
     local model = GetMatrix("MODELVIEW")
     local proj = GetMatrix("PROJECTION")
     
     assert(RenderSort_Current == RenderSort_Deactivated)
     RenderSort_Current = RenderSort_Activated
-    perfbar(0.5, 0.5, 1.0, self._Render, self, ...)
+    perfbar(0.5, 0.5, 1.0, self.Render_Original, self, ...)
     assert(RenderSort_Current == RenderSort_Activated)
     RenderSort_Current = RenderSort_Deactivated
     
@@ -842,7 +853,7 @@ do
       collates = {}
     end)
   end
-  function RenderSorterOverrides:SetShaderPriority(shader, priority, r, g, b)
+  function FrameTypes.RenderSorter:SetShaderPriority(shader, priority, r, g, b)
     for k, v in ipairs(self.priorities) do
       if v.shader == shader then
         table.remove(self.priorities, k)
@@ -856,6 +867,12 @@ do
     table.insert(self.priorities, {shader = shader, priority = priority, r = r, g = g, b = b})
     table.sort(self.priorities, function (a, b) return a.priority < b.priority end)
   end
+  function FrameTypes.RenderSorter:_Init()
+    self.priorities = {}
+    self.Render_Original = self.Render
+    self.Render = self.Render_New
+    self.Render_New = nil
+  end
 end
 
 function CreateFrame(typ, parent, name)
@@ -868,60 +885,20 @@ function CreateFrame(typ, parent, name)
     end
   end
   
-  if typ == "Frame" then
-    return Region(parent, name)
-  elseif typ == "Button" then
-    local rg = Region(parent, name)
-    rg.Key = Button_Key
-    rg.MouseOut = Button_MouseOut
-    return rg
-  elseif typ == "Draggable" then
-    local rg = Region(parent, name)
-    for k, v in pairs(DragOverrides) do
+  assert(FrameTypes[typ])
+  
+  local rg = Region(parent, name)
+  for k, v in pairs(FrameTypes[typ]) do
+    if k ~= "_Init" then
       rg[k] = v
     end
-    return rg
-  elseif typ == "Text" then
-    local rg = Region(parent, name)
-    for k, v in pairs(TextOverrides) do
-      rg[k] = v
-    end
-    rg.text = TextFrame_Make("")
-    rg:SetText("")
-    return rg
-  elseif typ == "Text_Multiline" then
-    local rg = Region(parent, name)
-    for k, v in pairs(TextMultilineOverrides) do
-      rg[k] = v
-    end
-    rg.text = FancyTextFrame_Make("")
-    rg:SetText("")
-    return rg
-  elseif typ == "Texture" then
-    local rg = Region(parent, name)
-    for k, v in pairs(TextureOverrides) do
-      rg[k] = v
-    end
-    return rg
-  elseif typ == "RenderSorter" then
-    local rg = Region(parent, name)
-    rg._Render = rg.Render
-    for k, v in pairs(RenderSorterOverrides) do
-      rg[k] = v
-    end
-    rg.priorities = {}
-    return rg
-  elseif typ == "Scroll" then
-    local rg = Region(parent, name)
-    for k, v in pairs(ScrollOverrides) do
-      rg[k] = v
-    end
-    ScrollInit(rg, name)
-    return rg
-  else
-    assert(false)
   end
-  assert(false)
+  
+  if FrameTypes[typ]._Init then
+    FrameTypes[typ]._Init(rg, name)
+  end
+  
+  return rg
 end
 
 local function TraverseUpWorker(start, x, y, keyed)
