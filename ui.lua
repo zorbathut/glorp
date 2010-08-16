@@ -677,6 +677,40 @@ local TextDistanceFont = LoadFont("font")
 print(TextDistanceFont.tex, TextDistanceFont.dat)
 --assert(false)
 
+local text_shader
+do
+  local vertex = glutil.Shader("VERTEX", [[
+    void main()
+    {
+      gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+      gl_TexCoord[0]  = gl_MultiTexCoord0;
+      
+      gl_FrontColor = gl_Color;
+      gl_BackColor = gl_Color;
+    }
+  ]])
+  local fragment = glutil.Shader("FRAGMENT", [[
+    uniform sampler2D tex;
+    
+    uniform vec2 texshift;
+    
+    void main()
+    {
+      float alph = texture2D(tex, gl_TexCoord[0].st).r;
+      
+      float shift = max(length(dFdx(gl_TexCoord[0].st) * texshift), length(dFdy(gl_TexCoord[0].st) * texshift)) / 2.0;
+      
+      float dens = smoothstep(0.5 - shift, 0.5 + shift, alph);
+      
+      gl_FragColor = vec4(gl_Color.rgb, gl_Color.a * dens);
+    }
+  ]])
+  text_shader = glutil.Program()
+  glutil.AttachShader(text_shader, vertex)
+  glutil.AttachShader(text_shader, fragment)
+  glutil.LinkProgram(text_shader)
+end
+
 FrameTypes.TextDistance = {}
 function FrameTypes.TextDistance:SetText(text)
   self.text = text
@@ -702,10 +736,8 @@ function FrameTypes.TextDistance:Draw()
   local vertices = {}
   local texes = {}
   
-  font.tex:SetTexture()
+  
   gl.Color(self.r or 1, self.g or 0.5, self.b or 0, self.a or 1)
-  gl.MatrixMode("TEXTURE")
-  gl.LoadIdentity()
   
   local sx, sy = self:GetLeft(), self:GetBottom()
   for i = 1, #self.text do
@@ -714,6 +746,7 @@ function FrameTypes.TextDistance:Draw()
     
     if kar then
       local dx, dy = kar.ex - kar.sx, kar.ey - kar.sy
+      dx, dy = dx, dy
       
       local vsx, vsy, vex, vey = sx + kar.ox, sy + kar.oy, sx + kar.ox + dx, sy + kar.oy + dy
       local tsx, tsy, tex, tey = kar.sx / iw, kar.sy / ih, kar.ex / iw, kar.ey / ih
@@ -746,9 +779,15 @@ function FrameTypes.TextDistance:Draw()
   
   printit = false
   
+  glutil.UseProgram(text_shader)
+  font.tex:SetTexture()
+  gl.TexParameter("TEXTURE_2D", "TEXTURE_MAG_FILTER", "LINEAR");
+  glutil.UniformI(text_shader, "tex", 0)
+  glutil.UniformF(text_shader, "texshift", iw * font.dat.distslope, ih * font.dat.distslope)
   glutil.RenderArray("QUADS", 2, vertices, nil, nil, 2, texes)
-
   SetNoTexture()
+  glutil.UseProgram(nil)
+  
 end
 
 FrameTypes.Texture = {}

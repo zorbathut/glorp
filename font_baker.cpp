@@ -26,7 +26,9 @@ using namespace std;
 
 const int pixheight = 48;
 const int supersample = 32;
-const int distmult = 64;  // this is "one pixel in the final version equals 64 difference". reduce this number to increase the "blur" radius, increase it to make things "sharper"
+const int distmult = 32;  // this is "one pixel in the final version equals 64 difference". reduce this number to increase the "blur" radius, increase it to make things "sharper"
+
+const int image_width = 512;
 
 const int maxsearch = (128 * supersample + distmult - 1) / distmult;
 
@@ -80,12 +82,11 @@ struct Bucket {
     items.push_back(make_pair(img, dat));
   }
   vector<Data> Resolve() {
-    const int wid = 512;
     
     Image masq;
     Image dest;
-    masq.resize(512, 1);
-    dest.resize(512, 1);
+    masq.resize(image_width, 1);
+    dest.resize(image_width, 1);
     
     sort(items.begin(), items.end());
     
@@ -93,16 +94,16 @@ struct Bucket {
       int idx = items[i].first.dat[0].size();
       int idy = items[i].first.dat.size();
       
-      CHECK(idx <= wid);
+      CHECK(idx <= image_width);
       
       bool found = false;
       
       for(int ty = 0; ty < 2048 && !found; ty++) {  // hurfing, occasional durfing
         if(ty + idy > dest.dat.size()) {
-          masq.resize(512, ty + idy);
-          dest.resize(512, ty + idy);
+          masq.resize(image_width, ty + idy);
+          dest.resize(image_width, ty + idy);
         }
-        for(int tx = 0; tx <= wid - items[i].first.dat[0].size() && !found; tx++) {
+        for(int tx = 0; tx <= image_width - items[i].first.dat[0].size() && !found; tx++) {
           bool valid = !(masq.dat[ty][tx] || masq.dat[ty + idy - 1][tx] || masq.dat[ty][tx + idx - 1] || masq.dat[ty + idy - 1][tx + idx - 1]);
           
           if(valid) {
@@ -243,7 +244,7 @@ int main(int argc, char **argv) {
             dist = -closest.find_closest(ctx, cty, 1);
           }
           
-          dist = dist / supersample * distmult + 127;
+          dist = dist / supersample * distmult + 127.5;
           
           dist = floor(dist + 0.5);
           
@@ -284,7 +285,7 @@ int main(int argc, char **argv) {
   FILE *fil = fopen((out_prefix + "font.lua").c_str(), "wb");
   fprintf(fil, "height = %f\n", -1.f);
   fprintf(fil, "baseline = %f\n", -1.f);
-  fprintf(fil, "distslope = %f\n", -1.f);
+  fprintf(fil, "distslope = %f\n", distmult / 256.0);
   fprintf(fil, "characters = {}\n");
   for(int i = 0; i < results.size(); i++) {
     fprintf(fil, "characters[%d] = {sx = %d, sy = %d, ex = %d, ey = %d, ox = %f, oy = %f, w = %f}\n", results[i].id, results[i].sx, results[i].sy, results[i].ex, results[i].ey, results[i].ox, results[i].oy, results[i].wx);
