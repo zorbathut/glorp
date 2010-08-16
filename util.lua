@@ -173,9 +173,6 @@ function glutil.RenderBoundedSpriteSegment(tex, sx, sy, ex, ey, ttsx, ttsy, ttex
   local teey = tex:GetHeight() / tex:GetInternalHeight()
   assert(teex and teey)
   
-  local xadj = 1 / tex:GetInternalWidth() / 2
-  local yadj = 1 / tex:GetInternalHeight() / 2
-  
   tex:SetTexture()
   gl.Color(1, 1, 1)
   glutil.RenderArray("TRIANGLE_FAN", 2, {sx, sy, ex, sy, ex, ey, sx, ey}, nil, nil, 2, {teex * ttsx, teey * ttsy, teex * ttex, teey * ttsy, teex * ttex, teey * ttey, teex * ttsx, teey * ttey})

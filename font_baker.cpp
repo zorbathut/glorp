@@ -215,6 +215,11 @@ int main(int argc, char **argv) {
     CHECK(FT_Load_Char(font, kar, FT_LOAD_RENDER|FT_LOAD_MONOCHROME) == 0);
     
     dprintf("%dx%d %08x\n", font->glyph->bitmap.width, font->glyph->bitmap.rows, font->glyph->bitmap.buffer);
+    
+    Image img;
+    
+    const int bord = (128 + distmult - 1) / distmult + 1;
+    
     if(font->glyph->bitmap.buffer) {
       FT_Bitmap tempbitmap;
       FT_Bitmap_New(&tempbitmap);
@@ -222,9 +227,6 @@ int main(int argc, char **argv) {
       
       Closest closest(tempbitmap);
       
-      int bord = (128 + distmult - 1) / distmult + 1;
-      
-      Image img;
       img.resize((tempbitmap.width + supersample - 1) / supersample + bord * 2, (tempbitmap.rows + supersample - 1) / supersample + bord * 2);
       
       int lmx = img.dat[0].size();
@@ -252,24 +254,26 @@ int main(int argc, char **argv) {
         }
       }
       
-      Data dat;
-      
-      dat.id = kar;
-      
-      dat.sx = 0;
-      dat.sy = 0;
-      dat.ex = img.dat[0].size();
-      dat.ey = img.dat.size();
-      
-      dat.ox = (float)font->glyph->metrics.horiBearingX / 64 / supersample - bord;
-      dat.oy = -(float)font->glyph->metrics.horiBearingY / 64 / supersample - bord;
-      
-      dat.wx = (float)font->glyph->metrics.horiAdvance / 64 / supersample;
-      
-      bucket.AddItem(img, dat);
-       
       FT_Bitmap_Done(freetype, &tempbitmap);
+    } else {
+      img.resize(1, 1);
     }
+    
+    Data dat;
+    
+    dat.id = kar;
+    
+    dat.sx = 0;
+    dat.sy = 0;
+    dat.ex = img.dat[0].size();
+    dat.ey = img.dat.size();
+    
+    dat.ox = (float)font->glyph->metrics.horiBearingX / 64 / supersample - bord;
+    dat.oy = -(float)font->glyph->metrics.horiBearingY / 64 / supersample - bord;
+    
+    dat.wx = (float)font->glyph->metrics.horiAdvance / 64 / supersample;
+    
+    bucket.AddItem(img, dat);
   }
   
   dprintf("resolve\n");

@@ -687,12 +687,68 @@ function FrameTypes.TextDistance:SetSize(size)
   self:RecalculateBounds()  -- technically just a multiplication, but lazy
 end
 function FrameTypes.TextDistance:RecalculateBounds()
+  self:SetWidth(50)
+  self:SetHeight(50)
 end
 function FrameTypes.TextDistance:SetColor(r, g, b, a)
   self.r, self.g, self.b, self.a = r, g, b, a
 end
+local printit = true
 function FrameTypes.TextDistance:Draw()
-  -- yupyupyup
+  local font = TextDistanceFont
+  
+  local iw, ih = font.tex:GetInternalWidth(), font.tex:GetInternalHeight()
+  
+  local vertices = {}
+  local texes = {}
+  
+  font.tex:SetTexture()
+  gl.Color(self.r or 1, self.g or 0.5, self.b or 0, self.a or 1)
+  gl.MatrixMode("TEXTURE")
+  gl.LoadIdentity()
+  
+  local sx, sy = self:GetLeft(), self:GetBottom()
+  for i = 1, #self.text do
+    local letter = self.text:byte(i)
+    local kar = font.dat.characters[letter]
+    
+    if kar then
+      local dx, dy = kar.ex - kar.sx, kar.ey - kar.sy
+      
+      local vsx, vsy, vex, vey = sx + kar.ox, sy + kar.oy, sx + kar.ox + dx, sy + kar.oy + dy
+      local tsx, tsy, tex, tey = kar.sx / iw, kar.sy / ih, kar.ex / iw, kar.ey / ih
+      
+      if printit then print(self.text:sub(i, i), letter, " ", vsx, vsy, vex, vey, " ", tsx, tsy, tex, tey, " ", dx, dy, " ", iw, ih) end
+      
+      table.insert(vertices, vsx)
+      table.insert(vertices, vsy)
+      table.insert(texes, tsx)
+      table.insert(texes, tsy)
+      
+      table.insert(vertices, vex)
+      table.insert(vertices, vsy)
+      table.insert(texes, tex)
+      table.insert(texes, tsy)
+      
+      table.insert(vertices, vex)
+      table.insert(vertices, vey)
+      table.insert(texes, tex)
+      table.insert(texes, tey)
+      
+      table.insert(vertices, vsx)
+      table.insert(vertices, vey)
+      table.insert(texes, tsx)
+      table.insert(texes, tey)
+      
+      sx = sx + kar.w
+    end
+  end
+  
+  printit = false
+  
+  glutil.RenderArray("QUADS", 2, vertices, nil, nil, 2, texes)
+
+  SetNoTexture()
 end
 
 FrameTypes.Texture = {}
