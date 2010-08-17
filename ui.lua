@@ -582,24 +582,24 @@ function FrameTypes.Button:MouseOut()
   self.button_down = false
 end
 
-FrameTypes.Text = {}
-function FrameTypes.Text:AssimilateBounds()
+FrameTypes.TextGlop = {}
+function FrameTypes.TextGlop:AssimilateBounds()
   self.text:UpdateSize(0, 0)
   self:SetWidth(self.text:GetWidth())
   self:SetHeight(self.text:GetHeight())
 end
-function FrameTypes.Text:SetSize(size)
+function FrameTypes.TextGlop:SetSize(size)
   self.text:SetTextSize(size / GetScreenX())
   self:AssimilateBounds()
 end
-function FrameTypes.Text:SetColor(r, g, b, a)
+function FrameTypes.TextGlop:SetColor(r, g, b, a)
   Text_SetColor(self.text, r, g, b, a or 1)
 end
-function FrameTypes.Text:SetText(text)
+function FrameTypes.TextGlop:SetText(text)
   self.text:SetText(text)
   self:AssimilateBounds()
 end
-function FrameTypes.Text:Draw()
+function FrameTypes.TextGlop:Draw()
   local l, u, r, d = self:GetBounds()
   if not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
     self.text:SetPosition(l, u, l, u, r, d)
@@ -607,7 +607,7 @@ function FrameTypes.Text:Draw()
   end
   self.text:Render()
 end
-function FrameTypes.Text:_Init()
+function FrameTypes.TextGlop:_Init()
   self.text = TextFrame_Make("")
   self:SetText("")
 end
@@ -805,6 +805,8 @@ function FrameTypes.TextDistance:_Init()
   self.size = 50
   self:SetText("")
 end
+
+FrameTypes.Text = FrameTypes.TextDistance
 
 FrameTypes.Texture = {}
 function FrameTypes.Texture:SetTexture(tex, preserve_dimensions)
