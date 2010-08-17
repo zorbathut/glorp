@@ -4,3 +4,6 @@
 [submodule "lgl"]
 	path = lgl
 	url = git@github.com:zorbathut/lgl.git
+[submodule "mild"]
+	path = mild
+	url = git@github.com:zorbathut/mild.git
