@@ -612,8 +612,8 @@ function FrameTypes.Text:_Init()
   self:SetText("")
 end
 
-FrameTypes.TextMultiline = {}
-function FrameTypes.TextMultiline:ResynchText()
+FrameTypes.Text_Multiline = {}
+function FrameTypes.Text_Multiline:ResynchText()
   local col = ("\1J0C%02x%02x%02x%02x\1"):format(self.tex_r * 255, self.tex_g * 255, self.tex_b * 255, self.tex_a * 255)
   local siz
   if self.tex_size then
@@ -624,25 +624,25 @@ function FrameTypes.TextMultiline:ResynchText()
   self.text:SetText(col .. siz .. self.tex_tex)
   self.update = true
 end
-function FrameTypes.TextMultiline:SetText(text)
+function FrameTypes.Text_Multiline:SetText(text)
   self.tex_tex = text
   self:ResynchText()
 end
-function FrameTypes.TextMultiline:SetColor(r, g, b, a)
+function FrameTypes.Text_Multiline:SetColor(r, g, b, a)
   if not a then a = 1 end
   self.tex_r, self.tex_g, self.tex_b, self.tex_a = r, g, b, a
   self:ResynchText()
 end
-function FrameTypes.TextMultiline:SetSize(siz)
+function FrameTypes.Text_Multiline:SetSize(siz)
   self.tex_size = siz
   self:ResynchText()
 end
-function FrameTypes.TextMultiline:ForceHeight()
+function FrameTypes.Text_Multiline:ForceHeight()
   self.text:UpdateSize(self:GetWidth(), 1000)
   self.text:SetPosition(0, 0, 0, 0, self:GetWidth(), 1000)
   self:SetHeight(self.text:GetHeight())
 end
-function FrameTypes.TextMultiline:Draw()
+function FrameTypes.Text_Multiline:Draw()
   local l, u, r, d = self:GetBounds()
   if self.update or not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
     self.text:UpdateSize(r - l, d - u)
@@ -652,11 +652,11 @@ function FrameTypes.TextMultiline:Draw()
   end
   self.text:Render()
 end
-FrameTypes.TextMultiline.tex_r = 1
-FrameTypes.TextMultiline.tex_g = 1
-FrameTypes.TextMultiline.tex_b = 1
-FrameTypes.TextMultiline.tex_a = 1
-function FrameTypes.TextMultiline:_Init()
+FrameTypes.Text_Multiline.tex_r = 1
+FrameTypes.Text_Multiline.tex_g = 1
+FrameTypes.Text_Multiline.tex_b = 1
+FrameTypes.Text_Multiline.tex_a = 1
+function FrameTypes.Text_Multiline:_Init()
   self.text = FancyTextFrame_Make("")
   self:SetText("")
 end
@@ -721,8 +721,22 @@ function FrameTypes.TextDistance:SetSize(size)
   self:RecalculateBounds()  -- technically just a multiplication, but lazy
 end
 function FrameTypes.TextDistance:RecalculateBounds()
-  self:SetWidth(50)
-  self:SetHeight(50)
+  local font = TextDistanceFont
+  
+  self:SetHeight(self.size)
+  self._scale = self.size / font.dat.height
+  
+  local wid = 0
+  for i = 1, #self.text do
+    local letter = self.text:byte(i)
+    local kar = font.dat.characters[letter]
+    
+    if kar then
+      wid = wid + kar.w
+    end
+  end
+  
+  self:SetWidth(wid * self._scale)
 end
 function FrameTypes.TextDistance:SetColor(r, g, b, a)
   self.r, self.g, self.b, self.a = r, g, b, a
@@ -739,16 +753,15 @@ function FrameTypes.TextDistance:Draw()
   
   gl.Color(self.r or 1, self.g or 0.5, self.b or 0, self.a or 1)
   
-  local sx, sy = self:GetLeft(), self:GetBottom()
+  local sx, sy = self:GetLeft(), self:GetTop() + font.dat.ascend * self._scale
   for i = 1, #self.text do
     local letter = self.text:byte(i)
     local kar = font.dat.characters[letter]
     
     if kar then
-      local dx, dy = kar.ex - kar.sx, kar.ey - kar.sy
-      dx, dy = dx, dy
+      local dx, dy = (kar.ex - kar.sx) * self._scale, (kar.ey - kar.sy) * self._scale
       
-      local vsx, vsy, vex, vey = sx + kar.ox, sy + kar.oy, sx + kar.ox + dx, sy + kar.oy + dy
+      local vsx, vsy, vex, vey = sx + kar.ox * self._scale, sy + kar.oy * self._scale, sx + kar.ox * self._scale + dx, sy + kar.oy * self._scale + dy
       local tsx, tsy, tex, tey = kar.sx / iw, kar.sy / ih, kar.ex / iw, kar.ey / ih
       
       if printit then print(self.text:sub(i, i), letter, " ", vsx, vsy, vex, vey, " ", tsx, tsy, tex, tey, " ", dx, dy, " ", iw, ih) end
@@ -773,7 +786,7 @@ function FrameTypes.TextDistance:Draw()
       table.insert(texes, tsx)
       table.insert(texes, tey)
       
-      sx = sx + kar.w
+      sx = sx + kar.w * self._scale
     end
   end
   
@@ -787,7 +800,10 @@ function FrameTypes.TextDistance:Draw()
   glutil.RenderArray("QUADS", 2, vertices, nil, nil, 2, texes)
   SetNoTexture()
   glutil.UseProgram(nil)
-  
+end
+function FrameTypes.TextDistance:_Init()
+  self.size = 50
+  self:SetText("")
 end
 
 FrameTypes.Texture = {}
@@ -1014,7 +1030,7 @@ function CreateFrame(typ, parent, name)
     end
   end
   
-  assert(FrameTypes[typ])
+  assert(FrameTypes[typ], typ)
   
   local rg = Region(parent, name)
   for k, v in pairs(FrameTypes[typ]) do

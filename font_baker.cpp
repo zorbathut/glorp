@@ -24,7 +24,7 @@
 
 using namespace std;
 
-const int pixheight = 48;
+const int pixheight = 64;
 const int supersample = 32;
 const int distmult = 32;  // this is "one pixel in the final version equals 64 difference". reduce this number to increase the "blur" radius, increase it to make things "sharper"
 
@@ -282,9 +282,19 @@ int main(int argc, char **argv) {
   
   sort(results.begin(), results.end());
   
+  float ascend = 0;
+  float descend = 0;
+  for(int i = 0; i < results.size(); i++) {
+    ascend = max(ascend, -results[i].oy);
+    descend = max(descend, results[i].ey - results[i].sy + results[i].oy);
+  }
+  
+  float height = font->size->metrics.height / 64.0 / supersample;
+  
   FILE *fil = fopen((out_prefix + "font.lua").c_str(), "wb");
-  fprintf(fil, "height = %f\n", -1.f);
-  fprintf(fil, "baseline = %f\n", -1.f);
+  fprintf(fil, "padding = %f\n", height - ascend - descend);
+  fprintf(fil, "height = %f\n", ascend + descend);
+  fprintf(fil, "ascend = %f\n", ascend);
   fprintf(fil, "distslope = %f\n", distmult / 256.0);
   fprintf(fil, "characters = {}\n");
   for(int i = 0; i < results.size(); i++) {
