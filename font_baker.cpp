@@ -11,11 +11,11 @@
 #include "init.h"
 #include "debug.h"
 
+#include <png.h>
+
 #include <ft2build.h>
 #include FT_FREETYPE_H 
 #include <freetype/ftbitmap.h>
-
-#include <png.h>
 
 #include <vector>
 #include <algorithm>
