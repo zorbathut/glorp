@@ -451,7 +451,7 @@ local mainprog = build_program(params.name)
 local reporter = build_program("reporter")
 local font_baker = build_program("font_baker")
 
-table.insert(genfiles, ursa.rule{{builddir .. "glorp/font.lua", builddir .. "glorp/font.png"}, {font_baker, params.font}, string.format("build/%s/font_baker %s build/%s/glorp/", platform, params.font, platform)})
+table.insert(genfiles, ursa.rule{{builddir .. "glorp/font.lua", builddir .. "glorp/font.png"}, {font_baker, params.font}, string.format("build/%s/font_baker%s %s build/%s/glorp/", platform, osd.extension, params.font, platform)})
 
 ursa.token.rule{"oggquality", "!6", function () return "6" end}  -- heh.
 
