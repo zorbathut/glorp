@@ -4,7 +4,7 @@ local rv = {}
 
 token_literal("CC", params.glop.cc)
 token_literal("CXXFLAGS", "-mwindows -DWIN32 -Iglorp/glop/release/cygwin/include")
-token_literal("LDFLAGS", "-L/Qt/2010.04/mingw -Lglorp/glop/release/cygwin/lib -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp -lpsapi")
+token_literal("LDFLAGS", "-static-libgcc -L/Qt/2010.04/mingw -Lglorp/glop/release/cygwin/lib -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp -lpsapi")
 
 token_literal("FLAC", "\"/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe\"")
 
