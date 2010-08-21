@@ -56,6 +56,9 @@ function table.wipe(tab)
     tab[x] = nil
   end
 end
+function math.random_choose(tab)
+  return tab[math.random(#tab)]
+end
 
 
 function GetMouse() return GetMouseX(), GetMouseY() end
@@ -79,6 +82,12 @@ end
 function lerp(d, s, e)
   return s * (1 - d) + e * d
 end
+function delerp(d, s, e)
+  return (d - s) / (e - s)
+end
+function remap(d, as, ae, bs, be)
+  return lerp(delerp(d, as, ae), bs, be)
+end
 function bezier(x0, x1, x2, x3, t)
   local cx = 3 * (x1 - x0)
   local bx = 3 * (x2 - x1) - cx
@@ -92,6 +101,18 @@ function cubic(x0, x1, x2, x3, t)
   local a3 = x1
   
   return a0 * t * t * t + a1 * t * t + a2 * t + a3
+end
+function normalize(a, b, c, d, e)
+  assert(not e)
+  local acu = 0
+  if a then acu = acu + a * a end
+  if b then acu = acu + b * b end
+  if c then acu = acu + c * c end
+  if d then acu = acu + d * d end
+  acu = math.sqrt(acu)
+  if acu == 0 then acu = 1 end -- yes yes
+  
+  return a and a / acu, b and b / acu, c and c / acu, d and d / acu
 end
 
 function line_intersect(sa, ea, sb, eb)
@@ -539,12 +560,17 @@ function impose_standard_ai(target)
   local tick_ai_reservoir = {}
   local clears = {}
   local clear_count = 0
-  function wipe_item(item)
+  local function wipe_item(item)
     clears[item] = true
     clear_count = clear_count + 1
   end
   function target:TickStandard()
+    local tar = {}
     for _, v in ipairs(tick_ai_reservoir) do
+      table.insert(tar, v)
+    end
+    
+    for _, v in ipairs(tar) do
       v(self)
     end
     
@@ -553,10 +579,14 @@ function impose_standard_ai(target)
       for _, v in ipairs(tick_ai_reservoir) do
         if not clears[v] then
           table.insert(ntai, v)
+        else
+          clear_count = clear_count - 1
         end
       end
       
-      clears, clear_count = {}, 0
+      assert(clear_count == 0)
+      
+      clears = {}
       tick_ai_reservoir = ntai
     end
   end
