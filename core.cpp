@@ -891,12 +891,7 @@ void fatal(const string &message) {
 
 DEFINE_bool(help, false, "Get help");
 void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
-  
-  if(atof((const char*)glGetString(GL_VERSION)) < 2.0) {
-    Message("This game currently requires OpenGL 2.0, which your computer doesn't seem to have.\n\nUpdating your video drivers might fix the problem, or it might not. Sorry!", false);
-    return;
-  }
-  
+
   #ifdef IPHONE
   width = 320;
   height = 480; // welp
@@ -966,6 +961,11 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   }
   FocusFrame *everything = new FocusFrame(world);
   window()->AddFrame(everything);
+  
+  if(atof((const char*)glGetString(GL_VERSION)) < 2.0) {
+    Message("This game currently requires OpenGL 2.0, which your computer doesn't seem to have.\n\nUpdating your video drivers might fix the problem, or it might not. Sorry!", false);
+    return;
+  }
   
   luainit(argc, argv);
   
