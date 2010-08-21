@@ -337,8 +337,10 @@ do
   -- if I got this right, these frames will actually end up deallocated
 end
 
+local ud = {}
 function tick_loop(...)
-  UIParent:Update()
+  ud = {}
+  UIParent:Update(ud)
   
   if wedothisfirst then
     wedothisfirst()

@@ -301,6 +301,7 @@ do
       for k, v in ipairs(self.parent.children) do
         if v == self then
           table.remove(self.parent.children, k)
+          self.parent._last_updated = nil -- we might need to reprocess
           break
         end
       end
@@ -316,6 +317,7 @@ do
   function Region_Type:resort_children()
     assert(self.children)
     table.sort(self.children, function (a, b) return (a.layer or 0) < (b.layer or 0) end)
+    self._last_updated = nil -- we might need to reprocess
     --[[
     if loud then
       print("layerz")
@@ -491,12 +493,18 @@ do
     end
   end
   
-  function Region_Type:Update()
-    if self.Tick then self:Tick() end
+  function Region_Type:Update(quanta)
+    if self._last_updated ~= quanta then
+      if self.Tick then self:Tick() end
+    end
     
-    if self.children then
-      for _, k in ipairs(self.children) do
-        k:Update()
+    while self._last_updated ~= quanta do
+      self._last_updated = quanta
+      
+      if self.children then
+        for _, k in ipairs(self.children) do
+          k:Update(quanta)
+        end
       end
     end
   end
