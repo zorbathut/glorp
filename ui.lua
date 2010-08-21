@@ -241,6 +241,9 @@ do
     local gs = getsize(self, "_anchor_y")
     if gs then return math.abs(gs) else return gs end
   end
+  function Region_Type:GetSize()
+    return self:GetWidth(), self:GetHeight()
+  end
   
   function Region_Type:GetLeft()
     return getpoint(self, "_anchor_x", 0)
