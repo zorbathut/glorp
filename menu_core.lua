@@ -15,26 +15,27 @@ end
 
 
 
-menu = {}
+menu = CreateFrame("Frame")
 
-menu.ok_button = CreateFrame("Button")
+menu.ok_button = CreateFrame("Button", menu)
 menu.ok_text = CreateFrame("Text", menu.ok_button)
 menu.ok_text:SetColor(1, 1, 1)
 menu.ok_text:SetSize(40)
 menu.ok_text:SetText("New Game")
 
-menu.exit_button = CreateFrame("Button")
+menu.exit_button = CreateFrame("Button", menu)
 menu.exit_text = CreateFrame("Text", menu.exit_button)
 menu.exit_text:SetColor(1, 1, 1)
 menu.exit_text:SetSize(40)
 menu.exit_text:SetText("Exit")
 
-menu.achievement_button = CreateFrame("Button")
+--[[
+menu.achievement_button = CreateFrame("Button", menu)
 menu.achievement_text = CreateFrame("Text", menu.achievement_button)
 menu.achievement_text:SetColor(1, 1, 1)
 menu.achievement_text:SetSize(40)
 menu.achievement_text:SetText("Achievements")
-menu.achievement_button:Hide() -- we don't want this anymore
+menu.achievement_button:Hide() ]] -- we don't want this anymore
 
 
 local ptr = CreateFrame("Text")
