@@ -726,6 +726,47 @@ do
   glutil.LinkProgram(text_shader)
 end
 
+local text_shader_outline -- hacky fix later
+do
+  local vertex = glutil.Shader("VERTEX", [[
+    void main()
+    {
+      gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+      gl_TexCoord[0]  = gl_MultiTexCoord0;
+      
+      gl_FrontColor = gl_Color;
+      gl_BackColor = gl_Color;
+    }
+  ]])
+  local fragment = glutil.Shader("FRAGMENT", [[
+    uniform sampler2D tex;
+    
+    uniform vec2 texshift;
+    
+    void main()
+    {
+      float alph = texture2D(tex, gl_TexCoord[0].st).r;
+      
+      float shift = max(length(dFdx(gl_TexCoord[0].st) * texshift), length(dFdy(gl_TexCoord[0].st) * texshift)) / 2.0;
+      
+      
+      if(alph > 0.4) {
+        float dens = smoothstep(0.5 - shift, 0.5 + shift, alph);
+        
+        gl_FragColor = vec4(gl_Color.rgb * dens, 1);
+      } else {
+        float shadow = smoothstep(0.2 - shift, 0.2 + shift, alph);
+        
+        gl_FragColor = vec4(0, 0, 0, shadow);
+      }
+    }
+  ]])
+  text_shader = glutil.Program()
+  glutil.AttachShader(text_shader, vertex)
+  glutil.AttachShader(text_shader, fragment)
+  glutil.LinkProgram(text_shader)
+end
+
 FrameTypes.TextDistance = {}
 function FrameTypes.TextDistance:SetText(text)
   self.text = text

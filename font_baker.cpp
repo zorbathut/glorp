@@ -26,7 +26,7 @@ using namespace std;
 
 const int pixheight = 64;
 const int supersample = 32;
-const int distmult = 32;  // this is "one pixel in the final version equals 64 difference". reduce this number to increase the "blur" radius, increase it to make things "sharper"
+const int distmult = 16;  // this is "one pixel in the final version equals 64 difference". reduce this number to increase the "blur" radius, increase it to make things "sharper"
 
 const int image_width = 512;
 
