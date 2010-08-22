@@ -866,6 +866,7 @@ FrameTypes.Text = FrameTypes.TextDistance
 
 FrameTypes.Texture = {}
 function FrameTypes.Texture:SetTexture(tex, preserve_dimensions)
+  assert(tex)
   if type(tex) == "string" then tex = Texture(tex) end
   self.tex = tex
   if not preserve_dimensions then
