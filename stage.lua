@@ -111,7 +111,7 @@ minimenu_resume:SetPoint("CENTER", UIParent, "CENTER", 0, -50)
 function imm_end()
   minimenu_frames:Hide()
   inminimenu = false
-  runninggame.UIRoot.Update = runninggame_runupdate
+  if runninggame then runninggame.UIRoot.Update = runninggame_runupdate end
 end
 function minimenu_resume_button:Click()
   print("clique")
