@@ -47,6 +47,8 @@ end
 
 local mainmenu
 local runninggame
+local runninggame_runupdate
+local runninggame_pauseupdate
 local inminimenu
 local minimenu_repopulate
 
@@ -69,6 +71,8 @@ local function Handle(param, ...)
     else
       runninggame = runuifile("main.lua", ...)
     end
+    runninggame_runupdate = runninggame.UIRoot.Update
+    runninggame_pauseupdate = function () end
     mainmenu.UIRoot:Hide()
   elseif param == "exit_game" then
     destroy_game()
@@ -107,6 +111,7 @@ minimenu_resume:SetPoint("CENTER", UIParent, "CENTER", 0, -50)
 function imm_end()
   minimenu_frames:Hide()
   inminimenu = false
+  runninggame.UIRoot.Update = runninggame_runupdate
 end
 function minimenu_resume_button:Click()
   print("clique")
@@ -182,6 +187,7 @@ local function imm_start()
   minimenu_pos = 1
   imm_resync()
   inminimenu = true
+  runninggame.UIRoot.Update = runninggame_pauseupdate
 end
 local function imm_render()
   minimenu_frames:Render()
