@@ -216,6 +216,10 @@ do
   function Region_Type:GetRelativeMousePosition()
     return ScreenToLocal(self, self.parent:GetRelativeMousePosition())
   end
+  --[[function Region_Type:IsMouseInside()  -- may not work
+    local x, y = self:GetRelativeMousePosition()
+    return x >= self:GetLeft() and x <= self:GetRight() and x >= self:GetTop() and x <= self:GetBottom()
+  end]]
 
   function Region_Type:Exists()
     return self:GetWidth() and self:GetHeight()
