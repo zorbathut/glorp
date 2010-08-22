@@ -753,11 +753,11 @@ do
       if(alph > 0.4) {
         float dens = smoothstep(0.5 - shift, 0.5 + shift, alph);
         
-        gl_FragColor = vec4(gl_Color.rgb * dens, 1);
+        gl_FragColor = vec4(gl_Color.rgb * dens, gl_Color.a);
       } else {
         float shadow = smoothstep(0.2 - shift, 0.2 + shift, alph);
         
-        gl_FragColor = vec4(0, 0, 0, shadow);
+        gl_FragColor = vec4(0, 0, 0, gl_Color.a * shadow);
       }
     }
   ]])
