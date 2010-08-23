@@ -3,6 +3,12 @@ local platform, _, mode = ...
 
 set_wrap_platform(platform)
 
+local show_in_menu = true
+local show_last = nil
+function ShowMouseCursorInMenu(sms)
+  show_in_menu = sms
+end
+
 function runfile_worker(file, global, optional, ...)
   assert(global)
   
@@ -109,6 +115,10 @@ minimenu_resume:SetSize(30)
 minimenu_resume:SetColor(1, 1, 1)
 minimenu_resume:SetPoint("CENTER", UIParent, "CENTER", 0, -50)
 function imm_end()
+  if show_last ~= nil then
+    ShowMouseCursor(show_last)
+    show_last = nil
+  end
   minimenu_frames:Hide()
   inminimenu = false
   if runninggame then runninggame.UIRoot.Update = runninggame_runupdate end
@@ -183,6 +193,8 @@ end
 minimenu_repopulate({}) -- default
 
 local function imm_start()
+  show_last = MouseCursorShown()
+  ShowMouseCursor(show_in_menu)
   minimenu_frames:Show()
   minimenu_pos = 1
   imm_resync()
