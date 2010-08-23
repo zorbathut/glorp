@@ -560,6 +560,9 @@ static int math_randomseed (lua_State *L) {
 void sms(bool bol) {
   input()->ShowMouseCursor(bol);
 }
+void setmousepos(int x, int y) {
+  input()->SetMousePosition(x, y);
+}
 
 void get_stack_entry(lua_State *L, int level) {
   lua_pushliteral(L, "");
@@ -812,6 +815,7 @@ void luainit(int argc, const char **argv) {
       def("GetMouseX", &gmx),
       def("GetMouseY", &gmy),
       def("ShowMouseCursor", &sms),
+      def("SetMousePosition", &setmousepos),
       #ifndef IPHONE
       def("ScreenshotTo", &screenshot_to),
       #endif
