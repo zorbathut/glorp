@@ -619,26 +619,13 @@ ursa.command{"package", osd.installers("datafiles")}
 
 -- editor!
 if params.targets[1] == "mild" then
-  ursa.token.rule{"mild_file_list", nil, "cd glorp/mild && find . -type f | sed s*\\\\./** | grep -v ^\\\\."}
-  ursa.token.rule{"mild_files", "#mild_file_list", function ()
-    local fil = {}
-    for item in ursa.token{"mild_file_list"}:gmatch("([^\n]+)") do
-      table.insert(fil, item)
-      print(item)
-    end
-    return fil
-  end}
+  local mildparms = {}
+  mildparms.builddir = ursa.absolute_from{builddir}
+  mildparms.cc = ursa.token{"CC"}
   
-  local makefile = ursa.rule{builddir .. "mild/Makefile", ursa.util.token_deferred{"mild_files"}, "cd " .. builddir .. "mild && /cygdrive/c/Qt/2010.04/qt/qmake/qmake QMAKE_INCDIR=c:/Qt/2010.04/qt/src/3rdparty/zlib ../../../glorp/mild/tiled.pro"}
-  local build = ursa.rule{builddir .. "mild/tiled.exe", makefile, "cd " .. builddir .. "mild && /cygdrive/c/Qt/2010.04/mingw/bin/mingw32-make.exe -j5"}
-
-  local support = {}
-  table.insert(support, ursa.rule{builddir .. "mild/QtCored4.dll", "/cygdrive/c/Qt/2010.04/qt/bin/QtCored4.dll", ursa.util.copy{}})
-  table.insert(support, ursa.rule{builddir .. "mild/QtGuid4.dll", "/cygdrive/c/Qt/2010.04/qt/bin/QtGuid4.dll", ursa.util.copy{}})
+  local builded = ursa.embed{"glorp/mild", "Den", {mildparms}}
   
-  table.insert(support, ursa.rule{builddir .. "mild/libgcc_s_dw2-1.dll", "/cygdrive/c/Qt/2010.04/mingw/bin/libgcc_s_dw2-1.dll", ursa.util.copy{}})
-  
-  ursa.command{"mild", {build, support}, builddir .. "mild/tiled.exe"}
+  ursa.command{"mild", builded, builddir .. "mild/tiled.exe"}
 end
 
 clean_dirs = {}
