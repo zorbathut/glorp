@@ -67,7 +67,7 @@ local lua_exec
 do
   do
     if not osd.noluajit and not noluajit then
-      local path = "glorp/libs/LuaJIT-2.0.0-beta4/"
+      local path = "glorp/libs/LuaJIT-2.0.0-beta5/"
       ursa.token.rule{"lua_files", "!" .. path, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
       local copied = {}
       for k in ursa.token{"lua_files"}:gmatch("([^\n]+)") do
