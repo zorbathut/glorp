@@ -711,6 +711,10 @@ bool window_in_focus() {
 
 #define ll_subregister(L, cn, sn, f) (lua_getglobal(L, cn), lua_pushstring(L, sn), lua_pushcfunction(L, f), lua_settable(L, -3))
 
+double time_micro() {
+  return system()->GetTimeMicro();
+}
+
 
 
 class DontKillMeBro_KillerBase;
@@ -819,6 +823,7 @@ void luainit(int argc, const char **argv) {
       #ifndef IPHONE
       def("ScreenshotTo", &screenshot_to),
       #endif
+      def("TimeMicro", &time_micro),
       def("GetMidName", &get_mid_name),
       def("GetDesktopDirectory", &getDesktopDirectory),
       def("GetConfigDirectory", &getConfigDirectory),
