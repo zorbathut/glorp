@@ -688,3 +688,10 @@ do
     return shown
   end
 end
+
+
+
+-- FIX THIS LATER (again)
+if not mode then
+  local ambient = ControlSound("Kirsty Hawkshaw - In Between", nil, true)
+end
