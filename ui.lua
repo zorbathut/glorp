@@ -761,10 +761,10 @@ do
       }
     }
   ]])
-  text_shader = glutil.Program()
-  glutil.AttachShader(text_shader, vertex)
-  glutil.AttachShader(text_shader, fragment)
-  glutil.LinkProgram(text_shader)
+  text_shader_outline = glutil.Program()
+  glutil.AttachShader(text_shader_outline, vertex)
+  glutil.AttachShader(text_shader_outline, fragment)
+  glutil.LinkProgram(text_shader_outline)
 end
 
 FrameTypes.TextDistance = {}
