@@ -56,6 +56,11 @@ function table.wipe(tab)
     tab[x] = nil
   end
 end
+function table.append(a, b)
+  for _, v in ipairs(b) do
+    table.insert(a, v)
+  end
+end
 function math.random_choose(tab)
   return tab[math.random(#tab)]
 end
