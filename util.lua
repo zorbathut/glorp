@@ -546,7 +546,6 @@ if gl then
       gl.ColorPointer(color_size, "FLOAT", color)
     end
     if texture_size then
-      print(#texture / texture_size, #vertices / vertex_size, #texture, texture_size, #vertices, vertex_size)
       assert(#texture / texture_size == #vertices / vertex_size)
       gl.EnableClientState("TEXTURE_COORD_ARRAY")
       gl.TexCoordPointer(texture_size, "FLOAT", texture)
