@@ -68,16 +68,15 @@ end
 
 function GetMouse() return GetMouseX(), GetMouseY() end
 
-function approach(current, target, delta)
-  if math.abs(current - target) <= delta then
-    return target
+function approach(current, target, delta, dist)
+  if target > current then
+    return -approach(-current, -target, delta, dist)
   end
   
-  if target > current then
-    return current + delta
-  else
-    return current - delta
-  end
+  if current - target <= dist then return current end
+  if current - target <= dist + delta then return target + dist end
+  
+  return current - delta
 end
 function clamp(cur, min, max)
   if cur < min then return min end
