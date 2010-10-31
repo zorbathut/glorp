@@ -8,6 +8,10 @@ function rotate_mod(x, m)
   while x > m do x = x - m end
   return x
 end
+function rotate(x, y, rot)
+  local s, c = math.sin(rot), math.cos(rot)
+  return x * c - y * s, y * c + x * s
+end
 
 function export_items_rw(tab, items)
   local lookup = {}
