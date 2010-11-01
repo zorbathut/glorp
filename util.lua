@@ -130,6 +130,9 @@ function collide(one, two)
   
   return math.abs(ax - bx) * 2 <= asx + bsx and math.abs(ay - by) * 2 <= asy + bsy
 end
+function sort2(a, b)
+  if a > b then return b, a else return a, b end
+end
 
 function line_intersect(sa, ea, sb, eb)
   local x1, x2, x3, x4, y1, y2, y3, y4 = sa[1], ea[1], sb[1], eb[1], sa[2], ea[2], sb[2], eb[2]
