@@ -8,6 +8,10 @@ function rotate_mod(x, m)
   while x > m do x = x - m end
   return x
 end
+function rotate(x, y, rot)
+  local s, c = math.sin(rot), math.cos(rot)
+  return x * c - y * s, y * c + x * s
+end
 
 function export_items_rw(tab, items)
   local lookup = {}
@@ -56,6 +60,11 @@ function table.wipe(tab)
     tab[x] = nil
   end
 end
+function table.append(a, b)
+  for _, v in ipairs(b) do
+    table.insert(a, v)
+  end
+end
 function math.random_choose(tab)
   return tab[math.random(#tab)]
 end
@@ -63,16 +72,15 @@ end
 
 function GetMouse() return GetMouseX(), GetMouseY() end
 
-function approach(current, target, delta)
-  if math.abs(current - target) <= delta then
-    return target
+function approach(current, target, delta, dist)
+  if target > current then
+    return -approach(-current, -target, delta, dist)
   end
   
-  if target > current then
-    return current + delta
-  else
-    return current - delta
-  end
+  if current - target <= dist then return current end
+  if current - target <= dist + delta then return target + dist end
+  
+  return current - delta
 end
 function clamp(cur, min, max)
   if cur < min then return min end
@@ -121,6 +129,9 @@ function collide(one, two)
   local bsx, bsy = two:GetSize()
   
   return math.abs(ax - bx) * 2 <= asx + bsx and math.abs(ay - by) * 2 <= asy + bsy
+end
+function sort2(a, b)
+  if a > b then return b, a else return a, b end
 end
 
 function line_intersect(sa, ea, sb, eb)
@@ -688,3 +699,10 @@ do
     return shown
   end
 end
+
+
+
+-- FIX THIS LATER (again)
+--if not mode then
+--  local ambient = ControlSound("Kirsty Hawkshaw - In Between", nil, true)
+--end

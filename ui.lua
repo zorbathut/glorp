@@ -761,10 +761,10 @@ do
       }
     }
   ]])
-  text_shader = glutil.Program()
-  glutil.AttachShader(text_shader, vertex)
-  glutil.AttachShader(text_shader, fragment)
-  glutil.LinkProgram(text_shader)
+  text_shader_outline = glutil.Program()
+  glutil.AttachShader(text_shader_outline, vertex)
+  glutil.AttachShader(text_shader_outline, fragment)
+  glutil.LinkProgram(text_shader_outline)
 end
 
 FrameTypes.TextDistance = {}
@@ -775,6 +775,9 @@ end
 function FrameTypes.TextDistance:SetSize(size)
   self.size = size
   self:RecalculateBounds()  -- technically just a multiplication, but lazy
+end
+function FrameTypes.TextDistance:SetBorder(border)
+  self.border = border
 end
 function FrameTypes.TextDistance:RecalculateBounds()
   local font = TextDistanceFont
@@ -848,7 +851,7 @@ function FrameTypes.TextDistance:Draw()
   
   printit = false
   
-  glutil.UseProgram(text_shader)
+  glutil.UseProgram(self.border and text_shader_outline or text_shader)
   font.tex:SetTexture()
   gl.TexParameter("TEXTURE_2D", "TEXTURE_MAG_FILTER", "LINEAR");
   glutil.UniformI(text_shader, "tex", 0)

@@ -248,6 +248,7 @@ function runuifile(file, ...)
     env.UIParent = CreateFrame("Frame", uip)
     env.UIParent:SetPoint("TOPLEFT", UIParent, "TOPLEFT")
     env.UIParent:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", 1024, 768)  -- we need for uiparent to have the right coordinates
+    -- note this is for iphone hackery, doesn't really exist right now
   else
     env.UIParent = uip
   end
