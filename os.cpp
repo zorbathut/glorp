@@ -6,7 +6,6 @@
 #include "parse.h"
 #include "args.h"
 #include "init.h"
-#include "version.h"
 
 #include <fstream>
 #include <vector>
@@ -68,12 +67,6 @@ void seriouslyCrash() {
   exit(-1);
 }
 
-string getConfigDirectory() {
-  char buff[MAX_PATH + 1];
-  SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, buff);
-  //dprintf("Home directory: %s\n", buff);
-  return string(buff) + "\\" + game_fullname + "\\";
-}
 string getDesktopDirectory() {
   char meep[MAX_PATH + 1] = {0};
   SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, meep);
@@ -86,12 +79,6 @@ string getTempFilename() {
   char fname[MAX_PATH + 1];
   GetTempFileName(buff, "dnd", 0, fname);
   return fname;
-}
-
-static const string directory_delimiter = "\\";
-
-void wrap_mkdir(const string &str) {
-  mkdir(str.c_str());
 }
 
 void SpawnProcess(const string &exec, const vector<string> &params) {
@@ -133,20 +120,9 @@ void seriouslyCrash() {
   dprintf("crash3\n");
 }
 
-string getConfigDirectory() {
-  string bf = getenv("HOME");
-  //dprintf("Home directory: %s\n", bf.c_str());
-  return bf + "/." + game_fullname + "/";
-}
 string getDesktopDirectory() {
   string bf = getenv("HOME");
   return bf + "/Desktop/";
-}
-
-static const string directory_delimiter = "/";
-
-void wrap_mkdir(const string &str) {
-  mkdir(str.c_str(), 0700);
 }
 
 string getTempFilename() {
@@ -178,22 +154,6 @@ void SpawnProcess(const string &exec, const vector<string> &params) {
 }
 
 #endif
-
-void makeConfigDirectory() {
-  CHECK(directory_delimiter.size() == 1);
-  vector<string> tok = tokenize(getConfigDirectory(), directory_delimiter);
-  
-  string cc;
-  if(getConfigDirectory().size() && getConfigDirectory()[0] == directory_delimiter[0])
-    cc = directory_delimiter;
-  
-  for(int i = 0; i < tok.size(); i++) {
-    if(cc.size())
-      cc += directory_delimiter;
-    cc += tok[i];
-    wrap_mkdir(cc);
-  }
-}
 
 string exename() {
   return loc_exename;
