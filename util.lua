@@ -176,7 +176,7 @@ function glutil.SetScreenCentered(x, y, pixelgrid)
 end
 
 function glutil.ResetScreen()
-  glutil.SetScreen(0, 0, 1024, 768)
+  glutil.SetScreen(0, 0, resolution[1], resolution[2])
 end
 
 
