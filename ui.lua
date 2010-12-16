@@ -890,7 +890,7 @@ end
 FrameTypes.Drag = {}
 function FrameTypes.Drag:Tick()
   if self._dragging then
-    if not IsKeyDownFrame("mouse_left") then
+    if not IsKeyDown("mouse_left") then
       self._dragging = false
       if self.DragEnded then self:DragEnded() end
     else
@@ -1238,7 +1238,7 @@ end
 
 function KeyPressed_Update()
   for k in pairs(important_keys) do
-    if IsKeyDownFrame(k) then
+    if IsKeyDown(k) then
       if important_keys[k] == "up" then important_keys[k] = "pressed" end
     else
       important_keys[k] = "up"
@@ -1289,7 +1289,7 @@ function UI_Loop(tix, ...)
       tickaccum = tickaccum - frame
       
       for k, v in pairs(kiiz) do
-        if IsKeyDownFrame(k) then
+        if IsKeyDown(k) then
           if v == true then
             UI_Key(k, nil, "frame")
           else

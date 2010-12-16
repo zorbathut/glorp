@@ -369,10 +369,6 @@ bool IsKeyDownFrameAdapter(const string &id) {
   return input()->IsKeyDownFrame(adapt(id));
 };
 
-bool WasKeyPressedAdapter(const string &id) {
-  return input()->WasKeyPressed(adapt(id), false);
-};
-
 class KeyList : public KeyListener {
   void OnKeyEvent(const KeyEvent &event) {
     string keyvent;
@@ -811,8 +807,7 @@ void luainit(int argc, const char **argv) {
       def("Texture", &GetTex, adopt(result)),
       def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),
-      def("IsKeyDownFrame", &IsKeyDownFrameAdapter),
-      def("WasKeyPressed_Frame", &WasKeyPressedAdapter),
+      def("IsKeyDown", &IsKeyDownFrameAdapter),
       def("PlaySound_Core", &DoASound),
       def("ControlSound_Core", &ControllableSound),
       def("TriggerExit", &TriggerExit),
