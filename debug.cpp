@@ -154,13 +154,13 @@ int dprintf(const char *bort, ...) {
 #endif
 
 static bool reentering = false;
-void HandleFailure(const char *file, int line) {
+void HandleFailure(const char *file, int line, const char *message) {
   if(reentering) {
     dprintf("Error in crash handling somewhere, terminating extremely abruptly");
   } else {
     reentering = true;
     PrintDebugStack();
-    Prepare911(file, line);
+    Prepare911(file, line, message);
   }
   
   seriouslyCrash();

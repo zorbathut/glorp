@@ -32,7 +32,7 @@ string writeDebug() {
     return "";
 };
 
-void Prepare911(const char *crashfname, int crashline) {
+void Prepare911(const char *crashfname, int crashline, const char *message) {
   if(FLAGS_report) {
     string fname = writeDebug();
     if(!fname.size()) {
@@ -42,8 +42,13 @@ void Prepare911(const char *crashfname, int crashline) {
       dprintf("Wrote debug dump to %s\n", fname.c_str());
     }
     
+    if(!message)
+    {
+      message = "";
+    }
+    
     vector<string> params;
-    boost::assign::push_back(params)(game_slug)(fname)(string(game_slug) + "-" + game_version + "-" + game_platform)(crashfname)(StringPrintf("%d", crashline))(StringPrintf("%d", exesize()));
+    boost::assign::push_back(params)(game_slug)(fname)(string(game_slug) + "-" + game_version + "-" + game_platform)(crashfname)(StringPrintf("%d", crashline))(StringPrintf("%d", exesize()))(message);
     SpawnProcess("data/reporter", params);
   }
 };

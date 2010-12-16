@@ -1,9 +1,4 @@
 
-print("EXTENSIONS:", gl.GetString("EXTENSIONS"))
-print("VENDOR:", gl.GetString("VENDOR"))
-print("RENDERER:", gl.GetString("RENDERER"))
-print("VERSION:", gl.GetString("VERSION"))
-
 package.path = package.path .. ";data/?.lua;glorp/?.lua;glorp/resources/?.lua"
 
 collectgarbage("stop")

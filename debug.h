@@ -11,7 +11,8 @@
   #include <Glop/Base.h>
 
   #define dprintf LOGF
-  #define CHECK(expression, ...) CHECK_HANDLED((void)(0), HandleFailure(__FILE__, __LINE__), expression, __VA_ARGS__)
+  #define CHECK(expression, ...) CHECK_HANDLED((void)(0), HandleFailure(__FILE__, __LINE__, NULL), expression, __VA_ARGS__)
+  #define CHECK_MESSAGE(expression, message, ...) CHECK_HANDLED((void)(0), HandleFailure(__FILE__, __LINE__, message), expression, __VA_ARGS__)
 
 #else
 
@@ -55,7 +56,7 @@ void disableStackTrace();
 
 extern void *stackStart;
 
-void HandleFailure(const char *file, int line);
+void HandleFailure(const char *file, int line, const char *message);
 
 
 

@@ -965,9 +965,14 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
   }
   FocusFrame *everything = new FocusFrame(world);
   window()->AddFrame(everything);
-  
+
+  dprintf("EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
+  dprintf("VENDOR: %s\n", glGetString(GL_VENDOR));
+  dprintf("RENDERER: %s\n", glGetString(GL_RENDERER));
+  dprintf("VERSION: %s\n", glGetString(GL_VERSION));
+    
   if(atof((const char*)glGetString(GL_VERSION)) < 2.0) {
-    Message("This game currently requires OpenGL 2.0, which your computer doesn't seem to have.\n\nUpdating your video drivers might fix the problem, or it might not. Sorry!", false);
+    CHECK_MESSAGE(false, "%s currently requires OpenGL 2.0, which your computer doesn't seem to have.\n\nUpdating your video drivers might fix the problem, or it might not. Sorry!\n\nI've created a datafile including some information that may help Mandible Games fix\nthe error in future versions. It contains no personally identifying information.\n\nMay I send this to Mandible?");
     return;
   }
   

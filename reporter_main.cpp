@@ -62,15 +62,21 @@ string request(string url, const map<string, string> &posts) {
 }
 
 int main(int argc, const char *argv[]) {
-  setInitFlagIgnore(7);
+  setInitFlagIgnore(8);
   initProgram(&argc, &argv);
   
   dprintf("%d", argc);
-  CHECK(argc == 7);
+  CHECK(argc == 8);
   
   dprintf("REPORTER IS YOUR FREND\n");
   
-  if(!Message(StringPrintf("Something unexpected has happened, and %s has been shut down.\n\nI've created a datafile including some information that may help Mandible Games fix\nthe error in future versions. It contains no personally identifying information.\n\nMay I send this to Mandible?", game_fullname), true)) {
+  const char *msg = argv[7];
+  if(strlen(msg) == 0)
+  {
+    msg = "Something unexpected has happened, and %s has been shut down.\n\nI've created a datafile including some information that may help Mandible Games fix\nthe error in future versions. It contains no personally identifying information.\n\nMay I send this to Mandible?";
+  }
+  
+  if(!Message(StringPrintf(msg, game_fullname), true)) {
     unlink(argv[2]);
     return 1;
   }
