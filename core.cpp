@@ -227,6 +227,7 @@ public:
     }
     
     if(lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
+      // Something broke, so we're displaying the error screen
       GlUtils::SetNoTexture();
       glBegin(GL_QUADS);
       int scal = phys_screenx / 20;

@@ -384,7 +384,27 @@ function loop(...)
   end
 end
 local last_perf_dump = os.time()
+
+local matrix_type_list = {"PROJECTION", "TEXTURE", "MODELVIEW"}
+local function ClearMatrices(matrix)
+  if gl.Get(matrix .. "_STACK_DEPTH") > 1 then
+    print("Clearing matrix " .. matrix .. ", " .. gl.Get(matrix .. "_STACK_DEPTH"))
+    gl.MatrixMode(matrix)
+    repeat
+      gl.PopMatrix()
+    until gl.Get(matrix .. "_STACK_DEPTH") == 1
+  end
+end
+local function TestMatrices(matrix)
+  if gl.Get(matrix .. "_STACK_DEPTH") > 1 then
+    assert(false, "Matrix mismatch! " .. matrix .. " " .. gl.Get(matrix .. "_STACK_DEPTH"))
+  end
+end
 function render(...)
+  for _, v in ipairs(matrix_type_list) do
+    ClearMatrices(v)
+  end
+  
   gl.ClearColor(0, 0, 0, 1)
   gl.Clear("COLOR_BUFFER_BIT")
   gl.Disable("CULL_FACE") -- ffffffff
@@ -408,6 +428,10 @@ function render(...)
   if last_perf_dump + 5 <= os.time() then
     if UI_cache_statistics then UI_cache_statistics() end
     last_perf_dump = os.time()
+  end
+  
+  for _, v in ipairs(matrix_type_list) do
+    TestMatrices(v)
   end
 end
 function key(button, ascii, event)
