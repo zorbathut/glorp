@@ -323,7 +323,11 @@ do
   end
   function Region_Type:resort_children()
     assert(self.children)
-    table.sort(self.children, function (a, b) return (a.layer or 0) < (b.layer or 0) end)
+    table.sort(self.children, function (a, b)
+      local al, bl = a.layer or 0, b.layer or 0
+      if al ~= bl then return al < bl end
+      return a.__globid < b.__globid
+    end)
     self._last_updated = nil -- we might need to reprocess
     --[[
     if loud then
@@ -516,14 +520,17 @@ do
     end
   end
   
+  local globid = 0
   local weak_key_meta = {__mode = 'k'}
   function Region(parent, name, suppress)
     local reg = setmetatable({}, Region_Type_mt)
     if not parent and not suppress then parent = UIParent end
-    if parent then reg:SetParent(parent) end
     reg.__name = name
     reg.__cache = {_anchor_x = {}, _anchor_y = {}}
     reg.__anchor_children = {_anchor_x = setmetatable({}, weak_key_meta), _anchor_y = setmetatable({}, weak_key_meta)}
+    reg.__globid = globid
+    globid = globid + 1
+    if parent then reg:SetParent(parent) end
     return reg
   end
 end
