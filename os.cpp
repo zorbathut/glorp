@@ -73,14 +73,6 @@ string getDesktopDirectory() {
   return meep;
 }
 
-string getTempFilename() {
-  char buff[MAX_PATH + 1];
-  GetTempPath(sizeof(buff), buff);
-  char fname[MAX_PATH + 1];
-  GetTempFileName(buff, "dnd", 0, fname);
-  return fname;
-}
-
 void SpawnProcess(const string &exec, const vector<string> &params) {
   dprintf("%s\n", exec.c_str());
   string texec = exec;
@@ -123,14 +115,6 @@ void seriouslyCrash() {
 string getDesktopDirectory() {
   string bf = getenv("HOME");
   return bf + "/Desktop/";
-}
-
-string getTempFilename() {
-  char temparg[128] = "/tmp/";
-  strcat(temparg, game_slug);
-  strcat(temparg, "-XXXXXX");
-  close(mkstemp(temparg));
-  return temparg;
 }
 
 void SpawnProcess(const string &exec, const vector<string> &params) {

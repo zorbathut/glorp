@@ -6,6 +6,7 @@
 #include "version.h"
 
 #include <unistd.h>
+#include <sys/stat.h>
 
 #ifdef WIN32
 
@@ -26,6 +27,14 @@ void wrap_mkdir(const string &str) {
   mkdir(str.c_str());
 }
 
+string getTempFilename() {
+  char buff[MAX_PATH + 1];
+  GetTempPath(sizeof(buff), buff);
+  char fname[MAX_PATH + 1];
+  GetTempFileName(buff, game_slug, 0, fname);
+  return fname;
+}
+
 #else
 
 static const string directory_delimiter = "/";
@@ -38,6 +47,14 @@ string getConfigDirectory() {
 
 void wrap_mkdir(const string &str) {
   mkdir(str.c_str(), 0700);
+}
+
+string getTempFilename() {
+  char temparg[128] = "/tmp/";
+  strcat(temparg, game_slug);
+  strcat(temparg, "-XXXXXX");
+  close(mkstemp(temparg));
+  return temparg;
 }
 
 #endif
