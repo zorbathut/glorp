@@ -895,6 +895,7 @@ void fatal(const string &message) {
 }
 
 DEFINE_bool(help, false, "Get help");
+DEFINE_bool(development, false, "Development tools");
 void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
 
   #ifdef IPHONE
@@ -1032,7 +1033,7 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
         }
       }
       
-      if(input()->IsKeyDownFrame(kKeyF12)) {
+      if(input()->IsKeyDownFrame(kKeyF12) && FLAGS_development) {
         if(!wasdown) {
           meltdown();
           luashutdown();
