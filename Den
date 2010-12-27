@@ -49,8 +49,6 @@ local builddir = builddir_pre .. "/"
 
 local osd = assert(loadfile("glorp/Den_" .. platform .. ".lua")){name = params.name, longname = params.longname, midname = params.midname, glop = glop, builddir = builddir}
 
-if platform == "osx" then noluajit = true end   -- temporary hack for luajitb4
-
 
 -- this will contain all the libs that got built from glop
 local libs = {}

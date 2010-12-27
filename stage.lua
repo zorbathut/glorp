@@ -1,6 +1,9 @@
 
 local platform, _, mode = ...
 
+print("JIT STATUS")
+print(jit)
+
 set_wrap_platform(platform)
 
 local show_in_menu = true
