@@ -35,7 +35,7 @@ params.midname = params.longname:gsub("[^%w]", "")
 
 local glop
 if true then
-  glop = ursa.embed{"glorp/glop", "Den", {{platform = params.platform}}}
+  glop = ursa.embed{"glorp/glop", "Den", {{platform = params.platform, minimal = true}}}
 else
   glop = {os = params.platform, headers = {}, lib = {}}
 end
