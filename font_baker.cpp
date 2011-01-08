@@ -212,14 +212,14 @@ int main(int argc, char **argv) {
   
   CHECK(FT_Set_Pixel_Sizes(font, 0, pixheight * supersample) == 0);
   
+  const int bord = (128 + distmult - 1) / distmult + 1;
+  
   for(int kar = 32; kar < 128; kar++) {
     CHECK(FT_Load_Char(font, kar, FT_LOAD_RENDER|FT_LOAD_MONOCHROME) == 0);
     
     dprintf("%dx%d %08x\n", font->glyph->bitmap.width, font->glyph->bitmap.rows, font->glyph->bitmap.buffer);
     
     Image img;
-    
-    const int bord = (128 + distmult - 1) / distmult + 1;
     
     if(font->glyph->bitmap.buffer) {
       FT_Bitmap tempbitmap;
@@ -285,8 +285,9 @@ int main(int argc, char **argv) {
   float ascend = 0;
   float descend = 0;
   for(int i = 0; i < results.size(); i++) {
-    ascend = max(ascend, -results[i].oy);
-    descend = max(descend, results[i].ey - results[i].sy + results[i].oy);
+    dprintf("Ascend: %c, %f/%f", i, -results[i].oy, results[i].ey - results[i].sy + results[i].oy);
+    ascend = max(ascend, -results[i].oy - bord);
+    descend = max(descend, results[i].ey - results[i].sy + results[i].oy - bord);
   }
   
   float height = font->size->metrics.height / 64.0 / supersample;

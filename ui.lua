@@ -807,7 +807,7 @@ end
 function FrameTypes.TextDistance:SetColor(r, g, b, a)
   self.r, self.g, self.b, self.a = r, g, b, a
 end
-local printit = true
+local printit = false
 function FrameTypes.TextDistance:Draw()
   local font = TextDistanceFont
   
