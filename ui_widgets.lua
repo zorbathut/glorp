@@ -21,86 +21,6 @@ function FrameTypes.Button:MouseOut()
   self.button_down = false
 end
 
-FrameTypes.TextGlop = {}
-function FrameTypes.TextGlop:AssimilateBounds()
-  self.text:UpdateSize(0, 0)
-  self:SetWidth(self.text:GetWidth())
-  self:SetHeight(self.text:GetHeight())
-end
-function FrameTypes.TextGlop:SetSize(size)
-  self.text:SetTextSize(size / GetScreenX())
-  self:AssimilateBounds()
-end
-function FrameTypes.TextGlop:SetColor(r, g, b, a)
-  Text_SetColor(self.text, r, g, b, a or 1)
-end
-function FrameTypes.TextGlop:SetText(text)
-  self.text:SetText(text)
-  self:AssimilateBounds()
-end
-function FrameTypes.TextGlop:Draw()
-  local l, u, r, d = self:GetBounds()
-  if not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
-    self.text:SetPosition(l, u, l, u, r, d)
-    self.text:UpdateSize(0, 0)
-  end
-  self.text:Render()
-end
-function FrameTypes.TextGlop:_Init()
-  self.text = TextFrame_Make("")
-  self:SetText("")
-end
-
-FrameTypes.TextGlop_Multiline = {}
-function FrameTypes.TextGlop_Multiline:ResynchText()
-  local col = ("\1J0C%02x%02x%02x%02x\1"):format(self.tex_r * 255, self.tex_g * 255, self.tex_b * 255, self.tex_a * 255)
-  local siz
-  if self.tex_size then
-    siz = ("\1S%f\1"):format(self.tex_size)
-  else
-    siz = ""
-  end
-  self.text:SetText(col .. siz .. self.tex_tex)
-  self.update = true
-end
-function FrameTypes.TextGlop_Multiline:SetText(text)
-  self.tex_tex = text
-  self:ResynchText()
-end
-function FrameTypes.TextGlop_Multiline:SetColor(r, g, b, a)
-  if not a then a = 1 end
-  self.tex_r, self.tex_g, self.tex_b, self.tex_a = r, g, b, a
-  self:ResynchText()
-end
-function FrameTypes.TextGlop_Multiline:SetSize(siz)
-  self.tex_size = siz
-  self:ResynchText()
-end
-function FrameTypes.TextGlop_Multiline:ForceHeight()
-  self.text:UpdateSize(self:GetWidth(), 1000)
-  self.text:SetPosition(0, 0, 0, 0, self:GetWidth(), 1000)
-  self:SetHeight(self.text:GetHeight())
-end
-function FrameTypes.TextGlop_Multiline:Draw()
-  local l, u, r, d = self:GetBounds()
-  if self.update or not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
-    self.text:UpdateSize(r - l, d - u)
-    self.text:SetPosition(l, u, l, u, r, d)
-    self:SetHeight(self.text:GetHeight())
-    self.update = nil
-  end
-  self.text:Render()
-end
-FrameTypes.TextGlop_Multiline.tex_r = 1
-FrameTypes.TextGlop_Multiline.tex_g = 1
-FrameTypes.TextGlop_Multiline.tex_b = 1
-FrameTypes.TextGlop_Multiline.tex_a = 1
-function FrameTypes.TextGlop_Multiline:_Init()
-  self.text = FancyTextFrame_Make("")
-  self:SetText("")
-end
-
-
 local function LoadFont(name)
   local tex = Texture(name)
   local fil = loadfile(name .. ".lua")
@@ -113,7 +33,6 @@ local function LoadFont(name)
   return {tex = tex, dat = env}
 end
 local TextDistanceFont = LoadFont("font")
-print(TextDistanceFont.tex, TextDistanceFont.dat)
 --assert(false)
 
 local text_shader
@@ -191,19 +110,19 @@ do
   glutil.LinkProgram(text_shader_outline)
 end
 
-FrameTypes.TextDistance = {}
-function FrameTypes.TextDistance:SetText(text)
+FrameTypes.Text = {}
+function FrameTypes.Text:SetText(text)
   self.text = text
   self:RecalculateBounds()
 end
-function FrameTypes.TextDistance:SetSize(size)
+function FrameTypes.Text:SetSize(size)
   self.size = size
   self:RecalculateBounds()  -- technically just a multiplication, but lazy
 end
-function FrameTypes.TextDistance:SetBorder(border)
+function FrameTypes.Text:SetBorder(border)
   self.border = border
 end
-function FrameTypes.TextDistance:RecalculateBounds()
+function FrameTypes.Text:RecalculateBounds()
   local font = TextDistanceFont
   
   self:SetHeight(self.size)
@@ -221,11 +140,10 @@ function FrameTypes.TextDistance:RecalculateBounds()
   
   self:SetWidth(wid * self._scale)
 end
-function FrameTypes.TextDistance:SetColor(r, g, b, a)
+function FrameTypes.Text:SetColor(r, g, b, a)
   self.r, self.g, self.b, self.a = r, g, b, a
 end
-local printit = false
-function FrameTypes.TextDistance:Draw()
+function FrameTypes.Text:Draw()
   local font = TextDistanceFont
   
   local iw, ih = font.tex:GetInternalWidth(), font.tex:GetInternalHeight()
@@ -246,8 +164,6 @@ function FrameTypes.TextDistance:Draw()
       
       local vsx, vsy, vex, vey = sx + kar.ox * self._scale, sy + kar.oy * self._scale, sx + kar.ox * self._scale + dx, sy + kar.oy * self._scale + dy
       local tsx, tsy, tex, tey = kar.sx / iw, kar.sy / ih, kar.ex / iw, kar.ey / ih
-      
-      if printit then print(self.text:sub(i, i), letter, " ", vsx, vsy, vex, vey, " ", tsx, tsy, tex, tey, " ", dx, dy, " ", iw, ih) end
       
       table.insert(vertices, vsx)
       table.insert(vertices, vsy)
@@ -273,8 +189,6 @@ function FrameTypes.TextDistance:Draw()
     end
   end
   
-  printit = false
-  
   glutil.UseProgram(self.border and text_shader_outline or text_shader)
   font.tex:SetTexture()
   gl.TexParameter("TEXTURE_2D", "TEXTURE_MAG_FILTER", "LINEAR");
@@ -284,31 +198,28 @@ function FrameTypes.TextDistance:Draw()
   SetNoTexture()
   glutil.UseProgram(nil)
 end
-function FrameTypes.TextDistance:_Init()
+function FrameTypes.Text:_Init()
   self.size = 50
   self:SetText("")
 end
 
-FrameTypes.Text = FrameTypes.TextDistance
-FrameTypes.Text_Multiline = FrameTypes.TextDistance_Multiline
-
-FrameTypes.TextDistance_Multiline = {}
-function FrameTypes.TextDistance_Multiline:SetText(text)
+FrameTypes.Text_Multiline = {}
+function FrameTypes.Text_Multiline:SetText(text)
   self.text = text
   self:RecreateSubtext()
 end
-function FrameTypes.TextDistance_Multiline:SetSize(size)
+function FrameTypes.Text_Multiline:SetSize(size)
   self.size = size
   self:RecreateSubtext()
 end
-function FrameTypes.TextDistance_Multiline:SetColor(r, g, b, a)
+function FrameTypes.Text_Multiline:SetColor(r, g, b, a)
   self.r, self.g, self.b, self.a = r, g, b, a
   self:RecreateSubtext()
 end
-function FrameTypes.TextDistance_Multiline:OnShiftX()
+function FrameTypes.Text_Multiline:OnShiftX()
   self:RecreateSubtext()
 end
-function FrameTypes.TextDistance_Multiline:RecreateSubtext()
+function FrameTypes.Text_Multiline:RecreateSubtext()
   local font = TextDistanceFont
   
   -- could probably be more efficient
@@ -407,9 +318,7 @@ function FrameTypes.TextDistance_Multiline:RecreateSubtext()
     self:SetHeight(0)
   end
 end
-
-local printit = false
-function FrameTypes.TextDistance_Multiline:_Init()
+function FrameTypes.Text_Multiline:_Init()
   self._subtext = {}
   self.size = 50
   self:SetText("")
