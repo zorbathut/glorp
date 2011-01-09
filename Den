@@ -333,9 +333,9 @@ ursa.rule{builddir .. "glorp/main.cpp", {"!" .. params.longname, "!" .. params.f
     #include "glorp/core.h"
 
     int main(int argc, const char **argv) {
-      glorp_init("%s", "%s", %d, %d, argc, argv);
+      glorp_init("%s", %d, %d, argc, argv);
     }
-]]):format(params.longname, params.font, params.resolution[1], params.resolution[2]))
+]]):format(params.longname, params.resolution[1], params.resolution[2]))
   fil:close()
 end}
 
@@ -350,7 +350,7 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_ui os_version os util parse args init perfbar box2d", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg libfreetype libfmodex glop" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_ui os_version os util parse args init perfbar box2d", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg libfmodex glop" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
@@ -373,7 +373,7 @@ end
 local function build_object(src, prefix, params)
   local compiler = ursa.token{"CC"}
   if params.compiler then compiler = compiler:gsub("g%+%+", params.compiler) end
-  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, src)
+  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DGLOP_LEAN_AND_MEAN -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, src)
   
   -- we *should* be doing something substantially more reliable and sane here. we're not, because this is much easier
   local clurl = (src == "glorp/reporter_main.cpp") and curl_headers or {}
@@ -538,8 +538,8 @@ do
     table.insert(data_deps, copy_a_lot("luabox2d", "data/", "glorp/"))
   end
 
-  -- Lua files and font files in our core
-  ursa.token.rule{"core_files", nil, "ls *.lua *.ttf *.otf | grep -v crashmelt | grep -v playtest.lev.lua", always_rebuild = true}
+  -- Lua files in our core
+  ursa.token.rule{"core_files", nil, "ls *.lua | grep -v crashmelt | grep -v playtest.lev.lua", always_rebuild = true}
   table.insert(data_deps, copy_a_lot("core", "data/", ""))
   
   -- generated files

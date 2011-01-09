@@ -14,6 +14,7 @@
 #include <Glop/Input.h>
 #include <Glop/OpenGl.h>
 #include <Glop/System.h>
+#include <Glop/ThinLayer.h>
 #include <Glop/Thread.h>
 #include <Glop/glop3d/Camera.h>
 #include <Glop/glop3d/Mesh.h>
@@ -185,86 +186,52 @@ void meltdown() {
   lua_pop(L, 1);
 }
 
-TableauFrame *world;
-
-template<typename Sub> class Destroyable : public Sub {
-  private:
-    ListId id;
-  
-  public:
-    Destroyable<Sub>() {
-      id = world->AddChild(this);
-    }
-    template <typename T> Destroyable<Sub>(const T &x) : Sub(x) {
-      id = world->AddChild(this);
-    }
-    ~Destroyable<Sub>() {
-      world->RemoveChildNoDelete(id);
-    }
-      
-    void Move(float x, float y) {
-      world->MoveChild(id, x, y);
-    }
-    
-    void SetLayer(int layer) {
-      world->MoveChild(id, layer);
-    }
-};
-
-class Layer : public Destroyable<GlopFrame> {
-public:
-  
-  void Render() const {
-    PerfStack pb(0.5, 0.0, 0.0);
-    
-    lua_getglobal(L, "generic_wrap");
-    lua_getglobal(L, "render");
-    int rv = lua_pcall(L, 1, 1, 0);
-    if (rv) {
-      dprintf("%s", lua_tostring(L, -1));
-      meltdown();
-      CHECK(0);
-    }
-    
-    if(lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
-      // Something broke, so we're displaying the error screen
-      GlUtils::SetNoTexture();
-      glBegin(GL_QUADS);
-      int scal = phys_screenx / 20;
-      for(int x = -5; x < 5; x++) {
-        for(int y = -2; y < 2; y++) {
-          if((x + y) % 2 == 0) {
-            glColor3d(1., 1., 1.);
-          } else {
-            glColor3d(1., 0., 0.);
-          }
-          glVertex2d((x + 0.) * scal + phys_screenx / 2, (y + 0.) * scal + phys_screeny / 2);
-          glVertex2d((x + 1.) * scal + phys_screenx / 2, (y + 0.) * scal + phys_screeny / 2);
-          glVertex2d((x + 1.) * scal + phys_screenx / 2, (y + 1.) * scal + phys_screeny / 2);
-          glVertex2d((x + 0.) * scal + phys_screenx / 2, (y + 1.) * scal + phys_screeny / 2);
-        }
-      }
-      glEnd();
-    }
-    lua_pop(L, 1);
-  }
-};
-
-map<int, Layer *> layers;
-
 bool perfbar_enabled = false;
 void set_perfbar(bool x) {perfbar_enabled = x;}
-class Perfbar : public GlopFrame {
+
+class GlorpThinLayer : public ThinLayer {
 public:
-  
   void Render() const {
+    {
+      PerfStack pb(0.5, 0.0, 0.0);
+      
+      lua_getglobal(L, "generic_wrap");
+      lua_getglobal(L, "render");
+      int rv = lua_pcall(L, 1, 1, 0);
+      if (rv) {
+        dprintf("%s", lua_tostring(L, -1));
+        meltdown();
+        CHECK(0);
+      }
+      
+      if(lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
+        // Something broke, so we're displaying the error screen
+        GlUtils::SetNoTexture();
+        glBegin(GL_QUADS);
+        int scal = phys_screenx / 20;
+        for(int x = -5; x < 5; x++) {
+          for(int y = -2; y < 2; y++) {
+            if((x + y) % 2 == 0) {
+              glColor3d(1., 1., 1.);
+            } else {
+              glColor3d(1., 0., 0.);
+            }
+            glVertex2d((x + 0.) * scal + phys_screenx / 2, (y + 0.) * scal + phys_screeny / 2);
+            glVertex2d((x + 1.) * scal + phys_screenx / 2, (y + 0.) * scal + phys_screeny / 2);
+            glVertex2d((x + 1.) * scal + phys_screenx / 2, (y + 1.) * scal + phys_screeny / 2);
+            glVertex2d((x + 0.) * scal + phys_screenx / 2, (y + 1.) * scal + phys_screeny / 2);
+          }
+        }
+        glEnd();
+      }
+      lua_pop(L, 1);
+    }
+    
     if(perfbar_enabled)
       drawPerformanceBar();
     startPerformanceBar();
   }
 };
-Layer *uilayer = NULL;
-
 
 class WrappedTex {
 private:
@@ -516,10 +483,6 @@ void adaptaload(const string &fname) {
 
 int gmx() {return input()->GetMouseX();};
 int gmy() {return input()->GetMouseY();};
-
-void tsc(TextFrame *tf, float r, float g, float b, float a) {
-  tf->SetColor(Color(r, g, b, a));
-}
 
 // arrrgh
 boost::lagged_fibonacci9689 rngstate(time(NULL));
@@ -775,7 +738,6 @@ void luainit(int argc, const char **argv) {
       class_<SoundSource, DontKillMeBro<SoundSource> >("SourceSource_Make")
         .def("Stop", &SoundSource::Stop),
       def("Texture", &GetTex, adopt(result)),
-      def("Text_SetColor", &tsc),
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDown", &IsKeyDownFrameAdapter),
       def("PlaySound_Core", &DoASound),
@@ -843,8 +805,6 @@ void luainit(int argc, const char **argv) {
       CHECK(0, "%s", lua_tostring(L, -1));
     }
   }
-  
-  uilayer = new Layer();
 }
 void luashutdown() {
   
@@ -854,8 +814,6 @@ void luashutdown() {
   lua_close(L);
   dprintf("lua closed");
   L = NULL;
-  
-  delete uilayer;
 }
 
 void fatal(const string &message) {
@@ -865,7 +823,7 @@ void fatal(const string &message) {
 
 DEFINE_bool(help, false, "Get help");
 DEFINE_bool(development, false, "Development tools");
-void glorp_init(const string &name, const string &fontname, int width, int height, int argc, const char **argv) {
+void glorp_init(const string &name, int width, int height, int argc, const char **argv) {
 
   #ifdef IPHONE
   width = 320;
@@ -917,25 +875,6 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
       glorp_set_icons();
     #endif
   }
-  
-  {
-    //dprintf("path: %s\n", getcwd(NULL, 0));
-    //Font *font = ShadowFont::Load(fontname.c_str(), 0.05, 0.05);
-    Font *font = Font::Load(fontname.c_str());
-    if(!font) {
-      font = Font::Load(("data/" + fontname).c_str());
-    }
-    CHECK(font);
-    InitDefaultFrameStyle(font);
-  }
-  
-  world = new TableauFrame();
-  {
-    ListId fid = world->AddChild(new Perfbar);
-    world->MoveChild(fid, 100000);
-  }
-  FocusFrame *everything = new FocusFrame(world);
-  window()->AddFrame(everything);
 
   dprintf("EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
   dprintf("VENDOR: %s\n", glGetString(GL_VENDOR));
@@ -946,6 +885,9 @@ void glorp_init(const string &name, const string &fontname, int width, int heigh
     CHECK_MESSAGE(false, "%s currently requires OpenGL 2.0, which your computer doesn't seem to have.\n\nUpdating your video drivers might fix the problem, or it might not. Sorry!\n\nI've created a datafile including some information that may help Mandible Games fix\nthe error in future versions. It contains no personally identifying information.\n\nMay I send this to Mandible?");
     return;
   }
+  
+  GlorpThinLayer thinlayer;
+  window()->SetThinLayer(&thinlayer);
   
   luainit(argc, argv);
   
