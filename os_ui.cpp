@@ -14,13 +14,6 @@ int Message(const string &text, bool yesno) {
   return false;
 }
 
-pair<int, int> getScreenRes() {
-  pair<int, int> glorb;
-  glorb.first = GetSystemMetrics(SM_CXSCREEN);
-  glorb.second = GetSystemMetrics(SM_CYSCREEN);
-  return glorb;
-}
-
 #elif defined(MACOSX)
 
 // implemented in os_ui_osx.mm

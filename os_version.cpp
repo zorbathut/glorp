@@ -37,6 +37,9 @@ string getTempFilename() {
 
 #else
 
+#include <cstring>
+#include <stdlib.h>
+
 static const string directory_delimiter = "/";
 
 string getConfigDirectory() {
