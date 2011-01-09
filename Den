@@ -156,7 +156,7 @@ do
   local objs = {}
   for item in ursa.token{"luabind_files"}:gmatch("([^\n]+)") do
     if item:match("%.cpp$") then
-      table.insert(objs, ursa.rule{builddir .. "lib_build/luabind/" .. item:gsub(".cpp", ".o"), {lua_headers, luabind_headers, builddir .. "lib_build/luabind/" .. item}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -I#builddir/lib_release/include -Iglorp/libs/boost #CXXFLAGS -g"):format(builddir .. "lib_build/luabind/" .. item)}})
+      table.insert(objs, ursa.rule{builddir .. "lib_build/luabind/" .. item:gsub(".cpp", ".o"), {lua_headers, luabind_headers, builddir .. "lib_build/luabind/" .. item}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -I#builddir/lib_release/include -Iglorp/libs/boost_1_45_0 #CXXFLAGS -g"):format(builddir .. "lib_build/luabind/" .. item)}})
     end
   end
   
@@ -373,7 +373,7 @@ end
 local function build_object(src, prefix, params)
   local compiler = ursa.token{"CC"}
   if params.compiler then compiler = compiler:gsub("g%+%+", params.compiler) end
-  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DGLOP_LEAN_AND_MEAN -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, src)
+  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DGLOP_LEAN_AND_MEAN -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost_1_45_0 -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, src)
   
   -- we *should* be doing something substantially more reliable and sane here. we're not, because this is much easier
   local clurl = (src == "glorp/reporter_main.cpp") and curl_headers or {}

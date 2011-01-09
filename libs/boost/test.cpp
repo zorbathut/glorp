@@ -1,2 +1,0 @@
-
-#include "luabind/class.hpp"
