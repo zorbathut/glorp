@@ -243,6 +243,8 @@ function coroutine.pause(frames)
   for i = 1, frames do coroutine.yield() end
 end
 
+local ctex = nil
+local texchanges = 0
 
 local Tex = Texture
 local texcache = {}
@@ -252,11 +254,37 @@ function Texture(...)
     if texcache[texname] then return texcache[texname] end
     
     texcache[texname] = Tex(texname)
-    if texcache[texname] then return texcache[texname] end
+    if texcache[texname] then
+      -- we actually want to sneak in here real fast and tweak things
+      local ost = texcache[texname].SetTexture
+      texcache[texname].SetTexture = function (self)
+        if ctex ~= self then
+          ctex = self
+          texchanges = texchanges + 1
+          ost(self)
+        end
+      end
+      return texcache[texname]
+    end
   end
   
   print("No such texture list", ...)
   assert(false)
+end
+local osnt = SetNoTexture
+function SetNoTexture()
+  if ctex then
+    ctex = nil
+    texchanges = texchanges + 1
+    osnt()
+  end
+end
+
+function instrumentation_GetTextureChanges()
+  return texchanges
+end
+function instrumentation_ResetTextureChanges()
+  texchanges = 0
 end
 
 function sign(x)
@@ -440,9 +468,24 @@ if gl then
       attrib_lookup[program.id:get()] = nil
       uniform_lookup[program.id:get()] = nil
     end
+    
+    local cprog = -1
+    local shaderchanges = 0
     function glutil.UseProgram(program)
-      snatch.UseProgram(program and program.id:get() or 0)
+      local intended = program and program.id:get() or 0
+      if cprog ~= intended then
+        cprog = intended
+        shaderchanges = shaderchanges + 1
+        snatch.UseProgram(intended)
+      end
     end
+    function instrumentation_GetShaderChanges()
+      return shaderchanges
+    end
+    function instrumentation_ResetShaderChanges()
+      shaderchanges = 0
+    end
+
 
     function glutil.GetShader(shader, flag)
       return snatch.GetShader(shader.id:get(), flag)

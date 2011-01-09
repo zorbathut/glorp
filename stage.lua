@@ -492,13 +492,19 @@ function failover()
   stdwrap("failover")
 end
 
-if mode == "debug" then
+if mode == "debug" or mode == "editor" then
   Perfbar_Set(true)
   wedothisfirst = nil
   Handle("start_game")
-end
-if mode == "editor" then
-  Perfbar_Set(true)
-  wedothisfirst = nil
-  Handle("start_game")
+  
+  local texcover = CreateFrame("Text", overlay)
+  texcover:SetLayer(100000)
+  texcover:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -20, -20)
+  texcover:SetSize(15)
+  texcover:SetColor(1, 1, 1)
+  function texcover:Tick()
+    self:SetText(string.format("%d / %d", instrumentation_GetTextureChanges(), instrumentation_GetShaderChanges()))
+    instrumentation_ResetTextureChanges()
+    instrumentation_ResetShaderChanges()
+  end
 end
