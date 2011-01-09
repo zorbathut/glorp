@@ -520,6 +520,9 @@ static int math_randomseed (lua_State *L) {
 void sms(bool bol) {
   input()->ShowMouseCursor(bol);
 }
+void lms(bool bol) {
+  input()->LockMouseCursor(bol);
+}
 void setmousepos(int x, int y) {
   input()->SetMousePosition(x, y);
 }
@@ -746,6 +749,7 @@ void luainit(int argc, const char **argv) {
       def("GetMouseX", &gmx),
       def("GetMouseY", &gmy),
       def("ShowMouseCursor", &sms),
+      def("LockMouseCursor", &lms),
       def("SetMousePosition", &setmousepos),
       #ifndef IPHONE
       def("ScreenshotTo", &screenshot_to),

@@ -8,6 +8,7 @@ set_wrap_platform(platform)
 
 local show_in_menu = true
 local show_last = nil
+local lock_last = nil
 function ShowMouseCursorInMenu(sms)
   show_in_menu = sms
 end
@@ -122,6 +123,10 @@ function imm_end()
     ShowMouseCursor(show_last)
     show_last = nil
   end
+  if lock_last ~= nil then
+    LockMouseCursor(lock_last)
+    lock_last = nil
+  end
   minimenu_frames:Hide()
   inminimenu = false
   if runninggame then runninggame.UIRoot.Update = runninggame_runupdate end
@@ -197,7 +202,9 @@ minimenu_repopulate({}) -- default
 
 local function imm_start()
   show_last = MouseCursorShown()
+  lock_last = MouseCursorLocked()
   ShowMouseCursor(show_in_menu)
+  LockMouseCursor(false)
   minimenu_frames:Show()
   minimenu_pos = 1
   imm_resync()

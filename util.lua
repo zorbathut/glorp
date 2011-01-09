@@ -742,6 +742,17 @@ do
     return shown
   end
 end
+do
+  local lms = LockMouseCursor
+  local locked = false
+  function LockMouseCursor(flag)
+    lms(flag)
+    locked = flag
+  end
+  function MouseCursorLocked()
+    return locked
+  end
+end
 
 
 

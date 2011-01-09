@@ -1,5 +1,6 @@
 
 ShowMouseCursor(true) -- keep this around so it's reset properly
+LockMouseCursor(false) -- keep this around so it's reset properly
 
 --disable_anchor()
 --pause_on_nofocus = true
