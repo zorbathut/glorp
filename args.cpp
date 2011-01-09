@@ -7,8 +7,6 @@
 
 #include <fstream>
 
-#include <boost/bind.hpp>
-
 using namespace std;
 
 class LinkageData {
@@ -46,8 +44,32 @@ map<string, LinkageData> &getLinkageSingleton() {
   return singy;
 }
 
-vector<boost::function<void (void)> > &getMassageSingleton() {
-  static vector<boost::function<void (void)> > singy;
+class SimpleBind {
+public:
+  virtual void operator()() const = 0;
+
+  virtual ~SimpleBind() { };
+};
+
+template<typename T> class SimpleBindImp : public SimpleBind {
+private:
+  T *item;
+  void (*f)(T *);
+
+public:
+  SimpleBindImp<T>(void (&f_in)(T *), T *item_in)
+  {
+    item = item_in;
+    f = &f_in;
+  }
+  
+  void operator()() const {
+    f(item);
+  }
+};
+
+vector<SimpleBind *> &getMassageSingleton() {
+  static vector<SimpleBind *> singy;
   return singy;
 }
 
@@ -102,7 +124,7 @@ LinkageData::LinkageData() {
 }
 
 template<typename T> void ARGS_Massager::real_worker(T *item, void (&f)(T *)) {
-  getMassageSingleton().push_back(boost::bind(f, item));
+  getMassageSingleton().push_back(new SimpleBindImp<T>(f, item));
 }
 
 template void ARGS_Massager::real_worker<string>(string *item, void (&f)(string *));
@@ -226,8 +248,10 @@ void initFlags(int *argcp, const char ***argvp, int ignoreargs, const string &se
   }
   
   for(int i = 0; i < getMassageSingleton().size(); i++) {
-    getMassageSingleton()[i]();
+    (*getMassageSingleton()[i])();
+    delete getMassageSingleton()[i];
   }
+  getMassageSingleton().clear();
   
   for(map<string, LinkageData>::iterator itr = links.begin(); itr != links.end(); itr++) {
     if(itr->second.type == LinkageData::LINKAGE_BOOL) {
