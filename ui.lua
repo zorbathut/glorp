@@ -155,6 +155,10 @@ do
     return setmetatable({}, axisanchormeta)
   end
   
+  local notifyMap = {
+    _anchor_x = "OnShiftX",
+    _anchor_y = "OnShiftY",
+  }
   local function decache(self, axis)
     if self.__cache[axis] then
       self.__cache[axis] = nil
@@ -163,6 +167,9 @@ do
         decache(k, axis)
       end
     end
+    
+    local notifyfunc = notifyMap[axis]
+    if self[notifyfunc] then self[notifyfunc](self) end
   end
   
   local function reanchor(self, axis, token, grip, p1, p2)
@@ -634,8 +641,8 @@ function FrameTypes.TextGlop:_Init()
   self:SetText("")
 end
 
-FrameTypes.Text_Multiline = {}
-function FrameTypes.Text_Multiline:ResynchText()
+FrameTypes.TextGlop_Multiline = {}
+function FrameTypes.TextGlop_Multiline:ResynchText()
   local col = ("\1J0C%02x%02x%02x%02x\1"):format(self.tex_r * 255, self.tex_g * 255, self.tex_b * 255, self.tex_a * 255)
   local siz
   if self.tex_size then
@@ -646,25 +653,25 @@ function FrameTypes.Text_Multiline:ResynchText()
   self.text:SetText(col .. siz .. self.tex_tex)
   self.update = true
 end
-function FrameTypes.Text_Multiline:SetText(text)
+function FrameTypes.TextGlop_Multiline:SetText(text)
   self.tex_tex = text
   self:ResynchText()
 end
-function FrameTypes.Text_Multiline:SetColor(r, g, b, a)
+function FrameTypes.TextGlop_Multiline:SetColor(r, g, b, a)
   if not a then a = 1 end
   self.tex_r, self.tex_g, self.tex_b, self.tex_a = r, g, b, a
   self:ResynchText()
 end
-function FrameTypes.Text_Multiline:SetSize(siz)
+function FrameTypes.TextGlop_Multiline:SetSize(siz)
   self.tex_size = siz
   self:ResynchText()
 end
-function FrameTypes.Text_Multiline:ForceHeight()
+function FrameTypes.TextGlop_Multiline:ForceHeight()
   self.text:UpdateSize(self:GetWidth(), 1000)
   self.text:SetPosition(0, 0, 0, 0, self:GetWidth(), 1000)
   self:SetHeight(self.text:GetHeight())
 end
-function FrameTypes.Text_Multiline:Draw()
+function FrameTypes.TextGlop_Multiline:Draw()
   local l, u, r, d = self:GetBounds()
   if self.update or not (self.text:GetX() == l and self.text:GetY() == u and self.text:GetClipX1() == l and self.text:GetClipX2() == r and self.text:GetClipY1() == u and self.text:GetClipY2() == d) then
     self.text:UpdateSize(r - l, d - u)
@@ -674,11 +681,11 @@ function FrameTypes.Text_Multiline:Draw()
   end
   self.text:Render()
 end
-FrameTypes.Text_Multiline.tex_r = 1
-FrameTypes.Text_Multiline.tex_g = 1
-FrameTypes.Text_Multiline.tex_b = 1
-FrameTypes.Text_Multiline.tex_a = 1
-function FrameTypes.Text_Multiline:_Init()
+FrameTypes.TextGlop_Multiline.tex_r = 1
+FrameTypes.TextGlop_Multiline.tex_g = 1
+FrameTypes.TextGlop_Multiline.tex_b = 1
+FrameTypes.TextGlop_Multiline.tex_a = 1
+function FrameTypes.TextGlop_Multiline:_Init()
   self.text = FancyTextFrame_Make("")
   self:SetText("")
 end
@@ -873,6 +880,131 @@ function FrameTypes.TextDistance:_Init()
 end
 
 FrameTypes.Text = FrameTypes.TextDistance
+FrameTypes.Text_Multiline = FrameTypes.TextDistance_Multiline
+
+FrameTypes.TextDistance_Multiline = {}
+function FrameTypes.TextDistance_Multiline:SetText(text)
+  self.text = text
+  self:RecreateSubtext()
+end
+function FrameTypes.TextDistance_Multiline:SetSize(size)
+  self.size = size
+  self:RecreateSubtext()
+end
+function FrameTypes.TextDistance_Multiline:SetColor(r, g, b, a)
+  self.r, self.g, self.b, self.a = r, g, b, a
+  self:RecreateSubtext()
+end
+function FrameTypes.TextDistance_Multiline:OnShiftX()
+  self:RecreateSubtext()
+end
+function FrameTypes.TextDistance_Multiline:RecreateSubtext()
+  local font = TextDistanceFont
+  
+  -- could probably be more efficient
+  local width = self:GetWidth()
+  
+  for _, v in ipairs(self._subtext) do
+    v:Detach()
+  end
+  self._subtext = {}
+  
+  local scale = self.size / font.dat.height
+  
+  local line = 0
+  local function testLine(text)
+    local wid = 0
+    for i = 1, #text do
+      local letter = text:byte(i)
+      local kar = font.dat.characters[letter]
+      
+      if kar then
+        wid = wid + kar.w * scale
+      end
+    end
+    
+    return wid <= width
+  end
+  local function insertLine(text)
+    local fram = CreateFrame("Text", self)
+    fram:SetSize(self.size)
+    fram:SetText(text)
+    fram:SetColor(self.r, self.g, self.b, self.a)
+    fram:SetPoint("TOPLEFT", self, "TOPLEFT", 0, line * (font.dat.height + font.dat.padding) * scale)
+    table.insert(self._subtext, fram)
+    line = line + 1
+  end
+  local function attemptLine(text)
+    if testLine(text) then
+      insertLine(text)
+      return true
+    else
+      return false
+    end
+  end
+  local textleft = self.text
+  local function processChunk()
+    -- exists just because we don't have continue
+    
+    -- First, see if we can fit a line in
+    local aline = textleft:match("^([^\n]*)\n")
+    if aline then
+      if attemptLine(aline) then
+        textleft = textleft:sub(#aline + 2)
+        return
+      end
+    end
+    
+    -- See if we can just fit everything
+    if attemptLine(textleft) then
+      textleft = ""
+      return
+    end
+    
+    -- Okay, we can't. Take that line and start chopping words off the end.
+    if not aline then aline = textleft end -- We might not have had a line, in which case we should just use everything.
+    while true do
+      aline = aline:match("^(.+)[ \t][^ \t]*$")
+      if not aline then break end -- Couldn't strip a word.
+      if aline and attemptLine(aline) then
+        textleft = textleft:sub(#aline + 2)
+        return
+      end
+    end
+    
+    -- We can't fit an entire word either. Just add as many letters as we can, with at least one.
+    for ct = 2, #textleft do
+      aline = textleft:sub(1, ct)
+      if not testLine(aline) then
+        insertLine(textleft:sub(1, ct - 1))
+        textleft = textleft:sub(ct)
+        return
+      end
+    end
+    
+    -- Maybe we only have one letter left, and it doesn't fit.
+    assert(#textleft == 1)
+    insertLine(textleft)
+    textleft = ""
+  end
+  while #textleft > 0 do
+    processChunk()
+  end
+  
+  if line > 0 then
+    self:SetHeight((line * (font.dat.height + font.dat.padding) - font.dat.padding) * scale)
+  else
+    self:SetHeight(0)
+  end
+end
+
+local printit = false
+function FrameTypes.TextDistance_Multiline:_Init()
+  self._subtext = {}
+  self.size = 50
+  self:SetText("")
+end
+
 
 FrameTypes.Texture = {}
 function FrameTypes.Texture:SetTexture(tex, preserve_dimensions)
