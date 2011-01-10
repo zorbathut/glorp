@@ -521,7 +521,7 @@ void sms(bool bol) {
   input()->ShowMouseCursor(bol);
 }
 void lms(bool bol) {
-  input()->LockMouseCursor(bol);
+  window()->LockMouseCursor(bol);
 }
 void setmousepos(int x, int y) {
   input()->SetMousePosition(x, y);
