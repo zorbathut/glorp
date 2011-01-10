@@ -1,6 +1,8 @@
 
 local mode, platform, FrameTypes = ...
 
+local disable_fonts_for_ogl_1 = false
+
 FrameTypes.Button = {}
 function FrameTypes.Button:Key(button, ascii, event)
   if not button then return true end
@@ -36,7 +38,7 @@ local TextDistanceFont = LoadFont("font")
 --assert(false)
 
 local text_shader
-do
+if not disable_fonts_for_ogl_1 then
   local vertex = glutil.Shader("VERTEX", [[
     void main()
     {
@@ -70,7 +72,7 @@ do
 end
 
 local text_shader_outline -- hacky fix later
-do
+if not disable_fonts_for_ogl_1 then
   local vertex = glutil.Shader("VERTEX", [[
     void main()
     {
@@ -538,4 +540,17 @@ do
     self.Render = self.Render_New
     self.Render_New = nil
   end
+end
+
+
+if disable_fonts_for_ogl_1 then  -- disable fonts!
+  FrameTypes.Text = {}
+  function FrameTypes.Text:SetText(text) self:SetWidth(50) self:SetHeight(50) end
+  function FrameTypes.Text:SetSize(size) end
+  function FrameTypes.Text:SetColor(r, g, b, a) end
+  function FrameTypes.Text:Tick()
+    print("Fonts disabled!")
+  end
+  
+  FrameTypes.Text_Multiline = FrameTypes.Text
 end
