@@ -240,6 +240,37 @@ do
   table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/multi.h", builddir .. "lib_build/curl/include/curl/multi.h", ursa.util.copy{}})
 end
 
+local openal_headers = {}
+local openal_dlls = {}
+do
+  -- I suppose we can openal it up a notch
+  local path = "glorp/libs/openal-soft-1.12.854"
+  
+  local files = {}
+  
+  ursa.token.rule{"openal_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  for item in ursa.token{"openal_files"}:gmatch("([^\n]+)") do
+    table.insert(files, ursa.rule{builddir .. "lib_build/openalsoft/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    
+    if item:match("include/.*%.h$") then
+      table.insert(openal_headers, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
+  end
+  
+  local lib
+  if platform == "cygwin" then
+    -- cmake makes this very hard
+    local sedreplace = " && " .. ("sed -i -e s@/usr/bin/gcc.exe@%s@g -e s@/usr/bin/c++.exe@%s@g -e s@/cygdrive/c@c:@g `find . -type f | grep -v empty`"):format(glop.libcc, glop.libcc)
+    local openalcflags = libcflags .. " -I../../../../../../../glorp/glop/Glop/third_party/system_cygwin/include -I../../../../../glorp/glop/Glop/third_party/system_cygwin/include"
+    local lib = ursa.rule{{builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/OpenAL32-1.12.854.dll"}, {files}, ursa.util.system_template{('cd %slib_build/openalsoft/build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DCMAKE_BUILD_TYPE=Release -DALSA=OFF -DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF -DDLOPEN=OFF -DEXTRA_LIBS=winmm ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, openalcflags, openalcflags, libldflags)}}
+    
+    libs.openal32 = ursa.rule{builddir .. "lib_release/lib/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", ursa.util.copy{}}
+    ursa.rule{builddir .. "lib_release/bin/OpenAL32-1.12.854.dll", builddir .. "lib_build/openalsoft/build/OpenAL32-1.12.854.dll", ursa.util.copy{}}
+  else
+    assert(false)
+  end
+end
+
 local fltk_headers = {}
 if platform == "linux" then
   -- now let's fltk it up a notch
@@ -350,7 +381,7 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg libfmodex glop" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg libfmodex openal32 glop" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
