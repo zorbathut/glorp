@@ -227,7 +227,7 @@ do
     end
   end
   
-  local makefile = ursa.rule{{builddir .. "lib_build/curl/Makefile", builddir .. "lib_build/curl/include/curl/curlbuild.h"}, files, ursa.util.system_template{('cd %slib_build/curl && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --disable-shared --disable-dependency-tracking --disable-ftp --disable-file --disable-ldap --disable-ldaps --disable-rtsp --disable-proxy --disable-dict --disable-telnet --disable-tftp --disable-pop3 --disable-imap --disable-smtp --disable-manual --disable-ipv6 --disable-crypto-auth --disable-cookies'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  local makefile = ursa.rule{{builddir .. "lib_build/curl/Makefile", builddir .. "lib_build/curl/include/curl/curlbuild.h"}, files, ursa.util.system_template{('asdlkfj cd %slib_build/curl && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --disable-shared --disable-dependency-tracking --disable-ftp --disable-file --disable-ldap --disable-ldaps --disable-rtsp --disable-proxy --disable-dict --disable-telnet --disable-tftp --disable-pop3 --disable-imap --disable-smtp --disable-manual --disable-ipv6 --disable-crypto-auth --disable-cookies'):format(builddir, glop.libcc, libcflags, libldflags)}}
   
   local lib = ursa.rule{builddir .. "lib_build/curl/lib/.libs/libcurl.a", makefile, ('cd %slib_build/curl && make'):format(builddir)}  -- can't parallelize this, libcurl is a giant butt
   
@@ -241,7 +241,6 @@ do
 end
 
 local openal_headers = {}
-local openal_dlls = {}
 do
   -- I suppose we can openal it up a notch
   local path = "glorp/libs/openal-soft-1.12.854"
@@ -264,7 +263,7 @@ do
     local openalcflags = libcflags .. " -I../../../../../../../glorp/glop/Glop/third_party/system_cygwin/include -I../../../../../glorp/glop/Glop/third_party/system_cygwin/include"
     local lib = ursa.rule{{builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/OpenAL32-1.12.854.dll"}, {files}, ursa.util.system_template{('cd %slib_build/openalsoft/build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DCMAKE_BUILD_TYPE=Release -DALSA=OFF -DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF -DDLOPEN=OFF -DEXTRA_LIBS=winmm ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, openalcflags, openalcflags, libldflags)}}
     
-    libs.openal32 = ursa.rule{builddir .. "lib_release/lib/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", ursa.util.copy{}}
+    libs.openal = ursa.rule{builddir .. "lib_release/lib/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", ursa.util.copy{}}
     ursa.rule{builddir .. "lib_release/bin/OpenAL32-1.12.854.dll", builddir .. "lib_build/openalsoft/build/OpenAL32-1.12.854.dll", ursa.util.copy{}}
   else
     assert(false)
@@ -381,7 +380,7 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg libfmodex openal32 glop" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg libfmodex openal glop" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
@@ -406,14 +405,24 @@ local function build_object(src, prefix, params)
   if params.compiler then compiler = compiler:gsub("g%+%+", params.compiler) end
   local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DGLOP_LEAN_AND_MEAN -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost_1_45_0 -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, src)
   
-  -- we *should* be doing something substantially more reliable and sane here. we're not, because this is much easier
-  local clurl = (src == "glorp/reporter_main.cpp") and curl_headers or {}
-  local flurl = {}
-  if prefix:find("reporter") and glop.os == "linux" then
-    flurl = fltk_headers
+  local sig = src .. "." .. prefix
+  
+  local extraheaders = {}
+  if params.builddata.libs:find("libcurl") then
+    table.insert(extraheaders, curl_headers)
+  end
+  if params.builddata.libs:find("libfltk") then
+    table.insert(extraheaders, fltk_headers)
+  end
+  if params.builddata.libs:find("openal") then
+    table.insert(extraheaders, openal_headers)
+  end
+  if params.builddata.libs:find("box2d") then
+    table.insert(extraheaders, box2d_headers)
   end
   
-  if not depsed[src] then
+  -- this little block is probably no longer necessary
+  if not depsed[sig] then
     local function make_dependencies(srcfile)
       local deps = ursa.system{cli .. "-MM"}
       deps = deps:match("^.*: (.*)$")
@@ -428,14 +437,14 @@ local function build_object(src, prefix, params)
       return dependencies
     end
     
-    local depend = src .. " dependencies"
+    local depend = sig .. " dependencies"
     
-    ursa.token.rule{depend, {glop.headers, lua_headers, luabind_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, clurl, flurl, lgl_deps, box2d_headers}, function () return make_dependencies(cpp) end}
-    depsed[src] = ursa.util.token_deferred{depend}
+    ursa.token.rule{depend, {glop.headers, lua_headers, luabind_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, extraheaders, lgl_deps}, function () return make_dependencies(cpp) end}
+    depsed[sig] = ursa.util.token_deferred{depend}
   end
   
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o"):gsub("%.mm", ".o")
-  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[src], clurl, flurl, lgl_deps, box2d_headers}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
+  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[sig], extraheaders, lgl_deps}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
   return dst
 end
 
@@ -448,16 +457,16 @@ local function build_program(name)
   local objs = {}
   
   for k in (item.dynfiles or ""):gmatch("([^%s]+)") do
-    table.insert(objs, build_object(builddir .. "glorp/" .. k .. ".cpp", prefix, {flags = item.flags}))
+    table.insert(objs, build_object(builddir .. "glorp/" .. k .. ".cpp", prefix, {builddata = item, flags = item.flags}))
   end
   for k in (item.glorpfiles or ""):gmatch("([^%s]+)") do
-    table.insert(objs, build_object("glorp/" .. k .. ".cpp", prefix, {flags = item.flags}))
+    table.insert(objs, build_object("glorp/" .. k .. ".cpp", prefix, {builddata = item, flags = item.flags}))
   end
   for k in (item.cfiles or ""):gmatch("([^%s]+)") do
-    table.insert(objs, build_object(k .. ".c", prefix, {compiler = "gcc", flags = item.flags}))
+    table.insert(objs, build_object(k .. ".c", prefix, {builddata = item, compiler = "gcc", flags = item.flags}))
   end
   for k in (item.mmfiles or ""):gmatch("([^%s]+)") do
-    table.insert(objs, build_object("glorp/" .. k .. ".mm", prefix, {flags = (item.flags or "") .. " -x objective-c++"}))
+    table.insert(objs, build_object("glorp/" .. k .. ".mm", prefix, {builddata = item, flags = (item.flags or "") .. " -x objective-c++"}))
   end
   
   if platform == "cygwin" then

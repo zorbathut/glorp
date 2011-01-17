@@ -24,6 +24,8 @@ rv.create_runnable = function(dat)
     table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, libname), ("%s/%s"):format(libpath, libname), ursa.util.copy{}})
   end
   
+  table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, "OpenAL32-1.12.854.dll"), ("%s%s"):format(liboutpath, "lib_release/bin/OpenAL32-1.12.854.dll"), ursa.util.copy{}})
+  
   return {deps = {dlls, dat.mainprog}, cli = ("%s%s.exe"):format(params.builddir, params.name)}
 end
 
@@ -39,6 +41,7 @@ function rv.installers()
   table.insert(data, ursa.rule{params.builddir .. "deploy/" .. params.name .. ".exe", params.builddir .. params.name .. ".exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{params.builddir .. "deploy/data/reporter.exe", params.builddir .. "reporter.exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{params.builddir .. "deploy/fmodex.dll", params.builddir .. "fmodex.dll", ursa.util.copy{}})
+  --table.insert(data, ursa.rule{params.builddir .. "deploy/OpenAL32-1.12.854.dll", params.builddir .. "OpenAL32-1.12.854.dll", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   
   cull_data({data})
 
