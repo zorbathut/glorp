@@ -405,53 +405,6 @@ class KeyList : public KeyListener {
   }
 };
 
-map<pair<string, float>, SoundSample *> sounds;
-
-vector<SoundSource> ss;
-SoundSource SoundCore(const string &sname, float vol, bool loop) {
-  vol = ceil(vol * 16) / 16;
-  for(int i = 0; i < ss.size(); i++) {
-    if(ss[i].IsStopped()) {
-      ss[i].Stop();
-      ss.erase(ss.begin() + i);
-    }
-  }
-  if(!sounds[make_pair(sname, vol)]) {
-    sounds[make_pair(sname, vol)] = SSLoad(sname, vol);
-  }
-  
-  if(!sounds[make_pair(sname, vol)]) {
-    if(!sound_manager()->IsInitialized())
-      return SoundSource(); // welp
-    
-    meltdown();
-    CHECK(sounds[make_pair(sname, vol)]);
-  }
-  
-  //dprintf("Looping: %d\n", loop);
-  return sounds[make_pair(sname, vol)]->Play(loop);
-  //dprintf("%d, %d\n", nss.IsPaused(), nss.IsStopped());
-  //CHECK(!nss.IsPaused() && !nss.IsStopped(), "%d, %d\n", nss.IsPaused(), nss.IsStopped());
-};
-
-void DoASound(const string &sname, float vol) {
-  ss.push_back(SoundCore(sname, vol, false));
-}
-
-SoundSource ControllableSound(const string &sname, float vol, bool loop) {
-  return SoundCore(sname, vol, loop);
-}
-
-void clean_up_sounds() {
-  for(int i = 0; i < ss.size(); i++)
-    ss[i].Stop();
-  ss.clear();
-  
-  for(map<pair<string, float>, SoundSample *>::iterator itr = sounds.begin(); itr != sounds.end(); itr++)
-    delete itr->second;
-  sounds.clear();
-}
-
 class PerfBarManager {
   PerfStack *ps;
   
@@ -738,13 +691,13 @@ void luainit(int argc, const char **argv) {
       class_<PerfBarManager, DontKillMeBro<PerfBarManager> >("Perfbar_Init")
         .def(constructor<float, float, float>())
         .def("Destroy", &PerfBarManager::Destroy),
-      class_<SoundSource, DontKillMeBro<SoundSource> >("SourceSource_Make")
-        .def("Stop", &SoundSource::Stop),
+      //class_<SoundSource, DontKillMeBro<SoundSource> >("SourceSource_Make")
+        //.def("Stop", &SoundSource::Stop),
       def("Texture", &GetTex, adopt(result)),
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDown", &IsKeyDownFrameAdapter),
-      def("PlaySound_Core", &DoASound),
-      def("ControlSound_Core", &ControllableSound),
+      //def("PlaySound_Core", &DoASound),
+      //def("ControlSound_Core", &ControllableSound),
       def("TriggerExit", &TriggerExit),
       def("GetMouseX", &gmx),
       def("GetMouseY", &gmy),
@@ -1230,12 +1183,12 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
   meltdown();
   luashutdown();
   
-  clean_up_sounds();
   System::ShutDown();
   
   dprintf("exiting");
 }
 
+/*
 SoundSample *SSLoad(const string &fname_base, float vol) {
   SoundSample *rv;
   rv = SoundSample::Load("data/" + fname_base + ".caf", false, vol);  // hurr
@@ -1253,3 +1206,4 @@ SoundSample *SSLoad(const string &fname_base, float vol) {
   
   return NULL;
 }
+*/

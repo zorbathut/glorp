@@ -227,7 +227,7 @@ do
     end
   end
   
-  local makefile = ursa.rule{{builddir .. "lib_build/curl/Makefile", builddir .. "lib_build/curl/include/curl/curlbuild.h"}, files, ursa.util.system_template{('asdlkfj cd %slib_build/curl && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --disable-shared --disable-dependency-tracking --disable-ftp --disable-file --disable-ldap --disable-ldaps --disable-rtsp --disable-proxy --disable-dict --disable-telnet --disable-tftp --disable-pop3 --disable-imap --disable-smtp --disable-manual --disable-ipv6 --disable-crypto-auth --disable-cookies'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  local makefile = ursa.rule{{builddir .. "lib_build/curl/Makefile", builddir .. "lib_build/curl/include/curl/curlbuild.h"}, files, ursa.util.system_template{('cd %slib_build/curl && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --disable-shared --disable-dependency-tracking --disable-ftp --disable-file --disable-ldap --disable-ldaps --disable-rtsp --disable-proxy --disable-dict --disable-telnet --disable-tftp --disable-pop3 --disable-imap --disable-smtp --disable-manual --disable-ipv6 --disable-crypto-auth --disable-cookies'):format(builddir, glop.libcc, libcflags, libldflags)}}
   
   local lib = ursa.rule{builddir .. "lib_build/curl/lib/.libs/libcurl.a", makefile, ('cd %slib_build/curl && make'):format(builddir)}  -- can't parallelize this, libcurl is a giant butt
   
@@ -380,7 +380,7 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg libfmodex openal glop" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
