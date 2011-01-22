@@ -52,17 +52,20 @@ local osd = assert(loadfile("glorp/Den_" .. platform .. ".lua")){name = params.n
 
 -- this will contain all the libs that got built from glop
 local libs = {}
+local headers = {}
 for k, v in pairs(glop.libs) do
   libs[k] = v
+  headers[k] = glop.headers
 end
 
 local libcflags = glop.libcflags
 local libldflags = glop.libcflags
 
 -- first we build the lua
-local lua_headers = {}
 local lua_exec
 do
+  headers.lua = {}
+  
   do
     if not osd.noluajit and not noluajit then
       local path = "glorp/libs/LuaJIT-2.0.0-beta5-p1/"
@@ -97,8 +100,8 @@ do
       ursa.rule{builddir .. "lib_release/lib/liblua.a", builddir .. "lib_build/lua/src/libluajit.a", ursa.util.copy{}}
       
       -- luajit includes it in src
-      table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/lua.hpp", builddir .. "lib_build/lua/src/lua.hpp", ursa.util.copy{}})
-      table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/luajit.h", builddir .. "lib_build/lua/src/luajit.h", ursa.util.copy{}})
+      table.insert(headers.lua, ursa.rule{builddir .. "lib_release/include/lua.hpp", builddir .. "lib_build/lua/src/lua.hpp", ursa.util.copy{}})
+      table.insert(headers.lua, ursa.rule{builddir .. "lib_release/include/luajit.h", builddir .. "lib_build/lua/src/luajit.h", ursa.util.copy{}})
     else
       local files = "lapi lcode ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate lstring ltable ltm lundump lzio lcoco linit lauxlib lbaselib ldblib liolib lmathlib loslib ltablib lstrlib loadlib lvm"
       local path = "glorp/libs/lua-5.1.4/"
@@ -119,20 +122,20 @@ do
       ursa.rule{builddir .. "lib_release/lib/liblua.a", luaobjects, ursa.util.system_template{"ar rcs $TARGET $SOURCES"}} -- wonder if this'll work right under cygwin
       
       -- base lua includes it in etc
-      table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/lua.hpp", builddir .. "lib_build/lua/etc/lua.hpp", ursa.util.copy{}})
+      table.insert(headers.lua, ursa.rule{builddir .. "lib_release/include/lua.hpp", builddir .. "lib_build/lua/etc/lua.hpp", ursa.util.copy{}})
     end
   end
 
   libs.lua = {builddir .. "lib_release/lib/liblua.a"}
   
   for k in ("lua.h lauxlib.h lualib.h luaconf.h"):gmatch("([^ ]+)") do
-    table.insert(lua_headers, ursa.rule{builddir .. "lib_release/include/" .. k, builddir .. "lib_build/lua/src/" .. k, ursa.util.copy{}})
+    table.insert(headers.lua, ursa.rule{builddir .. "lib_release/include/" .. k, builddir .. "lib_build/lua/src/" .. k, ursa.util.copy{}})
   end
 end
 
-local luabind_headers = {}
 do
   -- let's luabind it up a notch
+  headers.luabind = {}
   local path = "glorp/libs/luabind-0.9"
   
   local files = {}
@@ -149,14 +152,14 @@ do
     end    
     
     if item:match("%.hpp$") then
-      table.insert(luabind_headers, ursa.rule{builddir .. "lib_release/include/" .. item, builddir .. "lib_build/luabind/" .. item, ursa.util.copy{}})
+      table.insert(headers.luabind, ursa.rule{builddir .. "lib_release/include/" .. item, builddir .. "lib_build/luabind/" .. item, ursa.util.copy{}})
     end
   end
   
   local objs = {}
   for item in ursa.token{"luabind_files"}:gmatch("([^\n]+)") do
     if item:match("%.cpp$") then
-      table.insert(objs, ursa.rule{builddir .. "lib_build/luabind/" .. item:gsub(".cpp", ".o"), {lua_headers, luabind_headers, builddir .. "lib_build/luabind/" .. item}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -I#builddir/lib_release/include -Iglorp/libs/boost_1_45_0 #CXXFLAGS -g"):format(builddir .. "lib_build/luabind/" .. item)}})
+      table.insert(objs, ursa.rule{builddir .. "lib_build/luabind/" .. item:gsub(".cpp", ".o"), {headers.lua, headers.luabind, builddir .. "lib_build/luabind/" .. item}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -I#builddir/lib_release/include -Iglorp/libs/boost_1_45_0 #CXXFLAGS -g"):format(builddir .. "lib_build/luabind/" .. item)}})
     end
   end
   
@@ -166,9 +169,9 @@ do
   ursa.command{"hello", libs.luabind}
 end
   
-local curl_headers = {}
 do
   -- let's curl it up a notch
+  headers.libcurl = {}
   local path = "glorp/libs/curl-7.20.0"
   
   local files = {}
@@ -232,17 +235,17 @@ do
   local lib = ursa.rule{builddir .. "lib_build/curl/lib/.libs/libcurl.a", makefile, ('cd %slib_build/curl && make'):format(builddir)}  -- can't parallelize this, libcurl is a giant butt
   
   libs.libcurl = ursa.rule{builddir .. "lib_release/lib/libcurl.a", lib, ursa.util.copy{}}
-  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curl.h", builddir .. "lib_build/curl/include/curl/curl.h", ursa.util.copy{}})
-  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curlver.h", builddir .. "lib_build/curl/include/curl/curlver.h", ursa.util.copy{}})
-  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curlbuild.h", builddir .. "lib_build/curl/include/curl/curlbuild.h", ursa.util.copy{}})
-  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/curlrules.h", builddir .. "lib_build/curl/include/curl/curlrules.h", ursa.util.copy{}})
-  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/easy.h", builddir .. "lib_build/curl/include/curl/easy.h", ursa.util.copy{}})
-  table.insert(curl_headers, ursa.rule{builddir .. "lib_release/include/curl/multi.h", builddir .. "lib_build/curl/include/curl/multi.h", ursa.util.copy{}})
+  table.insert(headers.libcurl, ursa.rule{builddir .. "lib_release/include/curl/curl.h", builddir .. "lib_build/curl/include/curl/curl.h", ursa.util.copy{}})
+  table.insert(headers.libcurl, ursa.rule{builddir .. "lib_release/include/curl/curlver.h", builddir .. "lib_build/curl/include/curl/curlver.h", ursa.util.copy{}})
+  table.insert(headers.libcurl, ursa.rule{builddir .. "lib_release/include/curl/curlbuild.h", builddir .. "lib_build/curl/include/curl/curlbuild.h", ursa.util.copy{}})
+  table.insert(headers.libcurl, ursa.rule{builddir .. "lib_release/include/curl/curlrules.h", builddir .. "lib_build/curl/include/curl/curlrules.h", ursa.util.copy{}})
+  table.insert(headers.libcurl, ursa.rule{builddir .. "lib_release/include/curl/easy.h", builddir .. "lib_build/curl/include/curl/easy.h", ursa.util.copy{}})
+  table.insert(headers.libcurl, ursa.rule{builddir .. "lib_release/include/curl/multi.h", builddir .. "lib_build/curl/include/curl/multi.h", ursa.util.copy{}})
 end
 
-local openal_headers = {}
 do
   -- I suppose we can openal it up a notch
+  headers.openal = {}
   local path = "glorp/libs/openal-soft-1.12.854"
   
   local files = {}
@@ -252,7 +255,7 @@ do
     table.insert(files, ursa.rule{builddir .. "lib_build/openalsoft/" .. item, path .. "/" .. item, ursa.util.copy{}})
     
     if item:match("include/.*%.h$") then
-      table.insert(openal_headers, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
+      table.insert(headers.openal, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
     end
   end
   
@@ -270,9 +273,9 @@ do
   end
 end
 
-local fltk_headers = {}
 if platform == "linux" then
   -- now let's fltk it up a notch
+  headers.libfltk = {}
   local path = "glorp/libs/fltk-1.1.10"
   
   local files = {}
@@ -291,7 +294,7 @@ if platform == "linux" then
     
     
     if item:match("^FL.*") then
-      table.insert(fltk_headers, ursa.rule{builddir .. "lib_release/include/" .. item, path .. "/" .. item, ursa.util.copy{}})
+      table.insert(headers.libfltk, ursa.rule{builddir .. "lib_release/include/" .. item, path .. "/" .. item, ursa.util.copy{}})
     end
   end
   
@@ -304,9 +307,9 @@ if platform == "linux" then
   libs.libfltk = ursa.rule{builddir .. "lib_release/lib/libfltk.a", lib, ursa.util.copy{}}
 end
 
-local box2d_headers = {}
 if params.box2d then
   -- now let's box2d it up a notch
+  headers.box2d = {}
   local path = "glorp/libs/Box2D_v2.1.2"
   
   local files = {}
@@ -319,7 +322,7 @@ if params.box2d then
     end
     
     if item:match("%.h$") then
-      table.insert(box2d_headers, ursa.rule{builddir .. "lib_release/include/" .. item, path .. "/" .. item, ursa.util.copy{}})
+      table.insert(headers.box2d, ursa.rule{builddir .. "lib_release/include/" .. item, path .. "/" .. item, ursa.util.copy{}})
     end
   end
   
@@ -408,17 +411,9 @@ local function build_object(src, prefix, params)
   local sig = src .. "." .. prefix
   
   local extraheaders = {}
-  if params.builddata.libs:find("libcurl") then
-    table.insert(extraheaders, curl_headers)
-  end
-  if params.builddata.libs:find("libfltk") then
-    table.insert(extraheaders, fltk_headers)
-  end
-  if params.builddata.libs:find("openal") then
-    table.insert(extraheaders, openal_headers)
-  end
-  if params.builddata.libs:find("box2d") then
-    table.insert(extraheaders, box2d_headers)
+  for v in params.builddata.libs:gmatch("([^%s]+)") do
+    assert(headers[v])
+    table.insert(extraheaders, headers[v])
   end
   
   -- this little block is probably no longer necessary
@@ -439,12 +434,12 @@ local function build_object(src, prefix, params)
     
     local depend = sig .. " dependencies"
     
-    ursa.token.rule{depend, {glop.headers, lua_headers, luabind_headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, extraheaders, lgl_deps}, function () return make_dependencies(cpp) end}
+    ursa.token.rule{depend, {glop.headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, extraheaders, lgl_deps}, function () return make_dependencies(cpp) end}
     depsed[sig] = ursa.util.token_deferred{depend}
   end
   
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o"):gsub("%.mm", ".o")
-  ursa.rule{dst, {src, lua_headers, glop.headers, depsed[sig], extraheaders, lgl_deps}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
+  ursa.rule{dst, {src, depsed[sig], extraheaders, lgl_deps}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
   return dst
 end
 
