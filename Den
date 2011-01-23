@@ -282,7 +282,9 @@ do
   
   ursa.token.rule{"libogg_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
   for item in ursa.token{"libogg_files"}:gmatch("([^\n]+)") do
-    table.insert(files, ursa.rule{builddir .. "lib_build/libogg/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    if item ~= "libogg.spec" then
+      table.insert(files, ursa.rule{builddir .. "lib_build/libogg/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
     
     if item:match("include/ogg/.*%.h$") then
       table.insert(headers.libogg, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
@@ -308,7 +310,9 @@ do
   
   ursa.token.rule{"libvorbis_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
   for item in ursa.token{"libvorbis_files"}:gmatch("([^\n]+)") do
-    table.insert(files, ursa.rule{builddir .. "lib_build/libvorbis/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    if item ~= "libvorbis.spec" then
+      table.insert(files, ursa.rule{builddir .. "lib_build/libvorbis/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
     
     if item:match("include/vorbis/.*%.h$") then
       table.insert(headers.libvorbis, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
@@ -321,6 +325,37 @@ do
   
   libs.libvorbis = ursa.rule{builddir .. "lib_release/lib/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", ursa.util.copy{}}
   libs.libvorbisfile = ursa.rule{builddir .. "lib_release/lib/libvorbisfile.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a", ursa.util.copy{}}
+end
+
+do
+  -- libflac
+  headers.libflac = {}
+  local path = "glorp/libs/flac-1.2.1"
+  
+  local files = {}
+  
+  ursa.token.rule{"libflac_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  for item in ursa.token{"libflac_files"}:gmatch("([^\n]+)") do
+    if item == "include/share/alloc.h" then
+      table.insert(files, ursa.rule{builddir .. "lib_build/libflac/" .. item, path .. "/" .. item, ursa.util.system_template{([[sed
+        -e "s/#  ifdef _MSC_VER/#  if 1 == 1/"
+        
+        $SOURCE > $TARGET]]):format(glop.libcc):gsub("\n", " ")}})
+    else
+      table.insert(files, ursa.rule{builddir .. "lib_build/libflac/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
+    
+    if item:match("include/FLAC/.*%.h$") then
+      table.insert(headers.libflac, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
+  end
+  
+  
+  
+  local makefile = ursa.rule{builddir .. "lib_build/libflac/Makefile", files, ursa.util.system_template{('cd %slib_build/libflac && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --enable-shared=no --enable-static=yes --disable-ogg --disable-xmms-plugin --disable-cpplibs --disable-thorough-tests'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  ursa.command{"welp", makefile}
+  
+  libs.libflac = ursa.rule{builddir .. "lib_build/libflac/src/libFLAC/.libs/libFLAC.a", makefile, ('cd %slib_build/libflac && make'):format(builddir)}
 end
 
 if platform == "linux" then
@@ -433,7 +468,7 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop libvorbisfile libvorbis libogg" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop libvorbisfile libvorbis libogg libflac" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }

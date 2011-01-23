@@ -4,10 +4,10 @@
 #include "debug.h"
 #include "util.h"
 
-//#include <vorbis/vorbisfile.h>
+#include <vorbis/vorbisfile.h>
 #include <al/al.h>
 
-/*bool loadAsOgg(const char *prefix, int *buffer) {
+bool loadAsOgg(const char *prefix, int *buffer) {
   CHECK(alGetError() == AL_NO_ERROR);
   
   string fname = StringPrintf("data/%s.ogg", prefix);
@@ -47,10 +47,6 @@
   CHECK(!ov_clear(&ov));
 
   return true;
-}*/
-
-bool loadAsOgg(const char *prefix, int *buffer) {
-  return false;
 }
 
 struct WaveHeader {
