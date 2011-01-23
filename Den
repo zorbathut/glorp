@@ -273,6 +273,56 @@ do
   end
 end
 
+do
+  -- libogg
+  headers.libogg = {}
+  local path = "glorp/libs/libogg-1.2.2"
+  
+  local files = {}
+  
+  ursa.token.rule{"libogg_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  for item in ursa.token{"libogg_files"}:gmatch("([^\n]+)") do
+    table.insert(files, ursa.rule{builddir .. "lib_build/libogg/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    
+    if item:match("include/ogg/.*%.h$") then
+      table.insert(headers.libogg, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
+  end
+  
+  local makefile = ursa.rule{{builddir .. "lib_build/libogg/Makefile", builddir .. "lib_build/libogg/include/ogg/config_types.h"}, files, ursa.util.system_template{('cd %slib_build/libogg && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --enable-shared=no --enable-static=yes'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  
+  local lib = ursa.rule{builddir .. "lib_build/libogg/src/.libs/libogg.a", makefile, ('cd %slib_build/libogg && make'):format(builddir)}
+  
+  libs.libogg = ursa.rule{builddir .. "lib_release/lib/libogg.a", lib, ursa.util.copy{}}
+  
+  table.insert(headers.libogg, ursa.rule{builddir .. "lib_release/include/ogg/config_types.h", builddir .. "lib_build/libogg/include/ogg/config_types.h", ursa.util.copy{}})
+end
+
+do
+  -- libvorbis, libvorbisfile
+  headers.libvorbis = {}
+  headers.libvorbisfile = headers.libvorbis
+  local path = "glorp/libs/libvorbis-1.3.2"
+  
+  local files = {}
+  
+  ursa.token.rule{"libvorbis_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  for item in ursa.token{"libvorbis_files"}:gmatch("([^\n]+)") do
+    table.insert(files, ursa.rule{builddir .. "lib_build/libvorbis/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    
+    if item:match("include/vorbis/.*%.h$") then
+      table.insert(headers.libvorbis, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
+  end
+  
+  local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="%s" CFLAGS="%s" CPPFLAGS="-I../../lib_release/include -I../../../lib_release/include" LDFLAGS="%s" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  
+  ursa.rule{{builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a"}, makefile, ('cd %slib_build/libvorbis && make'):format(builddir)}
+  
+  libs.libvorbis = ursa.rule{builddir .. "lib_release/lib/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", ursa.util.copy{}}
+  libs.libvorbisfile = ursa.rule{builddir .. "lib_release/lib/libvorbisfile.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a", ursa.util.copy{}}
+end
+
 if platform == "linux" then
   -- now let's fltk it up a notch
   headers.libfltk = {}
@@ -383,7 +433,7 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop libvorbisfile libvorbis libogg" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
