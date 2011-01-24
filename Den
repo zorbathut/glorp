@@ -293,7 +293,7 @@ do
   
   local makefile = ursa.rule{{builddir .. "lib_build/libogg/Makefile", builddir .. "lib_build/libogg/include/ogg/config_types.h"}, files, ursa.util.system_template{('cd %slib_build/libogg && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --enable-shared=no --enable-static=yes'):format(builddir, glop.libcc, libcflags, libldflags)}}
   
-  local lib = ursa.rule{builddir .. "lib_build/libogg/src/.libs/libogg.a", makefile, ('cd %slib_build/libogg && make'):format(builddir)}
+  local lib = ursa.rule{builddir .. "lib_build/libogg/src/.libs/libogg.a", makefile, ('cd %slib_build/libogg && make -j1'):format(builddir)}
   
   libs.libogg = ursa.rule{builddir .. "lib_release/lib/libogg.a", lib, ursa.util.copy{}}
   
@@ -321,7 +321,7 @@ do
   
   local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="%s" CFLAGS="%s" CPPFLAGS="-I../../lib_release/include -I../../../lib_release/include" LDFLAGS="%s" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, glop.libcc, libcflags, libldflags)}}
   
-  ursa.rule{{builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a"}, makefile, ('cd %slib_build/libvorbis && make'):format(builddir)}
+  ursa.rule{{builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a"}, makefile, ('cd %slib_build/libvorbis && make -j1'):format(builddir)}
   
   libs.libvorbis = ursa.rule{builddir .. "lib_release/lib/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", ursa.util.copy{}}
   libs.libvorbisfile = ursa.rule{builddir .. "lib_release/lib/libvorbisfile.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a", ursa.util.copy{}}
@@ -457,18 +457,19 @@ ursa.rule{builddir .. "glorp/main.cpp", {"!" .. params.longname, "!" .. params.f
   fil:close()
 end}
 
--- lgl build
-local lgl_deps
+-- logal build
+local logal_deps
 do
-  local lgl = ursa.embed{"glorp/lgl", "Den", {{}}}
+  local logal = ursa.embed{"glorp/logal", "Den", {{}}}
   
-  lgl.generate(ursa.absolute_from{builddir .. "glorp/lgl.cpp"}, "")
+  logal.lgl_generate(ursa.absolute_from{builddir .. "glorp/lgl.cpp"}, "")
+  logal.lal_generate(ursa.absolute_from{builddir .. "glorp/lal.cpp"}, "")
   
-  lgl_deps = ursa.rule{builddir .. "glorp/lgl.h", lgl.header, ursa.util.copy{}}
+  logal_deps = {ursa.rule{builddir .. "glorp/lgl.h", logal.lgl_header, ursa.util.copy{}}, ursa.rule{builddir .. "glorp/lal.h", logal.lal_header, ursa.util.copy{}}}
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop libvorbisfile libvorbis libogg libflac" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl lal", glorpfiles = "core core_glutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop libvorbisfile libvorbis libogg libflac" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
@@ -519,12 +520,12 @@ local function build_object(src, prefix, params)
     
     local depend = sig .. " dependencies"
     
-    ursa.token.rule{depend, {glop.headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, extraheaders, lgl_deps}, function () return make_dependencies(cpp) end}
+    ursa.token.rule{depend, {glop.headers, ursa.util.token_deferred{depend, default = src}, "!" .. cli, extraheaders, logal_deps}, function () return make_dependencies(cpp) end}
     depsed[sig] = ursa.util.token_deferred{depend}
   end
   
   local dst = prefix .. "/" .. src:gsub("%.cpp", ".o"):gsub("%.c", ".o"):gsub("%.mm", ".o")
-  ursa.rule{dst, {src, depsed[sig], extraheaders, lgl_deps}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
+  ursa.rule{dst, {src, depsed[sig], extraheaders, logal_deps}, ursa.util.system_template{"nice glorp/ewrap $TARGET " .. cli .. "-o $TARGET -c"}}
   return dst
 end
 
