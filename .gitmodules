@@ -1,9 +1,9 @@
 [submodule "glop"]
 	path = glop
 	url = git@github.com:zorbathut/glop.git
-[submodule "lgl"]
-	path = lgl
-	url = git@github.com:zorbathut/lgl.git
+[submodule "logal"]
+	path = logal
+	url = git@github.com:zorbathut/logal.git
 [submodule "mild"]
 	path = mild
 	url = git@github.com:zorbathut/mild.git
