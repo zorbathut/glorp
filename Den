@@ -324,7 +324,7 @@ do
     end
   end
   
-  local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="%s" CFLAGS="%s" CPPFLAGS="-I../../lib_release/include -I../../../lib_release/include" LDFLAGS="%s" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg, libs.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="%s" CFLAGS="%s" CPPFLAGS="-I../../lib_release/include -I../../../lib_release/include" LDFLAGS="%s" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, glop.libcc, libcflags, libldflags)}}
   
   ursa.rule{{builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a"}, makefile, ('cd %slib_build/libvorbis && make -j1'):format(builddir)}
   
