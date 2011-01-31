@@ -6,7 +6,7 @@
 #include <luabind/discard_result_policy.hpp>
 #include <luabind/adopt_policy.hpp>
 
-#include "al/al.h"
+#include "AL/al.h"
 
 #include "debug.h"
 #include "sound.h"

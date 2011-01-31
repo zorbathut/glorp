@@ -2,8 +2,8 @@
 #include "lgl.h"
 #include "lal.h"
 
-#include <al/al.h>
-#include <al/alc.h>
+#include <AL/al.h>
+#include <AL/alc.h>
   
 #ifndef LINUX
   // can't include on linux because GLee includes X.h which conflicts with the Font class
