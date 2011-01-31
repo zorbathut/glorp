@@ -13,7 +13,7 @@ bool loadAsOgg(const char *prefix, int *buffer) {
   string fname = StringPrintf("data/%s.ogg", prefix);
     
   OggVorbis_File ov;
-  if (!ov_fopen(fname.c_str(), &ov))
+  if (ov_fopen(fname.c_str(), &ov))
     return false;
   
   vorbis_info *inf = ov_info(&ov, -1);
@@ -76,6 +76,10 @@ struct WaveFile {
   WaveChunkHeader data_header;
 };
 
+unsigned long endian_swap(unsigned long in) {
+  return ((in & 0xFF000000) >> 24) | ((in & 0x00FF0000) >>  8) | ((in & 0x0000FF00) <<  8) | ((in & 0x000000FF) << 24);
+}
+
 bool loadAsWav(const char *prefix, int *buffer) {
   CHECK(alGetError() == AL_NO_ERROR);
   
@@ -86,20 +90,20 @@ bool loadAsWav(const char *prefix, int *buffer) {
     return false;
   
   WaveFile header;
-  CHECK(fread(&header, sizeof(header), 1, fil) == sizeof(header));
+  CHECK(fread(&header, sizeof(header), 1, fil) == 1);
   
-  CHECK(header.header.riff == 'RIFF');
-  CHECK(header.header.type == 'WAVE');
-  CHECK(header.format_header.type == 'fmt ');
+  CHECK(header.header.riff == endian_swap('RIFF'));
+  CHECK(header.header.type == endian_swap('WAVE'));
+  CHECK(header.format_header.type == endian_swap('fmt '));
   CHECK(header.format_header.size == 16);
   CHECK(header.format.format = 1);
   CHECK(header.format.channels == 1 || header.format.channels == 2);
   CHECK(header.format.depth == 16);
-  CHECK(header.data_header.type == 'data');
+  CHECK(header.data_header.type == endian_swap('data'));
   
   vector<short> data(header.data_header.size);
   
-  CHECK(fread(&data[0], header.data_header.size, 1, fil) == header.data_header.size);
+  CHECK(fread(&data[0], header.data_header.size, 1, fil) == 1);
   
   fclose(fil);
   
