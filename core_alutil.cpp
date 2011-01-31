@@ -4,10 +4,12 @@
 #include <luabind/luabind.hpp>
 #include <luabind/operator.hpp>
 #include <luabind/discard_result_policy.hpp>
+#include <luabind/adopt_policy.hpp>
 
 #include "al/al.h"
 
 #include "debug.h"
+#include "sound.h"
 
 #include <vector>
 
@@ -18,23 +20,26 @@ vector<ALuint> to_delete_buffers;
 vector<ALuint> to_delete_sources;
 
 class AlBufferID {
-  int id;
+  ALuint id;
   
 public:
   AlBufferID() {
     alGenBuffers(1, &id);
   }
+  AlBufferID(int _id) {
+    id = _id;
+  }
   ~AlBufferID() {
     to_delete_buffers.push_back(id);
   }
   
-  int get() const {
+  ALuint get() const {
     return id;
   }
 };
 
 class AlSourceID {
-  int id;
+  ALuint id;
   
 public:
   AlSourceID() {
@@ -44,9 +49,15 @@ public:
     to_delete_sources.push_back(id);
   }
   
-  int get() const {
+  ALuint get() const {
     return id;
   }
+};
+
+AlBufferID *LoadSoundWrapped(const char *inp) {
+  int snd = loadSound(inp);
+  CHECK(snd);
+  return new AlBufferID(snd);
 };
 
 void glorp_alutil_init(lua_State *L) {
@@ -61,6 +72,7 @@ void glorp_alutil_init(lua_State *L) {
       class_<AlSourceID>("AlSourceID")
         .def(constructor<>())
         .def("get", &AlSourceID::get),
+      def("LoadSound", &LoadSoundWrapped, adopt(result))
     ];
   }
 }

@@ -802,6 +802,8 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
 
   System::Init();
   
+  ALCdevice* pDevice = alcOpenDevice(NULL);
+  CHECK(pDevice);
   ALCcontext* pContext = alcCreateContext(pDevice, NULL);
   CHECK(pContext);
   alcMakeContextCurrent(pContext);
