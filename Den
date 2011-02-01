@@ -12,6 +12,7 @@ require "ursa"
 function token_literal(name, data)
   ursa.token.rule{name, "!" .. data, function () return data end}
 end
+ursa.token.rule{"pwd", nil, function () return ursa.system{"pwd"} end}
 
 params.targets = ursa.util.cli_parameter_parse{unpack(params.targets)}
 
@@ -324,7 +325,7 @@ do
     end
   end
   
-  local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg, libs.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="%s" CFLAGS="%s" CPPFLAGS="-I../../lib_release/include -I../../../lib_release/include" LDFLAGS="%s" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg, libs.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="%s" CFLAGS="%s" CPPFLAGS="-I../../lib_release/include -I../../../lib_release/include" LDFLAGS="%s -L%s/build/%s/lib_release/lib" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, glop.libcc, libcflags, libldflags, ursa.token{"pwd"}, platform)}}
   
   ursa.rule{{builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a"}, makefile, ('cd %slib_build/libvorbis && make -j1'):format(builddir)}
   
@@ -386,8 +387,6 @@ if platform == "linux" then
       table.insert(headers.libfltk, ursa.rule{builddir .. "lib_release/include/" .. item, path .. "/" .. item, ursa.util.copy{}})
     end
   end
-  
-  ursa.token.rule{"pwd", nil, function () return ursa.system{"pwd"} end}
   
   local makefile = ursa.rule{builddir .. "lib_build/fltk/FL/Makefile", {files, glop.headers, libs.zlib, libs.libpng, libs.libjpeg}, ursa.util.system_template{('cd %slib_build/fltk && CC="%s" CFLAGS="%s" CPPFLAGS="-I%s/glorp/glop/release/linux/include -I%s/glorp/glop/release/linux/include/jpeglib" LDFLAGS="%s -L%s/glorp/glop/release/linux/lib -L/usr/lib" ./configure --disable-localjpeg --disable-localzlib --disable-localpng'):format(builddir, glop.libcc, libcflags, ursa.token{"pwd"}, ursa.token{"pwd"}, libldflags, ursa.token{"pwd"})}}
   

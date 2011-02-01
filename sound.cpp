@@ -5,7 +5,7 @@
 #include "util.h"
 
 #include <vorbis/vorbisfile.h>
-#include <al/al.h>
+#include <AL/al.h>
 
 bool loadAsOgg(const char *prefix, int *buffer) {
   CHECK(alGetError() == AL_NO_ERROR);
