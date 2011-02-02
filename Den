@@ -573,6 +573,10 @@ local function build_program(name)
     sg, eg = "", ""
   end
   
+  if platform == "linux" and name == params.name then
+    eg = eg .. " '-Wl,-rpath,$ORIGIN/data'"
+  end
+  
   local dst = builddir .. name .. osd.extension
   ursa.rule{dst, {objs, extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g %s $SOURCES -L#builddir/lib_release/lib -lm #LDFLAGS %s"):format(sg, eg)}}
   return dst

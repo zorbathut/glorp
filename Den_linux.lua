@@ -18,15 +18,12 @@ local runnable_deps
 
 rv.create_runnable = function(dat)
   local libpath = "glorp/glop/Glop/third_party/system_linux/lib"
-  local libs = "libfmodex.so"
   local liboutpath = params.builddir
 
   local dlls = {}
-  for libname in (libs):gmatch("[^%s]+") do
-    table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, libname), ("%s/%s"):format(libpath, libname), ursa.util.copy{}})
-  end
+  table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, "data/libopenal.so.1"), ("%s/%s"):format(liboutpath, "lib_release/bin/libopenal.so"), ursa.util.copy{}})
   
-  return {deps = {dlls, dat.mainprog}, cli = ("%s%s.prog"):format(params.builddir, params.name)}
+  return {deps = {dlls, dat.mainprog, liboutpath .. "lib_release/bin/libopenal.so"}, cli = ("%s%s.prog"):format(params.builddir, params.name)}
 end
 
 rv.appprefix = params.builddir .. "deploy/" .. params.midname .. "/"
@@ -38,34 +35,10 @@ function rv.installers()
   local data = {}
 
   -- DLLs and executables
-  local stripped = ursa.rule{params.builddir .. params.name .. ".prog.stripped", params.builddir .. params.name .. ".prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}}
-  table.insert(data, ursa.rule{rv.dataprefix .. params.midname, stripped, function ()
-    print("install_name_tool fakeout ugliness")
-    local ni = io.open(params.builddir .. params.name .. ".prog.stripped", "rb")
-    local dat = ni:read("*a")
-    ni:close()
-    
-    local orig = "glorp/glop/release/linux/lib/libfmodex.so"
-    local new = "data/libfmodex.so"
-    assert(#new <= #orig)
-    while #new < #orig do
-      new = new .. "\0"
-    end
-    
-    local ndat = dat:gsub(orig, new, 1)
-    
-    assert(#dat == #ndat)
-    
-    assert(not ndat:find(orig))
-    
-    local out = io.open(rv.dataprefix .. params.midname, "wb")
-    out:write(ndat)
-    out:close()
-    
-    ursa.system{"chmod +x " .. rv.dataprefix .. params.midname}
-  end})
+  ursa.rule{rv.dataprefix .. params.midname, params.builddir .. params.name .. ".prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}}
+  
+  table.insert(data, ursa.rule{rv.dataprefix .. "data/libopenal.so.1", params.builddir .. "data/libopenal.so.1", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{rv.dataprefix .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
-  table.insert(data, ursa.rule{rv.dataprefix .. "data/libfmodex.so", params.builddir .. "libfmodex.so", ursa.util.system_template{"cp $SOURCE $TARGET && (execstack -c $TARGET || /usr/sbin/execstack -c $TARGET)"}})
   
   local dfn = {}
   for i = 0, 2 do
