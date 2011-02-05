@@ -787,6 +787,8 @@ void fatal(const string &message) {
 
 DEFINE_bool(help, false, "Get help");
 DEFINE_bool(development, false, "Development tools");
+DEFINE_bool(permit_ogl1, false, "Permit OpenGL 1.0 renderer. Note this may crash in many fascinating manners or fail to render important parts of the game, this is strictly for local testing, here there be dragons");
+
 void glorp_init(const string &name, int width, int height, int argc, const char **argv) {
 
   #ifdef IPHONE
@@ -853,7 +855,7 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
   dprintf("RENDERER: %s\n", glGetString(GL_RENDERER));
   dprintf("VERSION: %s\n", glGetString(GL_VERSION));
     
-  if(atof((const char*)glGetString(GL_VERSION)) < 2.0) {
+  if(atof((const char*)glGetString(GL_VERSION)) < 2.0 && !FLAGS_permit_ogl1) {
     CHECK_MESSAGE(false, "%s currently requires OpenGL 2.0, which your computer doesn't seem to have.\n\nUpdating your video drivers might fix the problem, or it might not. Sorry!\n\nI've created a datafile including some information that may help Mandible Games fix\nthe error in future versions. It contains no personally identifying information.\n\nMay I send this to Mandible?");
     return;
   }

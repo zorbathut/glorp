@@ -1,7 +1,16 @@
 
 local mode, platform, FrameTypes = ...
 
+local glv = tonumber(gl.GetString("VERSION"):match("^([^ ]*).*$"))
+
+print(gl.GetString("VERSION"))
+print(gl.GetString("VERSION"):match("^([^ ]*).*$"))
+print(glv)
+
 local disable_fonts_for_ogl_1 = false
+if glv and glv < 2 then
+  disable_fonts_for_ogl_1 = true
+end
 
 FrameTypes.Button = {}
 function FrameTypes.Button:Key(button, ascii, event)

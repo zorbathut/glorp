@@ -25,12 +25,12 @@ bool loadAsOgg(const char *prefix, int *buffer) {
 
   while(1) {
     char buf[4096];
-    int bitstream;
+    int bitstream = 0;
     int rv = ov_read(&ov, buf, sizeof(buf), 0, 2, 1, &bitstream);
     CHECK(bitstream == 0);
     CHECK(rv >= 0);
     CHECK(rv <= sizeof(buf));
-    CHECK(rv % 4 == 0);
+    CHECK(rv % (2 * inf->channels) == 0);
     if(rv == 0)
       break;
     short *pt = reinterpret_cast<short*>(buf);

@@ -35,7 +35,7 @@ function rv.installers()
   local data = {}
 
   -- DLLs and executables
-  ursa.rule{rv.dataprefix .. params.midname, params.builddir .. params.name .. ".prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}}
+  table.insert(data, ursa.rule{rv.dataprefix .. params.midname, params.builddir .. params.name .. ".prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   
   table.insert(data, ursa.rule{rv.dataprefix .. "data/libopenal.so.1", params.builddir .. "data/libopenal.so.1", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{rv.dataprefix .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
