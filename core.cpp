@@ -854,8 +854,8 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
   dprintf("VERSION: %s\n", glGetString(GL_VERSION));
     
   if(atof((const char*)glGetString(GL_VERSION)) < 2.0) {
-    //CHECK_MESSAGE(false, "%s currently requires OpenGL 2.0, which your computer doesn't seem to have.\n\nUpdating your video drivers might fix the problem, or it might not. Sorry!\n\nI've created a datafile including some information that may help Mandible Games fix\nthe error in future versions. It contains no personally identifying information.\n\nMay I send this to Mandible?");
-    //return;
+    CHECK_MESSAGE(false, "%s currently requires OpenGL 2.0, which your computer doesn't seem to have.\n\nUpdating your video drivers might fix the problem, or it might not. Sorry!\n\nI've created a datafile including some information that may help Mandible Games fix\nthe error in future versions. It contains no personally identifying information.\n\nMay I send this to Mandible?");
+    return;
   }
   
   GlorpThinLayer thinlayer;
