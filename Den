@@ -12,7 +12,7 @@ require "ursa"
 function token_literal(name, data)
   ursa.token.rule{name, "!" .. data, function () return data end}
 end
-ursa.token.rule{"pwd", nil, function () return ursa.system{"pwd"} end}
+ursa.token.rule{"pwd", nil, function () return ursa.system{"pwd"}:gsub("/cygdrive/c", "c:") end}
 
 params.targets = ursa.util.cli_parameter_parse{unpack(params.targets)}
 
@@ -59,8 +59,8 @@ for k, v in pairs(glop.libs) do
   headers[k] = glop.headers
 end
 
-local libcflags = glop.libcflags
-local libldflags = glop.libcflags
+local libcflags = string.format("%s -I%s/build/%s/lib_release/include", glop.libcflags, ursa.token{"pwd"}, platform)
+local libldflags = string.format("%s -L%s/build/%s/lib_release/lib", glop.libldflags, ursa.token{"pwd"}, platform)
 
 -- first we build the lua
 local lua_exec
@@ -296,7 +296,7 @@ do
   if platform == "cygwin" then
     -- cmake makes this very hard
     local sedreplace = " && " .. ("sed -i -e s@/usr/bin/gcc.exe@%s@g -e s@/usr/bin/c++.exe@%s@g -e s@/cygdrive/c@c:@g `find . -type f | grep -v empty`"):format(glop.libcc, glop.libcc)
-    local openalcflags = libcflags .. " -I../../../../../../../glorp/glop/Glop/third_party/system_cygwin/include -I../../../../../glorp/glop/Glop/third_party/system_cygwin/include"
+    local openalcflags = libcflags .. " -I" .. ursa.token{"pwd"} .. "/glorp/glop/Glop/third_party/system_cygwin/include"
     local lib = ursa.rule{{builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/OpenAL32-1.12.0.dll"}, {files}, ursa.util.system_template{('cd %slib_build/openalsoft/build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DCMAKE_BUILD_TYPE=Release -DALSA=OFF -DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF -DDLOPEN=OFF -DEXTRA_LIBS=winmm ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, openalcflags, openalcflags, libldflags)}}
     
     libs.openal = ursa.rule{builddir .. "lib_release/lib/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", ursa.util.copy{}}
