@@ -253,14 +253,19 @@ do
   
   ursa.token.rule{"openal_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
   for item in ursa.token{"openal_files"}:gmatch("([^\n]+)") do
-    table.insert(files, ursa.rule{builddir .. "lib_build/openalsoft/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    if item == "CMakeLists.txt" then
+      table.insert(files, ursa.rule{builddir .. "lib_build/openalsoft/" .. item, path .. "/" .. item, ursa.util.system_template{([[sed
+        -e "s/854/0/"
+        
+        $SOURCE > $TARGET]]):gsub("\n", " ")}})
+    else
+      table.insert(files, ursa.rule{builddir .. "lib_build/openalsoft/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
     
     if item:match("include/.*%.h$") then
       table.insert(headers.openal, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
     end
   end
-  
-  ursa.command{"welp", files}
   
   local lib
   if platform == "cygwin" then
@@ -271,13 +276,19 @@ do
     
     libs.openal = ursa.rule{builddir .. "lib_release/lib/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", ursa.util.copy{}}
     ursa.rule{builddir .. "lib_release/bin/OpenAL32-1.12.854.dll", builddir .. "lib_build/openalsoft/build/OpenAL32-1.12.854.dll", ursa.util.copy{}}
-  elseif platform == "linux" then
-    local lib = ursa.rule{builddir .. "lib_build/openalsoft/build/libopenal.so", {files}, ursa.util.system_template{('cd %slib_build/openalsoft/build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DCMAKE_BUILD_TYPE=Release DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF .. && make'):format(builddir, libcflags, libcflags, libldflags)}}
-    
-    libs.openal = ursa.rule{builddir .. "lib_release/lib/libopenal.so", builddir .. "lib_build/openalsoft/build/libopenal.so", ursa.util.copy{}}
-    ursa.rule{builddir .. "lib_release/bin/libopenal.so", builddir .. "lib_build/openalsoft/build/libopenal.so", ursa.util.copy{}}
   else
-    assert(false)
+    local ext = "so"
+    if platform == "osx" then ext = "dylib" end
+    
+    local lib = ursa.rule{builddir .. "lib_build/openalsoft/build/libopenal." .. ext, {files}, ursa.util.system_template{('cd %slib_build/openalsoft/build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DCMAKE_BUILD_TYPE=Release DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF .. && make'):format(builddir, libcflags, libcflags, libldflags)}}
+    
+    if platform == "osx" then
+      libs.openal = ursa.rule{builddir .. "lib_release/lib/libopenal.dylib", builddir .. "lib_build/openalsoft/build/libopenal.dylib", ursa.util.copy{}}
+      ursa.rule{builddir .. "lib_release/bin/libopenal.dylib", builddir .. "lib_build/openalsoft/build/libopenal.dylib", ursa.util.copy{}}
+    else
+      libs.openal = ursa.rule{builddir .. "lib_release/lib/libopenal.so", builddir .. "lib_build/openalsoft/build/libopenal.so", ursa.util.copy{}}
+      ursa.rule{builddir .. "lib_release/bin/libopenal.so", builddir .. "lib_build/openalsoft/build/libopenal.so", ursa.util.copy{}}
+    end
   end
 end
 
@@ -348,7 +359,12 @@ do
       table.insert(files, ursa.rule{builddir .. "lib_build/libflac/" .. item, path .. "/" .. item, ursa.util.system_template{([[sed
         -e "s/#  ifdef _MSC_VER/#  if 1 == 1/"
         
-        $SOURCE > $TARGET]]):format(glop.libcc):gsub("\n", " ")}})
+        $SOURCE > $TARGET]]):gsub("\n", " ")}})
+    elseif item == "src/libFLAC/ia32/nasm.h" then
+      table.insert(files, ursa.rule{builddir .. "lib_build/libflac/" .. item, path .. "/" .. item, ursa.util.system_template{([[sed
+        -e "s/%error unsupported object format!/%define FLAC__PUBLIC_NEEDS_UNDERSCORE/"
+        
+        $SOURCE > $TARGET]]):gsub("\n", " ")}})
     else
       table.insert(files, ursa.rule{builddir .. "lib_build/libflac/" .. item, path .. "/" .. item, ursa.util.copy{}})
     end
@@ -358,9 +374,17 @@ do
     end
   end
   
+  local ldflags2 = ""
+  local cflags2 = ""
   
+  if platform == "osx" then
+    cflags2 = " -m32"
+    ldflags2 = " -m32"
+  end
   
-  local makefile = ursa.rule{builddir .. "lib_build/libflac/Makefile", files, ursa.util.system_template{('cd %slib_build/libflac && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --enable-shared=no --enable-static=yes --disable-ogg --disable-xmms-plugin --disable-cpplibs --disable-thorough-tests'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  local makefile = ursa.rule{builddir .. "lib_build/libflac/Makefile", files, ursa.util.system_template{('cd %slib_build/libflac && CC="%s" CFLAGS="%s%s" CXXFLAGS="%s%s" LDFLAGS="%s%s" ./configure --enable-shared=no --enable-static=yes --disable-ogg --disable-xmms-plugin --disable-cpplibs --disable-thorough-tests'):format(builddir, glop.libcc, libcflags, cflags2, libcflags, cflags2, libldflags, ldflags2)}}
+  
+  ursa.command{"welp", files}
   
   libs.libflac = ursa.rule{builddir .. "lib_build/libflac/src/libFLAC/.libs/libFLAC.a", makefile, ('cd %slib_build/libflac && make'):format(builddir)}
 end
