@@ -20,9 +20,11 @@ This may or may not include box2d. If it does, license below. If it doesn't, lic
 
 OpenAL Soft is included is included under the terms of its absolute behemoth of an LGPL license, reproduced below. Technically I am required to also distribute the sourcecode from the same download source you got this from. I'm completely ignoring this requirement - the library can either be downloaded from the same site as glop (see below) in the libs/ directory, or from its own site which you can doubtless find on google, or you can ask me. If the openal32 maintainers find this problematical, let me know and I'll go the trouble of posting a copy on my server, but, seriously guys, github is going to be stabler than my server is.
 
-Finally, PortAudio is included on at least one operating system. License below.
+Note that there is one small tweak to the OpenAL Soft distribution - in order to dodge an OSX compatibility issue, the library version number has been changed from 1.12.854 to 1.12.0. Beyond that, it's identical.
 
-This relies on several of my own libraries, including lgl, glorp, and glop. It was built using ursa. All of these are available using extremely permissive licenses, either BSD or the standard Lua license. Check them out at http://github.com/zorbathut .
+Finally, PortAudio is included on at least one operating system (OSX, right now.) License below.
+
+This relies on my own Logal library and Glorp framework. Glorp uses a library called Glop, which was developed by several friends of mine and later modified by me. This entire mess was built using Ursa. All of these projects are available using extremely permissive licenses, either BSD or the standard Lua license. Check them out at http://github.com/zorbathut .
 
 =============== LIBOGG LICENSE
 
