@@ -267,6 +267,8 @@ do
     end
   end
   
+  ursa.command{"welp", files}
+  
   local lib
   if platform == "cygwin" then
     -- cmake makes this very hard
@@ -383,8 +385,6 @@ do
   end
   
   local makefile = ursa.rule{builddir .. "lib_build/libflac/Makefile", files, ursa.util.system_template{('cd %slib_build/libflac && CC="%s" CFLAGS="%s%s" CXXFLAGS="%s%s" LDFLAGS="%s%s" ./configure --enable-shared=no --enable-static=yes --disable-ogg --disable-xmms-plugin --disable-cpplibs --disable-thorough-tests'):format(builddir, glop.libcc, libcflags, cflags2, libcflags, cflags2, libldflags, ldflags2)}}
-  
-  ursa.command{"welp", files}
   
   libs.libflac = ursa.rule{builddir .. "lib_build/libflac/src/libFLAC/.libs/libFLAC.a", makefile, ('cd %slib_build/libflac && make'):format(builddir)}
 end

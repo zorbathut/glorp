@@ -20,6 +20,8 @@ This may or may not include box2d. If it does, license below. If it doesn't, lic
 
 OpenAL Soft is included is included under the terms of its absolute behemoth of an LGPL license, reproduced below. Technically I am required to also distribute the sourcecode from the same download source you got this from. I'm completely ignoring this requirement - the library can either be downloaded from the same site as glop (see below) in the libs/ directory, or from its own site which you can doubtless find on google, or you can ask me. If the openal32 maintainers find this problematical, let me know and I'll go the trouble of posting a copy on my server, but, seriously guys, github is going to be stabler than my server is.
 
+Finally, PortAudio is included on at least one operating system. License below.
+
 This relies on several of my own libraries, including lgl, glorp, and glop. It was built using ursa. All of these are available using extremely permissive licenses, either BSD or the standard Lua license. Check them out at http://github.com/zorbathut .
 
 =============== LIBOGG LICENSE
@@ -680,3 +682,12 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
+=============== PORTAUDIO LICENSE
+
+PortAudio Portable Real-Time Audio Library 
+Copyright (c) 1999-2000 Ross Bencina and Phil Burk
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND ON INFRINGEMENT. 
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
