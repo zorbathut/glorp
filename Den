@@ -244,6 +244,31 @@ do
   table.insert(headers.libcurl, ursa.rule{builddir .. "lib_release/include/curl/multi.h", builddir .. "lib_build/curl/include/curl/multi.h", ursa.util.copy{}})
 end
 
+if platform == "osx" then
+  headers.portaudio = {}
+  local path = "glorp/libs/portaudio"
+  
+  local files = {}
+  
+  ursa.token.rule{"portaudio_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  for item in ursa.token{"portaudio_files"}:gmatch("([^\n]+)") do
+    table.insert(files, ursa.rule{builddir .. "lib_build/portaudio/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    
+    if item:match("include/.*%.h$") then
+      table.insert(headers.portaudio, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
+    end
+  end
+  
+  local makefile = ursa.rule{builddir .. "lib_build/portaudio/Makefile", files, ursa.util.system_template{('cd %slib_build/portaudio && CC="%s" CFLAGS="%s" LDFLAGS="%s" ./configure --enable-shared --disable-static --with-alsa=no --with-jack=no --disable-mac-universal'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  
+  local lib = ursa.rule{builddir .. "lib_build/portaudio/lib/.libs/libportaudio.dylib", makefile, ('cd %slib_build/portaudio && make'):format(builddir)}
+  
+  libs.portaudio = ursa.rule{builddir .. "lib_release/lib/libportaudio.dylib", lib, ursa.util.copy{}}
+else
+  headers.portaudio = {}
+  libs.portaudio = {}
+end
+
 do
   -- I suppose we can openal it up a notch
   headers.openal = {}
@@ -267,8 +292,6 @@ do
     end
   end
   
-  ursa.command{"welp", files}
-  
   local lib
   if platform == "cygwin" then
     -- cmake makes this very hard
@@ -280,9 +303,13 @@ do
     ursa.rule{builddir .. "lib_release/bin/OpenAL32-1.12.854.dll", builddir .. "lib_build/openalsoft/build/OpenAL32-1.12.854.dll", ursa.util.copy{}}
   else
     local ext = "so"
-    if platform == "osx" then ext = "dylib" end
+    local po = "OFF"
+    if platform == "osx" then
+      ext = "dylib"
+      po = "ON"
+    end
     
-    local lib = ursa.rule{builddir .. "lib_build/openalsoft/build/libopenal." .. ext, {files}, ursa.util.system_template{('cd %slib_build/openalsoft/build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DCMAKE_BUILD_TYPE=Release DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF .. && make'):format(builddir, libcflags, libcflags, libldflags)}}
+    local lib = ursa.rule{builddir .. "lib_build/openalsoft/build/libopenal." .. ext, {files, headers.portaudio, libs.portaudio}, ursa.util.system_template{('cd %slib_build/openalsoft/build && CFLAGS="%s -I%s/build/%s/lib_release/include" CXXFLAGS="%s -I%s/build/%s/lib_release/include" LDFLAGS="%s -L/usr/lib -L%s/build/%s/lib_release/lib" cmake -DCMAKE_BUILD_TYPE=Release DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=%s -DPULSEAUDIO=OFF -DEXAMPLES=OFF .. && make'):format(builddir, libcflags, ursa.token{"pwd"}, platform, libcflags, ursa.token{"pwd"}, platform, libldflags, ursa.token{"pwd"}, platform, po)}}
     
     if platform == "osx" then
       libs.openal = ursa.rule{builddir .. "lib_release/lib/libopenal.dylib", builddir .. "lib_build/openalsoft/build/libopenal.dylib", ursa.util.copy{}}
@@ -340,7 +367,7 @@ do
     end
   end
   
-  local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg, libs.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="%s" CFLAGS="%s" CPPFLAGS="-I../../lib_release/include -I../../../lib_release/include" LDFLAGS="%s -L%s/build/%s/lib_release/lib" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, glop.libcc, libcflags, libldflags, ursa.token{"pwd"}, platform)}}
+  local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg, libs.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="%s" CFLAGS="%s" CPPFLAGS="-I%s/build/%s/lib_release/include" LDFLAGS="%s -L%s/build/%s/lib_release/lib" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, glop.libcc, libcflags, ursa.token{"pwd"}, platform, libldflags, ursa.token{"pwd"}, platform)}}
   
   ursa.rule{{builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a"}, makefile, ('cd %slib_build/libvorbis && make -j1'):format(builddir)}
   
@@ -498,7 +525,7 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl lal", glorpfiles = "core core_glutil core_alutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop libvorbisfile libvorbis libogg libflac" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl lal", glorpfiles = "core core_glutil core_alutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop libvorbisfile libvorbis libogg libflac portaudio" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }

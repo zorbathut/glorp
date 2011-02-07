@@ -23,7 +23,7 @@ rv.create_runnable = function(dat)
   local current_glop_iteration = 0
   
   -- copy our main executable
-  table.insert(runnable, ursa.rule{basepath .. "/Contents/MacOS/" .. params.longname, dat.mainprog, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool -change ./libfmodex.dylib @executable_path/../Frameworks/libfmodex.dylib $TARGET"):format(cli)}})
+  table.insert(runnable, ursa.rule{basepath .. "/Contents/MacOS/" .. params.longname, dat.mainprog, ursa.util.system_template{"cp $SOURCE $TARGET && install_name_tool -change /usr/local/lib/libportaudio.2.dylib @executable_path/../Frameworks/libportaudio.dylib -change #pwd/build/osx/lib_build/openalsoft/build/libopenal.1.dylib @executable_path/../Frameworks/libopenal.dylib $TARGET"}})
   
   --[[
   local function tweak_glop(cli)
@@ -32,14 +32,8 @@ rv.create_runnable = function(dat)
     --assert(false)
   end]]
   
-  -- copy subsidiary libraries
-  for libname in ("libfmodex.dylib"):gmatch("[^%s]+") do
-    table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/%s"):format(basepath, libname), ("glorp/glop/Glop/third_party/system_osx/lib/%s"):format(libname), ursa.util.copy{}})
-    --tweak_glop(("-change ./%s @executable_path/../Frameworks/%s"):format(libname, libname))
-  end
-  
-  -- copy the main glop library
-  --table.insert(runnable, ursa.rule{basepath .. "/Contents/Frameworks/Glop.framework/Glop", current_glop, ursa.util.system_template{"cp $SOURCE $TARGET"}})
+  table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/libportaudio.dylib"):format(basepath), "build/osx/lib_release/lib/libportaudio.dylib", ursa.util.copy{}})
+  table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/libopenal.dylib"):format(basepath), "build/osx/lib_release/lib/libopenal.dylib", ursa.util.copy{}})
   
   runnable_deps = runnable
   
