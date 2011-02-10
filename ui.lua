@@ -768,6 +768,8 @@ local frame = 1000 / 60
 
 local last_inside = {}
 function UI_Loop(tix, ...)
+  alutil.Tick()
+  
   local this_inside
   perfbar(0, 0.5, 0.5, function ()
     this_inside = AccumulateInternals()

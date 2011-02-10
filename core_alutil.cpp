@@ -13,13 +13,15 @@
 
 #include <vector>
 
+#include <boost/noncopyable.hpp>
+
 using namespace std;
 
 
 vector<ALuint> to_delete_buffers;
 vector<ALuint> to_delete_sources;
 
-class AlBufferID {
+class AlBufferID : boost::noncopyable {
   ALuint id;
   
 public:
@@ -38,7 +40,7 @@ public:
   }
 };
 
-class AlSourceID {
+class AlSourceID : boost::noncopyable {
   ALuint id;
   
 public:

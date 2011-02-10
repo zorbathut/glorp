@@ -11,6 +11,8 @@
 
 #include <vector>
 
+#include <boost/noncopyable.hpp>
+
 using namespace std;
 
 
@@ -22,7 +24,7 @@ vector<GLuint> to_delete_framebuffers;
 vector<GLuint> to_delete_renderbuffers;
 vector<GLuint> to_delete_textures;
 
-class GlListID {
+class GlListID : boost::noncopyable {
   int id;
   
 public:
@@ -38,7 +40,7 @@ public:
   }
 };
 
-class GlShader {
+class GlShader : boost::noncopyable {
   int id;
   
 public:
@@ -58,7 +60,7 @@ public:
   }
 };
 
-class GlProgram {
+class GlProgram : boost::noncopyable {
   int id;
   
 public:
@@ -74,7 +76,7 @@ public:
   }
 };
 
-class GlFramebuffer {
+class GlFramebuffer : boost::noncopyable {
   GLuint id;
   
 public:
@@ -90,7 +92,7 @@ public:
   }
 };
 
-class GlRenderbuffer {
+class GlRenderbuffer : boost::noncopyable {
   GLuint id;
   
 public:
@@ -106,7 +108,7 @@ public:
   }
 };
 
-class GlTexture {
+class GlTexture : boost::noncopyable {
   GLuint id;
   
 public:

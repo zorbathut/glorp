@@ -706,16 +706,16 @@ do
   table.insert(data_deps, copy_a_lot("data", "data/", "data/"))
 
   -- resources
-  ursa.token.rule{"stock_files", nil, "cd glorp/resources && ls mandible_games.png licenses.txt"}
+  ursa.token.rule{"stock_files", nil, "cd glorp/resources && ls mandible_games.png licenses.txt", always_rebuild = true}
   table.insert(data_deps, copy_a_lot("stock", "data/", "glorp/resources/"))
 
   -- Lua files in Glorp
-  ursa.token.rule{"luaglorp_files", nil, "cd glorp && ls *.lua | grep -v Den | grep -v box2d"}
+  ursa.token.rule{"luaglorp_files", nil, "cd glorp && ls *.lua | grep -v Den | grep -v box2d", always_rebuild = true}
   table.insert(data_deps, copy_a_lot("luaglorp", "data/", "glorp/"))
   
   -- Box2d lua files
   if params.box2d then
-    ursa.token.rule{"luabox2d_files", nil, "cd glorp && ls *.lua | grep box2d"}
+    ursa.token.rule{"luabox2d_files", nil, "cd glorp && ls *.lua | grep box2d", always_rebuild = true}
     table.insert(data_deps, copy_a_lot("luabox2d", "data/", "glorp/"))
   end
 
@@ -724,7 +724,7 @@ do
   table.insert(data_deps, copy_a_lot("core", "data/", ""))
   
   -- generated files
-  ursa.token.rule{"generated_files", genfiles, ("cd build/%s/glorp && ls *.lua *.png"):format(platform)}
+  ursa.token.rule{"generated_files", genfiles, ("cd build/%s/glorp && ls *.lua *.png"):format(platform), always_rebuild = true}
   table.insert(data_deps, copy_a_lot("generated", "data/", ("build/%s/glorp/"):format(platform)))
 
   ursa.token.rule{"datafiles", data_deps, function ()
