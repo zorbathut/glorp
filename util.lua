@@ -148,13 +148,6 @@ function line_intersect(sa, ea, sb, eb)
   return ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1
 end
 
-function PlaySound(snd, vol)
-  PlaySound_Core(snd, vol or 1)
-end
-function ControlSound(snd, vol, loop)
-  return ControlSound_Core(snd, vol or 1, loop or false)
-end
-
 
 function math.round(x)
   return math.floor(x + 0.5)
