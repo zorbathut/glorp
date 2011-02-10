@@ -2,12 +2,12 @@
 -- tables in tables exist to fix a luabind crash
 
 local sources_active = {}
-local sources = setmetatable({}, {__mode = "k"})
+local sources = setmetatable({}, {__mode = "kv"})
 
 alutil = {}
 function alutil.Source()
   local src = AlSourceID()
-  sources[src] = true
+  sources[src] = src
   
   return src
 end

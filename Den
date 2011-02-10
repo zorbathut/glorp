@@ -14,6 +14,9 @@ function token_literal(name, data)
 end
 ursa.token.rule{"pwd", nil, function () return ursa.system{"pwd"}:gsub("/cygdrive/c", "c:") end}
 
+local optflags = "-O2"
+token_literal("optflags", optflags)
+
 params.targets = ursa.util.cli_parameter_parse{unpack(params.targets)}
 
 assert(params.font, "choose a font, you dumbass")
@@ -34,12 +37,8 @@ end
 params.midname = params.longname:gsub("[^%w]", "")
 
 
-local glop
-if true then
-  glop = ursa.embed{"glorp/glop", "Den", {{platform = params.platform, minimal = true}}}
-else
-  glop = {os = params.platform, headers = {}, lib = {}}
-end
+local glop = ursa.embed{"glorp/glop", "Den", {{platform = params.platform, minimal = true, optflags = optflags}}}
+
 
 
 local platform = params.platform or glop.os
@@ -160,7 +159,7 @@ do
   local objs = {}
   for item in ursa.token{"luabind_files"}:gmatch("([^\n]+)") do
     if item:match("%.cpp$") then
-      table.insert(objs, ursa.rule{builddir .. "lib_build/luabind/" .. item:gsub(".cpp", ".o"), {headers.lua, headers.luabind, builddir .. "lib_build/luabind/" .. item}, ursa.util.system_template{("nice #CC -O2 -o $TARGET -c %s -I#builddir/lib_release/include -Iglorp/libs/boost_1_45_0 #CXXFLAGS -g"):format(builddir .. "lib_build/luabind/" .. item)}})
+      table.insert(objs, ursa.rule{builddir .. "lib_build/luabind/" .. item:gsub(".cpp", ".o"), {headers.lua, headers.luabind, builddir .. "lib_build/luabind/" .. item}, ursa.util.system_template{("nice #CC #optflags -o $TARGET -c %s -I#builddir/lib_release/include -Iglorp/libs/boost_1_45_0 #CXXFLAGS -g"):format(builddir .. "lib_build/luabind/" .. item)}})
     end
   end
   
@@ -548,7 +547,7 @@ end
 local function build_object(src, prefix, params)
   local compiler = ursa.token{"CC"}
   if params.compiler then compiler = compiler:gsub("g%+%+", params.compiler) end
-  local cli = ("%s %s -O2 -Wall -Wno-sign-compare -Wno-uninitialized -g -DGLOP_LEAN_AND_MEAN -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost_1_45_0 -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, src)
+  local cli = ("%s %s %s -Wall -Wno-sign-compare -Wno-uninitialized -g -DGLOP_LEAN_AND_MEAN -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost_1_45_0 -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", optflags, buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, src)
   
   local sig = src .. "." .. prefix
   
@@ -631,7 +630,7 @@ local function build_program(name)
   end
   
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC -O2 -o $TARGET -g %s $SOURCES -L#builddir/lib_release/lib -lm #LDFLAGS %s"):format(sg, eg)}}
+  ursa.rule{dst, {objs, extradeps}, ursa.util.system_template{("nice glorp/ewrap $TARGET #CC #optflags -o $TARGET -g %s $SOURCES -L#builddir/lib_release/lib -lm #LDFLAGS %s"):format(sg, eg)}}
   return dst
 end
 
@@ -795,7 +794,9 @@ else
   ursa.command{"runclean", {runnable.deps, genfiles}, runnable.cli}
 end
 
-ursa.command{"package", osd.installers("datafiles")}
+if not noluajit and optflags == "-O2" then
+  ursa.command{"package", osd.installers("datafiles")}
+end
 
 -- editor!
 if params.targets[1] == "mild" then
