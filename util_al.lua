@@ -43,6 +43,18 @@ function sound_proto:Gain(gain)
   al.Source(self.id:get(), "GAIN", gain)
   return self
 end
+function sound_proto:Looping(gain)
+  al.Source(self.id:get(), "LOOPING", gain and "TRUE" or "FALSE")
+  return self
+end
+function sound_proto:Position(x, y, z)
+  al.Source(self.id:get(), "POSITION", {x, y, z})
+  return self
+end
+function sound_proto:Velocity(x, y, z)
+  al.Source(self.id:get(), "VELOCITY", {x, y, z})
+  return self
+end
 function sound_proto:Play()
   al.SourcePlay(self.id:get())
   return self
@@ -60,3 +72,6 @@ end
 function PlaySound(sound)
   return CreateSound(sound):Play()
 end
+
+al.Listener("POSITION", {0, 0, 0})
+al.DistanceModel("NONE")
