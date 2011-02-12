@@ -101,7 +101,7 @@ bool loadAsWav(const char *prefix, int *buffer) {
   CHECK(header.format.depth == 16);
   CHECK(header.data_header.type == endian_swap('data'));
   
-  vector<short> data(header.data_header.size);
+  vector<short> data(header.data_header.size / 2);
   
   CHECK(fread(&data[0], header.data_header.size, 1, fil) == 1);
   

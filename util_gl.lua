@@ -1,4 +1,6 @@
 
+local mode, platform = ...
+
 glutil = {}
 function glutil.SetScreen(sx, sy, ex, ey)
   local ax = (sx + ex) / 2
@@ -151,7 +153,7 @@ if gl then
   -- hurrr
   if true then
     local shutup = false
-    function testerror(bef, nam)
+    local function testerror(bef, nam)
       if shutup then return end
       local err = gl.GetError()
       if err ~= "NO_ERROR" then

@@ -1,6 +1,29 @@
 
--- tables in tables exist to fix a luabind crash
+local mode, platform = ...
 
+if true then
+  local function testerror(bef, nam)
+    local err = al.GetError()
+    if err ~= "NO_ERROR" then
+      print("AL ERROR: ", err, bef, nam)
+      if mode then assert(err == "NO_ERROR", err ..  "   " .. bef .. " " .. nam) end -- fuckyou
+    end
+  end
+  for k, v in pairs(al) do
+    local tk = k
+    if tk ~= "GetError" then
+      al[tk] = function (...)
+        testerror("before", k)
+        return (function (...)
+          testerror("after", k)
+          return ...
+        end)(v(...))
+      end
+    end
+  end
+end
+
+-- tables in tables exist to fix a luabind crash
 local sources_active = {}
 local sources = setmetatable({}, {__mode = "kv"})
 
@@ -53,6 +76,11 @@ function sound_proto:Position(x, y, z)
 end
 function sound_proto:Velocity(x, y, z)
   al.Source(self.id:get(), "VELOCITY", {x, y, z})
+  return self
+end
+function sound_proto:MixerOverride(channel, volume)
+  al.Source(self.id:get(), "EXT_MIXER_OVERRIDE_FLAG", "TRUE")
+  al.Source(self.id:get(), "EXT_MIXER_OVERRIDE", {channel, volume})
   return self
 end
 function sound_proto:Play()
