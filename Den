@@ -269,25 +269,18 @@ else
 end
 
 do
-  -- I suppose we can openal it up a notch
-  headers.openal = {}
-  local path = "glorp/libs/openal-soft-1.12.854"
+  -- I suppose we can opengal it up a notch
+  headers.opengal = {}
+  local path = "glorp/opengal32"
   
   local files = {}
   
-  ursa.token.rule{"openal_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
-  for item in ursa.token{"openal_files"}:gmatch("([^\n]+)") do
-    if item == "CMakeLists.txt" then
-      table.insert(files, ursa.rule{builddir .. "lib_build/openalsoft/" .. item, path .. "/" .. item, ursa.util.system_template{([[sed
-        -e "s/854/0/"
-        
-        $SOURCE > $TARGET]]):gsub("\n", " ")}})
-    else
-      table.insert(files, ursa.rule{builddir .. "lib_build/openalsoft/" .. item, path .. "/" .. item, ursa.util.copy{}})
-    end
+  ursa.token.rule{"opengal_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  for item in ursa.token{"opengal_files"}:gmatch("([^\n]+)") do
+    table.insert(files, ursa.rule{builddir .. "lib_build/opengalsoft/" .. item, path .. "/" .. item, ursa.util.copy{}})
     
     if item:match("include/.*%.h$") then
-      table.insert(headers.openal, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
+      table.insert(headers.opengal, ursa.rule{builddir .. "lib_release/" .. item, path .. "/" .. item, ursa.util.copy{}})
     end
   end
   
@@ -295,11 +288,11 @@ do
   if platform == "cygwin" then
     -- cmake makes this very hard
     local sedreplace = " && " .. ("sed -i -e s@/usr/bin/gcc.exe@%s@g -e s@/usr/bin/c++.exe@%s@g -e s@/cygdrive/c@c:@g `find . -type f | grep -v empty`"):format(glop.libcc, glop.libcc)
-    local openalcflags = libcflags .. " -I" .. ursa.token{"pwd"} .. "/glorp/glop/Glop/third_party/system_cygwin/include"
-    local lib = ursa.rule{{builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/OpenAL32-1.12.0.dll"}, {files}, ursa.util.system_template{('cd %slib_build/openalsoft/build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DCMAKE_BUILD_TYPE=Release -DALSA=OFF -DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF -DDLOPEN=OFF -DEXTRA_LIBS=winmm ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, openalcflags, openalcflags, libldflags)}}
+    local opengalcflags = libcflags .. " -I" .. ursa.token{"pwd"} .. "/glorp/glop/Glop/third_party/system_cygwin/include"
+    local lib = ursa.rule{{builddir .. "lib_build/opengalsoft/build/libOpenGAL32.dll.a", builddir .. "lib_build/opengalsoft/build/OpenGAL32-1.12.0.dll"}, {files}, ursa.util.system_template{('cd %slib_build/opengalsoft/build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DCMAKE_BUILD_TYPE=Release -DALSA=OFF -DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF -DDLOPEN=OFF -DEXTRA_LIBS=winmm ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, opengalcflags, opengalcflags, libldflags)}}
     
-    libs.openal = ursa.rule{builddir .. "lib_release/lib/libOpenAL32.dll.a", builddir .. "lib_build/openalsoft/build/libOpenAL32.dll.a", ursa.util.copy{}}
-    ursa.rule{builddir .. "lib_release/bin/OpenAL32-1.12.0.dll", builddir .. "lib_build/openalsoft/build/OpenAL32-1.12.0.dll", ursa.util.copy{}}
+    libs.opengal = ursa.rule{builddir .. "lib_release/lib/libOpenGAL32.dll.a", builddir .. "lib_build/opengalsoft/build/libOpenGAL32.dll.a", ursa.util.copy{}}
+    ursa.rule{builddir .. "lib_release/bin/OpenGAL32-1.12.0.dll", builddir .. "lib_build/opengalsoft/build/OpenGAL32-1.12.0.dll", ursa.util.copy{}}
   else
     local ext = "so"
     local po = "OFF"
@@ -308,14 +301,14 @@ do
       po = "ON"
     end
     
-    local lib = ursa.rule{builddir .. "lib_build/openalsoft/build/libopenal." .. ext, {files, headers.portaudio, libs.portaudio}, ursa.util.system_template{('cd %slib_build/openalsoft/build && CFLAGS="%s -I%s/build/%s/lib_release/include" CXXFLAGS="%s -I%s/build/%s/lib_release/include" LDFLAGS="%s -L/usr/lib -L%s/build/%s/lib_release/lib" cmake -DCMAKE_BUILD_TYPE=Release DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=%s -DPULSEAUDIO=OFF -DEXAMPLES=OFF .. && make'):format(builddir, libcflags, ursa.token{"pwd"}, platform, libcflags, ursa.token{"pwd"}, platform, libldflags, ursa.token{"pwd"}, platform, po)}}
+    local lib = ursa.rule{builddir .. "lib_build/opengalsoft/build/libopengal." .. ext, {files, headers.portaudio, libs.portaudio}, ursa.util.system_template{('cd %slib_build/opengalsoft/build && CFLAGS="%s -I%s/build/%s/lib_release/include" CXXFLAGS="%s -I%s/build/%s/lib_release/include" LDFLAGS="%s -L/usr/lib -L%s/build/%s/lib_release/lib" cmake -DCMAKE_BUILD_TYPE=Release DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=%s -DPULSEAUDIO=OFF -DEXAMPLES=OFF .. && make'):format(builddir, libcflags, ursa.token{"pwd"}, platform, libcflags, ursa.token{"pwd"}, platform, libldflags, ursa.token{"pwd"}, platform, po)}}
     
     if platform == "osx" then
-      libs.openal = ursa.rule{builddir .. "lib_release/lib/libopenal.dylib", builddir .. "lib_build/openalsoft/build/libopenal.dylib", ursa.util.copy{}}
-      ursa.rule{builddir .. "lib_release/bin/libopenal.dylib", builddir .. "lib_build/openalsoft/build/libopenal.dylib", ursa.util.copy{}}
+      libs.opengal = ursa.rule{builddir .. "lib_release/lib/libopengal.dylib", builddir .. "lib_build/opengalsoft/build/libopengal.dylib", ursa.util.copy{}}
+      ursa.rule{builddir .. "lib_release/bin/libopengal.dylib", builddir .. "lib_build/opengalsoft/build/libopengal.dylib", ursa.util.copy{}}
     else
-      libs.openal = ursa.rule{builddir .. "lib_release/lib/libopenal.so", builddir .. "lib_build/openalsoft/build/libopenal.so", ursa.util.copy{}}
-      ursa.rule{builddir .. "lib_release/bin/libopenal.so", builddir .. "lib_build/openalsoft/build/libopenal.so", ursa.util.copy{}}
+      libs.opengal = ursa.rule{builddir .. "lib_release/lib/libopengal.so", builddir .. "lib_build/opengalsoft/build/libopengal.so", ursa.util.copy{}}
+      ursa.rule{builddir .. "lib_release/bin/libopengal.so", builddir .. "lib_build/opengalsoft/build/libopengal.so", ursa.util.copy{}}
     end
   end
 end
@@ -524,7 +517,7 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl lal", glorpfiles = "core core_glutil core_alutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg openal glop libvorbisfile libvorbis libogg libflac portaudio" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl lal", glorpfiles = "core core_glutil core_alutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg opengal glop libvorbisfile libvorbis libogg libflac portaudio" .. (params.box2d and " box2d" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }

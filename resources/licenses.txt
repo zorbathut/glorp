@@ -18,9 +18,11 @@ My standard error reporter is based in part on the work of the FLTK project (htt
 
 This may or may not include box2d. If it does, license below. If it doesn't, license below anyway.
 
-OpenAL Soft is included is included under the terms of its absolute behemoth of an LGPL license, reproduced below. Technically I am required to also distribute the sourcecode from the same download source you got this from. I'm completely ignoring this requirement - the library can either be downloaded from the same site as glop (see below) in the libs/ directory, or from its own site which you can doubtless find on google, or you can ask me. If the openal32 maintainers find this problematical, let me know and I'll go the trouble of posting a copy on my server, but, seriously guys, github is going to be stabler than my server is.
+This includes OpenGAL32. Bear with me for a second.
 
-Note that there is one small tweak to the OpenAL Soft distribution - in order to dodge an OSX compatibility issue, the library version number has been changed from 1.12.854 to 1.12.0. Beyond that, it's identical.
+OpenGAL32 is a fork of OpenAL Soft. OpenAL Soft is licensed under the LGPL. OpenGAL32 is, therefore, also licensed under the LGPL, but the changes are owned by me. Technically you don't have to include the license for things you own. Does this mean I need to include the OpenAL Soft license? I don't think it does, because you don't need to include a billion separate copies of the GPL when merging GPL'ed software. That would be crazy. But I'm not sure if I'm supposed to include the OpenGAL32 license. The entire situation is confusing. In any case, since they use the same license, it's listed below, and you can choose which package you want it to apply to (note: both.)
+
+Furthermore, I am technically required to also distribute the sourcecode from the same download source you got this from. I'm completely ignoring this requirement. OpenGAL32 can be downloaded from the same site as the rest of the software, and OpenALSoft can be downloaded from its own site, which you can find online. If the openal32 maintainers find this problematical, let me know and I'll go the trouble of posting a copy on my server, but, seriously guys, github is going to be stabler than my server is.
 
 Finally, PortAudio is included on at least one operating system (OSX, right now.) License below.
 
@@ -199,7 +201,7 @@ appreciated but is not required.
 misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 
-=============== OPENAL-SOFT LICENSE
+=============== OPENAL-SOFT/OPENGAL32 LICENSE
  
 		  GNU LIBRARY GENERAL PUBLIC LICENSE
 		       Version 2, June 1991

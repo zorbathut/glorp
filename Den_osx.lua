@@ -23,7 +23,7 @@ rv.create_runnable = function(dat)
   local current_glop_iteration = 0
   
   -- copy our main executable
-  table.insert(runnable, ursa.rule{basepath .. "/Contents/MacOS/" .. params.longname, dat.mainprog, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool -change /usr/local/lib/libportaudio.2.dylib @executable_path/../Frameworks/libportaudio.2.dylib -change #pwd/build/osx/lib_build/openalsoft/build/libopenal.1.dylib @executable_path/../Frameworks/libopenal.1.dylib -add_rpath @executable_path/../Frameworks $TARGET"):format(basepath)}})
+  table.insert(runnable, ursa.rule{basepath .. "/Contents/MacOS/" .. params.longname, dat.mainprog, ursa.util.system_template{("cp $SOURCE $TARGET && install_name_tool -change /usr/local/lib/libportaudio.2.dylib @executable_path/../Frameworks/libportaudio.2.dylib -change #pwd/build/osx/lib_build/opengalsoft/build/libopengal.1.dylib @executable_path/../Frameworks/libopengal.1.dylib -add_rpath @executable_path/../Frameworks $TARGET"):format(basepath)}})
   
   --[[
   local function tweak_glop(cli)
@@ -33,7 +33,7 @@ rv.create_runnable = function(dat)
   end]]
   
   table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/libportaudio.2.dylib"):format(basepath), "build/osx/lib_release/lib/libportaudio.dylib", ursa.util.copy{}})
-  table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/libopenal.1.dylib"):format(basepath), "build/osx/lib_release/lib/libopenal.dylib", ursa.util.copy{}})
+  table.insert(runnable, ursa.rule{("%s/Contents/Frameworks/libopengal.1.dylib"):format(basepath), "build/osx/lib_release/lib/libopengal.dylib", ursa.util.copy{}})
   
   runnable_deps = runnable
   

@@ -21,9 +21,9 @@ rv.create_runnable = function(dat)
   local liboutpath = params.builddir
 
   local dlls = {}
-  table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, "data/libopenal.so.1"), ("%s/%s"):format(liboutpath, "lib_release/bin/libopenal.so"), ursa.util.copy{}})
+  table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, "data/libopengal.so.1"), ("%s/%s"):format(liboutpath, "lib_release/bin/libopengal.so"), ursa.util.copy{}})
   
-  return {deps = {dlls, dat.mainprog, liboutpath .. "lib_release/bin/libopenal.so"}, cli = ("%s%s.prog"):format(params.builddir, params.name)}
+  return {deps = {dlls, dat.mainprog, liboutpath .. "lib_release/bin/libopengal.so"}, cli = ("%s%s.prog"):format(params.builddir, params.name)}
 end
 
 rv.appprefix = params.builddir .. "deploy/" .. params.midname .. "/"
@@ -37,7 +37,7 @@ function rv.installers()
   -- DLLs and executables
   table.insert(data, ursa.rule{rv.dataprefix .. params.midname, params.builddir .. params.name .. ".prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   
-  table.insert(data, ursa.rule{rv.dataprefix .. "data/libopenal.so.1", params.builddir .. "data/libopenal.so.1", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
+  table.insert(data, ursa.rule{rv.dataprefix .. "data/libopengal.so.1", params.builddir .. "data/libopengal.so.1", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   table.insert(data, ursa.rule{rv.dataprefix .. "data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   
   local dfn = {}
