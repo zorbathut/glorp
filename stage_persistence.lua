@@ -1,5 +1,6 @@
 
-local mode = ...
+local params = ...
+local mode = params.mode
 
 
 persistence = {}

@@ -40,7 +40,7 @@ end
 
 
 local plat, mode
-function wrap_init(platform, filename, mode_in, ...)
+function wrap_init(platform, audio, filename, mode_in, ...)
   if mode_in and mode_in:find("_") then mode_in = nil end -- this is not a mode, this is an abomination
   plat, mode = platform, mode_in
   print(plat, mode)
@@ -49,7 +49,7 @@ function wrap_init(platform, filename, mode_in, ...)
   package.path = package.path .. ";build/" .. platform .. "/glorp"
   
   local stt 
-  assert(loadfile("stage.lua"))(platform, filename, mode_in, ...)
+  assert(loadfile("stage.lua")){platform = platform, audio = audio, filename = filename, mode = mode, cli = {...}}
 end
 
 local function barf(err)

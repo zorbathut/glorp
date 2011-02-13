@@ -1,5 +1,6 @@
 
-local platform, _, mode = ...
+local params = ...
+local platform, mode = params.platform, params.mode
 
 print("JIT STATUS")
 print(jit)
@@ -28,7 +29,7 @@ function runfile_worker(file, global, optional, ...)
     setfenv(dat, global)
   end
   
-  dat(mode, platform, ...)
+  dat(params, ...)
 end
 function runfile(file, global, ...)
   runfile_worker(file, global, false, ...)

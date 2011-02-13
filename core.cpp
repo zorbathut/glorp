@@ -429,16 +429,6 @@ void TriggerExit() {
   exiting = true;
 };
 
-void adaptaload(const string &fname) {
-  int error = luaL_dofile(L, ("data/" + fname).c_str());
-  if(error) {
-    error = luaL_dofile(L, ("glorp/" + fname).c_str());
-  }
-  if(error) {
-    CHECK(0, "%s", lua_tostring(L, -1));
-  }
-}
-
 int gmx() {return input()->GetMouseX();};
 int gmy() {return input()->GetMouseY();};
 
@@ -744,17 +734,26 @@ void luainit(int argc, const char **argv) {
     glorp_box2d_init(L);
     #endif
   }
-  
-  adaptaload("wrap.lua");
+
+  {
+    int error = luaL_dofile(L, "data/wrap.lua");
+    if(error) {
+      error = luaL_dofile(L, "glorp/wrap.lua");
+    }
+    if(error) {
+      CHECK(0, "%s", lua_tostring(L, -1));
+    }
+  }
   
   {
     lua_getglobal(L, "generic_wrap");
     lua_getglobal(L, "wrap_init");
     lua_pushstring(L, game_platform);
+    lua_pushboolean(L, true);
     for(int i = 0; i < argc; i++) {
       lua_pushstring(L, argv[i]);
     }
-    int error = lua_pcall(L, 2 + argc, 0, 0);
+    int error = lua_pcall(L, 3 + argc, 0, 0);
     if(error) {
       CHECK(0, "%s", lua_tostring(L, -1));
     }

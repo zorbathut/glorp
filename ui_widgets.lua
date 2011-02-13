@@ -1,5 +1,6 @@
 
-local mode, platform, FrameTypes = ...
+local params, FrameTypes = ...
+local platform, mode = params.platform, params.mode
 
 local glv = tonumber(gl.GetString("VERSION"):match("^([^ ]*).*$"))
 

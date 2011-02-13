@@ -1,5 +1,6 @@
 
-local mode, platform = ...
+local params = ...
+local mode, platform = params.mode, params.platform
 
 if true then
   local function testerror(bef, nam)
