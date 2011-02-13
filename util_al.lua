@@ -1,61 +1,84 @@
 
 local params = ...
-local mode, platform = params.mode, params.platform
+local mode, platform, audio = params.mode, params.platform, params.audio
 
-if true then
-  local function testerror(bef, nam)
-    local err = al.GetError()
-    if err ~= "NO_ERROR" then
-      print("AL ERROR: ", err, bef, nam)
-      if mode then assert(err == "NO_ERROR", err ..  "   " .. bef .. " " .. nam) end -- fuckyou
+alutil = {}
+
+if audio then
+  -- audio works
+  
+  if true then
+    local function testerror(bef, nam)
+      local err = al.GetError()
+      if err ~= "NO_ERROR" then
+        print("AL ERROR: ", err, bef, nam)
+        if mode then assert(err == "NO_ERROR", err ..  "   " .. bef .. " " .. nam) end -- fuckyou
+      end
     end
-  end
-  for k, v in pairs(al) do
-    local tk = k
-    if tk ~= "GetError" then
-      al[tk] = function (...)
-        testerror("before", k)
-        return (function (...)
-          testerror("after", k)
-          return ...
-        end)(v(...))
+    for k, v in pairs(al) do
+      local tk = k
+      if tk ~= "GetError" then
+        al[tk] = function (...)
+          testerror("before", k)
+          return (function (...)
+            testerror("after", k)
+            return ...
+          end)(v(...))
+        end
       end
     end
   end
-end
 
--- tables in tables exist to fix a luabind crash
-local sources_active = {}
-local sources = setmetatable({}, {__mode = "kv"})
+  -- tables in tables exist to fix a luabind crash
+  local sources_active = {}
+  local sources = setmetatable({}, {__mode = "kv"})
 
-alutil = {}
-function alutil.Source()
-  local src = AlSourceID()
-  sources[src] = src
-  sources_active[src] = src
-  
-  return src
-end
+  function alutil.Source()
+    local src = AlSourceID()
+    sources[src] = src
+    sources_active[src] = src
+    
+    return src
+  end
 
-function alutil.Tick()
-  for k in pairs(sources) do
-    if al.GetSource(k:get(), "SOURCE_STATE") ~= "PLAYING" then
-      sources_active[k] = nil
-    else
-      sources_active[k] = true
+  function alutil.Tick()
+    for k in pairs(sources) do
+      if al.GetSource(k:get(), "SOURCE_STATE") ~= "PLAYING" then
+        sources_active[k] = nil
+      else
+        sources_active[k] = true
+      end
     end
   end
-end
 
-local buffers = {}
+  local buffers = {}
 
-LoadSoundBuffer = LoadSound
-function LoadSound(sound)
-  if not buffers[sound] then
-    buffers[sound] = LoadSoundBuffer(sound)
+  local LoadSoundBuffer = LoadSound
+  function LoadSound(sound)
+    if not buffers[sound] then
+      buffers[sound] = LoadSoundBuffer(sound)
+    end
+    
+    return buffers[sound]
+  end
+else
+  -- audio don't work
+  
+  -- fake things out a bit
+  for k, v in pairs(al) do
+    al[k] = function () end
   end
   
-  return buffers[sound]
+  function alutil.Source()
+    return {get = function() return 0 end}
+  end
+  
+  function alutil.Tick()
+  end
+  
+  function LoadSound()
+    return {get = function() return 0 end}
+  end
 end
 
 local sound_proto = {}

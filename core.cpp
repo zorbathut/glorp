@@ -656,6 +656,8 @@ public:
   }
 };
 
+bool audio_enabled = false;
+
 void luainit(int argc, const char **argv) {
   L = lua_open();   /* opens Lua */
   luaL_openlibs(L);
@@ -749,7 +751,7 @@ void luainit(int argc, const char **argv) {
     lua_getglobal(L, "generic_wrap");
     lua_getglobal(L, "wrap_init");
     lua_pushstring(L, game_platform);
-    lua_pushboolean(L, true);
+    lua_pushboolean(L, audio_enabled);
     for(int i = 0; i < argc; i++) {
       lua_pushstring(L, argv[i]);
     }
@@ -787,6 +789,7 @@ void fatal(const string &message) {
 DEFINE_bool(help, false, "Get help");
 DEFINE_bool(development, false, "Development tools");
 DEFINE_bool(permit_ogl1, false, "Permit OpenGL 1.0 renderer. Note this may crash in many fascinating manners or fail to render important parts of the game, this is strictly for local testing, here there be dragons");
+DEFINE_bool(sound, true, "Enable sound");
 
 void glorp_init(const string &name, int width, int height, int argc, const char **argv) {
 
@@ -803,12 +806,20 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
 
   System::Init();
   
-  ALCdevice* pDevice = alcOpenDevice(NULL);
-  CHECK(pDevice);
-  ALCcontext* pContext = alcCreateContext(pDevice, NULL);
-  CHECK(pContext);
-  alcMakeContextCurrent(pContext);
-  CHECK(alGetError() == AL_NO_ERROR);
+  ALCdevice* pDevice = NULL;
+  ALCcontext* pContext = NULL;
+  if (FLAGS_sound) {
+    pDevice = alcOpenDevice(NULL);
+    if (pDevice) {
+      CHECK(pDevice);
+      ALCcontext* pContext = alcCreateContext(pDevice, NULL);
+      CHECK(pContext);
+      alcMakeContextCurrent(pContext);
+      CHECK(alGetError() == AL_NO_ERROR);
+      
+      audio_enabled = true;
+    }
+  }
   
   #ifdef IPHONE
     init_osx();
@@ -949,7 +960,8 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
       }
       
       glorp_glutil_tick();
-      glorp_alutil_tick();
+      if (audio_enabled)
+        glorp_alutil_tick();
       
       if(exiting) {
         window()->Destroy();
@@ -961,11 +973,18 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
   luashutdown();
   
   glorp_glutil_tick();
-  glorp_alutil_tick();
+  if (audio_enabled)
+    glorp_alutil_tick();
   
   alcMakeContextCurrent(NULL);
-  alcDestroyContext(pContext);
-  alcCloseDevice(pDevice);
+  if (pContext) {
+    alcDestroyContext(pContext);
+    pContext = NULL;
+  }
+  if (pDevice) {
+    alcCloseDevice(pDevice);
+    pDevice = NULL;
+  }
 
   System::ShutDown();
   

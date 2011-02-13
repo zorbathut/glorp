@@ -42,6 +42,28 @@ end
 -- Button UL is anchored to Container UL
 -- Container BR is anchored to Button BR
 -- Bam, we have a container that adapts to fit its contents
+
+-- Let's think about the semantics here
+-- Internal rescaling should be done for the frame and for children
+-- Origin rejiggering should work the same way
+-- Semantics/documentation:
+
+-- SetPoint((coord/coordpair), ((parent, (coord/coordpair))/"origin"), xofs, yofs)
+-- offsets are all based on the local coordinate scale
+-- positions are absolute
+-- when we calculate positional changes, we find the absolute loc, then the relative loc
+
+-- in order to rescale, we can have a few manners, similar to how size is calculated
+-- either you can state the new scale/origin explicitly, or you can state size and two points and origin
+-- origin: SetPoint semantics? SetPoint("ORIGIN", selfframe, "CENTER", x, y)? Maybe SetPoint("ORIGINX", etc) eventually
+-- rotation is separate from that
+-- We also need a bool for allowing the rescale stuff to happen
+
+-- So, rescale-related functionality:
+-- PermitAutoScale (defaults to 1.0)
+-- SetScale, similar to SetSize
+-- Not gonna bother with x/y yet
+-- Let's rename Text::SetSize to SetTextSize
 do
   -- Locals
     -- Axes, split into L R T B
@@ -83,7 +105,7 @@ do
       end
     end
     
-    return self.bg_r and 20 -- everything is 20, unless it actually fails to exist
+    return self.bg_r and 20 -- everything is 20 wide, unless it actually fails to exist
   end
   local function getsize(self, axis)
     if not self.__cache[axis] then
