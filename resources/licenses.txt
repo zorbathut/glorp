@@ -1,8 +1,6 @@
 This release includes many free or open-source packages, all of which I am truly thankful for.
 
-libogg and libvorbis are included under the terms of their respective licenses. The text of those licenses are below.
-
-zlib and libpng are included. Thankfully, their license does not require me to bloat this file even further.
+libogg, libvorbis, and libflac are included under the terms of their respective licenses. The text of those licenses are below.
 
 I rely very heavily on Lua 5.1. I am actually not sure if its license requires that I reproduce it here. I shall do so anyway. It is below. I also rely on Luabind, whose near-identical license is also below, and Luajit, which, well, you can see where this is going.
 
@@ -10,7 +8,7 @@ I'm leaning on GLee because Windows is terrible. Yep you heard me. Windows is te
 
 (GLee's, not Windows's.)
 
-On OSX I'm using Chris Campbell's elegant little version loader to give reasonable version errors. You can probably guess where its license is. Technically I could remove this bit for the Windows build, but :effort:
+On OSX I'm using Chris Campbell's elegant little System Version Check loader to give reasonable version errors. You can probably guess where its license is. Technically I could remove this bit for the Windows build, but :effort:
 
 I'm using curl for the error reporting system. You know the drill by now.
 
@@ -23,6 +21,8 @@ This includes OpenGAL32. Bear with me for a second.
 OpenGAL32 is a fork of OpenAL Soft. OpenAL Soft is licensed under the LGPL. OpenGAL32 is, therefore, also licensed under the LGPL, but the changes are owned by me. Technically you don't have to include the license for things you own. Does this mean I need to include the OpenAL Soft license? I don't think it does, because you don't need to include a billion separate copies of the GPL when merging GPL'ed software. That would be crazy. But I'm not sure if I'm supposed to include the OpenGAL32 license. The entire situation is confusing. In any case, since they use the same license, it's listed below, and you can choose which package you want it to apply to (note: both.)
 
 Furthermore, I am technically required to also distribute the sourcecode from the same download source you got this from. I'm completely ignoring this requirement. OpenGAL32 can be downloaded from the same site as the rest of the software, and OpenALSoft can be downloaded from its own site, which you can find online. If the openal32 maintainers find this problematical, let me know and I'll go the trouble of posting a copy on my server, but, seriously guys, github is going to be stabler than my server is.
+
+zlib and libpng are included. Thankfully, their license does not require me to bloat this file even further.
 
 Finally, PortAudio is included on at least one operating system (OSX, right now.) License below.
 
@@ -89,6 +89,37 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+=============== LIBFLAC LICENSE
+
+Copyright (C) 2000,2001,2002,2003,2004,2005,2006,2007,2008,2009  Josh Coalson
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+- Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+- Neither the name of the Xiph.org Foundation nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =============== LUA LICENSE
 

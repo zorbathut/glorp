@@ -228,10 +228,10 @@ function FrameTypes.Text_Multiline:SetColor(r, g, b, a)
   self.r, self.g, self.b, self.a = r, g, b, a
   self:RecreateSubtext()
 end
-function FrameTypes.Text_Multiline:OnShiftX()
-  self:RecreateSubtext()
-end
 function FrameTypes.Text_Multiline:RecreateSubtext()
+  self.__textLayout:Invalidate()
+end
+function FrameTypes.Text_Multiline:RecreateSubtextCore()
   local font = TextDistanceFont
   
   -- could probably be more efficient
@@ -325,14 +325,25 @@ function FrameTypes.Text_Multiline:RecreateSubtext()
   end
   
   if line > 0 then
-    self:SetHeight((line * (font.dat.height + font.dat.padding) - font.dat.padding) * scale)
+    return (line * (font.dat.height + font.dat.padding) - font.dat.padding) * scale
   else
-    self:SetHeight(0)
+    return 0
   end
+end
+function FrameTypes.Text_Multiline:PreDraw()
+  self.__textLayout:Get() -- does all the processing to rebuild the text layout
 end
 function FrameTypes.Text_Multiline:_Init()
   self._subtext = {}
   self.size = 50
+  
+  local widthHandle = self:GetHandle("x", "size")
+  
+  self.__textLayout = CreateNode(self.__name .. " text layout")
+  self.__textLayout:Set({widthHandle}, function () return self:RecreateSubtextCore() end)
+  
+  self:SetHandle("y", "size", {self.__textLayout}, function () return self.__textLayout:Get() end)
+  
   self:SetText("")
 end
 

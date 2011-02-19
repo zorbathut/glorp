@@ -2,8 +2,6 @@
 --print("MAX_PROJECTION_STACK_DEPTH is", gl.Get("MAX_PROJECTION_STACK_DEPTH"))
 --assert(gl.Get("MAX_PROJECTION_STACK_DEPTH") >= 4)
 
-UIParent = {} -- faaaake
-
 --[[local cache_statistics = {}
 function UI_cache_statistics()
   local boil = {}
@@ -44,8 +42,7 @@ end
 -- Bam, we have a container that adapts to fit its contents
 
 -- Let's think about the semantics here
--- Internal rescaling should be done for the frame and for children
--- Origin rejiggering should work the same way
+-- Internal rescaling and origin rejiggering should be done for the children only, it creates problems otherwise
 -- Semantics/documentation:
 
 -- SetPoint((coord/coordpair), ((parent, (coord/coordpair))/"origin"), xofs, yofs)
@@ -60,205 +57,176 @@ end
 -- We also need a bool for allowing the rescale stuff to happen
 
 -- So, rescale-related functionality:
--- PermitAutoScale (defaults to 1.0)
+-- PermitAutoScale boolean
 -- SetScale, similar to SetSize
 -- Not gonna bother with x/y yet
 -- Let's rename Text::SetSize to SetTextSize
+
+-- Dependencies:
+-- We have some categories of thing. Point hooks are _anchor_x and _anchor_y? origins are separate, because origin can depend on
+-- oh wait that doesn't seem to work well, since origin can point at "self", and points can depend on "origin"
+-- hmmmmm
+-- let's ignore dependencies for now. start with no caching add frame caching go from there
 do
-  -- Locals
-    -- Axes, split into L R T B
-      -- Check to see if it's anchored - anchor_l, anchor_l_point, and anchor_l_offset
-      -- If so, return the appropriately modified thing
-      -- If not, check to see if the alternatives (r, cx) are anchored, then return the modified version based on the width
-      -- If not, assume we're anchored to 0,0
-    -- Width, split into H W
-      -- Check to see if the two points are anchored, then return different
-      -- If not, return the internal size_w size_h
+  local weak_key = {__mode = "k"}
+  local weak_value = {__mode = "v"}
+  
+  local Node_Type = {}
+  local Node_Type_mt = {__index = Node_Type, __tostring = function (self) return self.name end}
+  
+  function Node_Type:Set(dependencies, command)
+    self:Invalidate()
+    
+    assert(command)
+    
+    if self.dependencies then
+      for _, v in pairs(self.dependencies) do
+        v:RemoveChild(self)
+      end
+    end
+    
+    self.dependencies = dependencies
+    self.command = command
+    
+    if self.dependencies then
+      for _, v in pairs(self.dependencies) do
+        v:AddChild(self)
+      end
+    end
+  end
+  function Node_Type:Get()
+    if self.cache then return self.cache end
+    assert(not self.executing)  -- loop detection, error more usefully
+    self.executing = true
+    self.cache = self.command(self.dependencies)
+    assert(self.cache)
+    self.executing = false
+    return self.cache
+  end
+  function Node_Type:Invalidate()
+    if self.cache then
+      self.cache = nil
+      for k in pairs(self.children) do
+        k:Invalidate()
+      end
+    end
+  end
+  function Node_Type:AddChild(child)
+    self.children[child] = (self.children[child] or 0) + 1
+  end
+  function Node_Type:RemoveChild(child)
+    self.children[child] = (self.children[child] or 0) - 1
+    assert(self.children[child] >= 0)
+    if self.children[child] == 0 then
+      self.children[child] = nil
+    end
+  end
+  function CreateNode(name)
+    local nod = setmetatable({}, Node_Type_mt)
+    nod.children = setmetatable({}, weak_key)
+    nod.name = name
+    return nod
+  end
+  
+  local Axis_Type = {}
+  local Axis_Type_mt = {__index = Axis_Type, __tostring = function (self) return self.name end}
+  
+  function Axis_Type:Get(point)
+    if self.explicit[point] then return self.explicit[point] end
+    if self.implicit[point] then return self.implicit[point] end
+    
+    self.implicit[point] = CreateNode(self.name .. " " .. tostring(point))
+    
+    self:Remake(point)
+    
+    return self.implicit[point]
+  end
+  function Axis_Type:Set(point, dependencies, command)
+    if not self.explicit[point] then
+      if point == "size" then
+        assert(self.exppoint < 2)
+        self.expsize = true
+      else
+        assert(self.exppoint < 2)
+        assert(not self.expsize or self.exppoint < 1)
+        self.exppoint = self.exppoint + 1
+      end
+      
+      if self.implicit[point] then
+        self.explicit[point] = self.implicit[point]
+        self.implicit[point] = nil
+      else
+        self.explicit[point] = CreateNode(self.name .. " " .. tostring(point))
+      end
+      
+      self:RemakeAll()
+    end
+    
+    self.explicit[point]:Set(dependencies, command)
+  end
+  function Axis_Type:RemakeAll()
+    for k in pairs(self.implicit) do
+      self:Remake(k)
+    end
+  end
+  function Axis_Type:Remake(point)
+    if point == "size" then
+      if self.exppoint < 2 then
+        self.implicit[point]:Set({}, function () return 20 end)  -- default values
+      elseif self.exppoint == 2 then
+        -- default values don't work, we're gonna have to calculate
+        local deps = {}
+        local ka, va = next(self.explicit)
+        local kb, vb = next(self.explicit, ka)
+        assert(va)
+        assert(vb)
+        table.insert(deps, va)
+        table.insert(deps, vb)
+        self.implicit[point]:Set(deps, function () return (vb:Get() - va:Get()) / (kb - ka) end)
+      else
+        assert(false)
+      end
+    else
+      if self.exppoint == 0 then
+        -- we have essentially nothing to go on
+        self.implicit[point]:Set({self:Get("size")}, function (params) return point * params[1]:Get() end)
+      else
+        local ka, va = next(self.explicit)
+        if ka == "size" then ka, va = next(self.explicit, ka) end
+        assert(va)
+        self.implicit[point]:Set({self:Get("size"), va}, function (params) return va:Get() + (point - ka) * params[1]:Get() end)
+      end
+    end
+  end
+  local function CreateAxis(name)
+    local axi = setmetatable({}, Axis_Type_mt)
+    axi.name = name
+    axi.explicit = {}
+    axi.implicit = setmetatable({}, weak_value)
+    axi.expsize = false
+    axi.exppoint = 0
+    return axi
+  end
   
   local Region_Type = {}
-  local Region_Type_mt = {__index = Region_Type, __tostring = function (self) return "<frame " .. (self.__name or "(unnammed)") .. " " .. toaddress(self) .. ">" end}
+  local Region_Type_mt = {__index = Region_Type, __tostring = function (self) return "<frame " .. (self.__name or "(unnamed)") .. " " .. toaddress(self) .. ">" end}
   
-  -- bit of musing on caching
-  -- we'll have to maintain a "layout children" list, and deal with that properly on attach/detach (make it weak pointers so we can ignore it with attach/detach)
-  -- when anything is looked up, size or point, we check the cache first. when it's inserted, we insert it into the cache.
-  
-  -- "gravitate towards center"? how does that work? answer: it doesn't, let's not do that
-  
-  -- {"size", value}
-  -- {coordinate, target, targ_coordinate, offset}
-  
-  local function getsize_core(self, axis)
-    --print("gs", self, axis)
-    if self[axis] then
-      if self[axis].size then
-        return self[axis].size[1]
-      end
-      
-      local ptx, ptxl = next(self[axis])
-      local pty, ptyl = next(self[axis], ptx)
-      
-      if ptx and pty then
-        local ptxp = ptxl[1]:GetPointOnAxis(axis, ptxl[2]) + ptxl[3]
-        local ptyp = ptyl[1]:GetPointOnAxis(axis, ptyl[2]) + ptyl[3]
-        
-        return (ptyp - ptxp) / (pty - ptx)
-      end
-    end
-    
-    return self.bg_r and 20 -- everything is 20 wide, unless it actually fails to exist
+  function Region_Type:GetHandle(axis, coord)
+    return self.__axes[axis]:Get(coord)
   end
-  local function getsize(self, axis)
-    if not self.__cache[axis] then
-      self.__cache[axis] = {}
-    end
-    if not self.__cache[axis].size then
-      self.__cache[axis].size = getsize_core(self, axis) or "nil"
-      --[[if cache_statistics then
-        cache_statistics[self.__name] = (cache_statistics[self.__name] or 0) + 1
-      end]]
-    end
-    return tonumber(self.__cache[axis].size)
-  end
-  local function getpoint_core(self, axis, point)
-    --print("GPC", self)
-    assert(axis)
-    assert(point)
-    
-    --print("gp", self, axis, point)
-    if self[axis] then
-      do
-        local tp = self[axis][point]
-        if tp then return tp[1]:GetPointOnAxis(axis, tp[2]) + tp[3] end
-      end
-      
-      -- Various options:
-      -- * Zero points and size
-      -- * At least one point and size
-      -- There's always an implicit size, at the very worst. Two points degenerates to one point, since we need the size anyway. We'll need caching at some point or this is going to be n^3 or so.
-      
-      local ptx, ptxl = next(self[axis])
-      local pty, ptyl = next(self[axis], ptx)
-      
-      if ptx == "size" then
-        ptx, ptxl, pty, ptyl = pty, ptyl, nil, nil
-      end
-      
-      if ptx then
-        local ptxp = ptxl[1]:GetPointOnAxis(axis, ptxl[2]) + ptxl[3]
-        local wid = getsize(self, axis)
-        assert(wid)
-        return ptxp + (point - ptx) * wid
-      end -- zero points falls back to no constraints
-    end
-    
-    local gs = getsize(self, axis)
-    if not gs then
-      print("Failure to get size for " .. tostring(self.__name) .. " axis " .. tostring(axis))
-      assert(gs)
-    end
-    
-    return point * gs
-  end
-  local function getpoint(self, axis, point)
-    if not self.__cache[axis] then
-      self.__cache[axis] = {}
-    end
-    if not self.__cache[axis][point] then
-      self.__cache[axis][point] = getpoint_core(self, axis, point) or "nil"
-      --[[if cache_statistics then
-        cache_statistics[self.__name] = (cache_statistics[self.__name] or 0) + 1
-      end]]
-    end
-    return tonumber(self.__cache[axis][point])
+  function Region_Type:SetHandle(axis, coord, deps, func)
+    return self.__axes[axis]:Set(coord, deps, func)
   end
   
-  local axisanchormeta = {__mode = 'k'}
-  local function new_axis_anchor()
-    return setmetatable({}, axisanchormeta)
-  end
-  
-  local notifyMap = {
-    _anchor_x = "OnShiftX",
-    _anchor_y = "OnShiftY",
-  }
-  local function decache(self, axis)
-    if self.__cache[axis] then
-      self.__cache[axis] = nil
-      
-      for k in pairs(self.__anchor_children[axis]) do
-        decache(k, axis)
-      end
-    end
-    
-    local notifyfunc = notifyMap[axis]
-    if self[notifyfunc] then self[notifyfunc](self) end
-  end
-  
-  local function reanchor(self, axis, token, grip, p1, p2)
-    if not self[axis] and not grip then
-      -- we "clear", but we clear something that doesn't actually exist
-    elseif not self[axis] then
-      self[axis] = {[token] = {grip, p1, p2}}
-    elseif self[axis][token] then
-      if self[axis][token][1] == grip and self[axis][token][2] == p1 and self[axis][token][3] == p2 then
-        -- it is being set to the same thing! let's just do nothing
-        return  -- skip the decaching
-      end
-      
-      if type(self[axis][token][1]) == "table" then
-        self[axis][token][1].__anchor_children[axis][self] = nil
-      end
-      if not grip then
-        self[axis][token] = nil
-      else
-        self[axis][token] = {grip, p1, p2}
-      end
-    elseif not grip then
-      -- we "clear", but we clear something that doesn't actually exist
-      return  -- skip the decaching
-    else
-      local ct = 0
-      for _ in pairs(self[axis]) do
-        ct = ct + 1
-      end
-      
-      if ct >= 2 then
-        print("Too many anchors!")
-        print("Trying to anchor", token, grip, p1, p2)
-        for anc in pairs(self[axis]) do
-          print("Existing anchor", anc)
-        end
-        assert(ct < 2)
-      end
-      self[axis][token] = {grip, p1, p2}
-    end
-    
-    if type(grip) == "table" then
-      grip.__anchor_children[axis][self] = true
-    end
-    
-    decache(self, axis)
-    --getpoint(self, axis, token) -- check for circular dependencies
-  end
-  
-  -- hmm is this a good idea?
-  function Region_Type:GetRelativeMousePosition()
-    return ScreenToLocal(self, self.parent:GetRelativeMousePosition())
-  end
-  --[[function Region_Type:IsMouseInside()  -- may not work
-    local x, y = self:GetRelativeMousePosition()
-    return x >= self:GetLeft() and x <= self:GetRight() and x >= self:GetTop() and x <= self:GetBottom()
-  end]]
-
   function Region_Type:Exists()
-    return self:GetWidth() and self:GetHeight()
+    return true -- may need to work on this later
   end
   
   function Region_Type:SetWidth(width)
-    reanchor(self, "_anchor_x", "size", width)
+    self.__axes.x:Set("size", {}, function () return width end)
   end
   function Region_Type:SetHeight(height)
-    reanchor(self, "_anchor_y", "size", height)
+    self.__axes.y:Set("size", {}, function () return height end)
   end
   function Region_Type:SetSize(width, height)
     if not height then height = width end
@@ -267,59 +235,42 @@ do
   end
   
   function Region_Type:GetWidth()
-    local gs = getsize(self, "_anchor_x")
-    if gs then return math.abs(gs) else return gs end
+    return math.abs(self.__width:Get())
   end
   function Region_Type:GetHeight()
-    local gs = getsize(self, "_anchor_y")
-    if gs then return math.abs(gs) else return gs end
+    return math.abs(self.__height:Get())
   end
   function Region_Type:GetSize()
     return self:GetWidth(), self:GetHeight()
   end
   
   function Region_Type:GetLeft()
-    return getpoint(self, "_anchor_x", 0)
+    return self.__point_left:Get()
   end
   function Region_Type:GetRight()
-    return getpoint(self, "_anchor_x", 1)
+    return self.__point_right:Get()
   end
   function Region_Type:GetTop()
-    return getpoint(self, "_anchor_y", 0)
+    return self.__point_top:Get()
   end
   function Region_Type:GetBottom()
-    return getpoint(self, "_anchor_y", 1)
+    return self.__point_bottom:Get()
   end
   
   function Region_Type:GetXCenter()
-    return getpoint(self, "_anchor_x", 0.5)
+    return self.__axes.x:Get(0.5):Get()
   end
   function Region_Type:GetYCenter()
-    return getpoint(self, "_anchor_y", 0.5)
+    return self.__axes.y:Get(0.5):Get()
   end
   function Region_Type:GetCenter()
     return self:GetXCenter(), self:GetYCenter()
   end
-  function Region_Type:GetTopLeft()
-    return self:GetLeft(), self:GetTop()
-  end
-  
+
   function Region_Type:GetBounds()
     return self:GetLeft(), self:GetTop(), self:GetRight(), self:GetBottom()
   end
-  
-  function Region_Type:GetPointOnAxis(axis, pt)
-    if verbositude then print(self, axis, pt) end
-    if axis == "x" or axis == "_anchor_x" then
-      return getpoint(self, "_anchor_x", pt)
-    elseif axis == "y" or axis == "_anchor_y" then
-      return getpoint(self, "_anchor_y", pt)
-    else
-      print("Weird axis:", axis)
-      assert(false)
-    end
-  end
-  
+
   function Region_Type:SetParent(parent)
     self:Detach()
     
@@ -331,13 +282,15 @@ do
       
       parent:resort_children()
     end
+    
+    -- some point we'll need to refresh everything that refers to this table
   end
   function Region_Type:Detach()
     if self.parent then
       for k, v in ipairs(self.parent.children) do
         if v == self then
           table.remove(self.parent.children, k)
-          self.parent._last_updated = nil -- we might need to reprocess
+          self.parent._update_children_done = false  -- we might need to reprocess
           break
         end
       end
@@ -345,6 +298,8 @@ do
     self.parent = nil
     
     -- Note: Technically we're still anchored. This is A-OK, we might reattach to something else later on. If we get GC'ed, well, that's why the anchor children tables are weak-keyed
+    
+    -- How do we deal with the translation now?
   end
   function Region_Type:SetLayer(layer)
     self.layer = layer
@@ -357,7 +312,7 @@ do
       if al ~= bl then return al < bl end
       return a.__globid < b.__globid
     end)
-    self._last_updated = nil -- we might need to reprocess
+    self._update_children_done = false -- we might need to reprocess
     --[[
     if loud then
       print("layerz")
@@ -381,48 +336,23 @@ do
     return not self.hide
   end
   
+  
+  local function set_standard_anchor(self, axis, dest, target, src, offset)
+    local dept = {target:GetHandle(axis, src)}
+    self:SetHandle(axis, dest, dept, function () return dept[1]:Get() + offset end)
+  end
+  local function set_origin_anchor(self, axis, dest, offset)
+    self:SetHandle(axis, dest, {}, function () return offset end)
+  end
+  
   function Region_Type:SetAllPoints(target)
     target = target or self.parent
     assert(target)
-    reanchor(self, "_anchor_x", 0, target, 0, 0)
-    reanchor(self, "_anchor_x", 1, target, 1, 0)
-    reanchor(self, "_anchor_y", 0, target, 0, 0)
-    reanchor(self, "_anchor_y", 1, target, 1, 0)
+    set_standard_anchor(self, "x", 0, target, 0, 0)
+    set_standard_anchor(self, "x", 1, target, 1, 0)
+    set_standard_anchor(self, "y", 0, target, 0, 0)
+    set_standard_anchor(self, "y", 1, target, 1, 0)
     -- grunch
-  end
-  
-  local function clear(self, axis, nsize, npoint)
-    if not self[axis] then return end
-    
-    local cle = {}
-    for k in pairs(self[axis]) do
-      if k == "size" then
-        if not nsize then
-          table.insert(cle, k)
-        end
-      else
-        if not npoint then
-          table.insert(cle, k)
-        end
-      end
-    end
-    
-    for _, v in ipairs(cle) do
-      reanchor(self, axis, v, nil)
-    end
-  end
-  
-  function Region_Type:ClearAllPoints(not_sizes, not_points)
-    clear(self, "_anchor_x", not_sizes, not_points)
-    clear(self, "_anchor_y", not_sizes, not_points)
-  end
-  
-  local function set_axis(self, x, y, target, tx, ty, ofsx, ofsy)
-    assert(target)
-    assert(target ~= self)
-    --print(self, x, y, target, tx, ty, ofsx, ofsy)
-    if x and tx then reanchor(self, "_anchor_x", x, target, tx, ofsx or 0) end
-    if y and ty then reanchor(self, "_anchor_y", y, target, ty, ofsy or 0) end
   end
   
   local strconv = {
@@ -431,6 +361,8 @@ do
     BOTTOMLEFT = {0, 1},
     BOTTOMRIGHT = {1, 1},
     CENTER = {0.5, 0.5},
+    CENTERX = {0.5, nil},
+    CENTERY = {nil, 0.5},
     LEFT = {0, nil},
     RIGHT = {1, nil},
     TOP = {nil, 0},
@@ -438,19 +370,39 @@ do
   }
   function Region_Type:SetPoint(a, b, c, d, e, f, g)
     if type(a) == "string" then
-      if strconv[a] then
-        return self:SetPoint(strconv[a][1], strconv[a][2], b, c, d, e, f, g)
-      else
+      if not strconv[a] then
         assert(false)
       end
-    elseif type(d) == "string" then
-      if strconv[d] then
-        return self:SetPoint(a, b, c, strconv[d][1], strconv[d][2], e, f, g)
-      else
+      
+      a, b, c, d, e, f, g = strconv[a][1], strconv[a][2], b, c, d, e, f
+    end
+    
+    if c == "origin" then
+      local sx, sy, _, ox, oy = a, b, c, d, e
+      if sx and ox then
+        set_origin_anchor(self, "x", sx, ox)
+      end
+      if sy and oy then
+        set_origin_anchor(self, "y", sy, oy)
+      end
+      
+      return
+    end
+    
+    if type(d) == "string" then
+      if not strconv[d] then
         assert(false)
       end
-    else
-      return set_axis(self, a, b, c, d, e, f, g)
+      
+      a, b, c, d, e, f, g = a, b, c, strconv[d][1], strconv[d][2], e, f
+    end
+    
+    local sx, sy, target, ex, ey, ofsx, ofsy = a, b, c, d, e, f, g
+    if sx and ex then
+      set_standard_anchor(self, "x", sx, target, ex, ofsx or 0)
+    end
+    if sy and ey then
+      set_standard_anchor(self, "y", sy, target, ey, ofsy or 0)
     end
   end
   
@@ -467,10 +419,11 @@ do
   -- "scale" is the width of the new coordinate system (it ends up being the size of the window)
   -- "rotate" is in degrees I guess
   
+  --[[
   function Region_Type:SetCoordinateScale(x, y, scale, rotate)
     assert((x and y and scale) or not (x or y or scale))
     self.cs_x, self.cs_y, self.cs_scale, self.cs_rotate = x, y, scale, rotate
-  end
+  end]]
   
   
   function Region_Type:SetBackgroundColor(r, g, b, a)
@@ -499,7 +452,7 @@ do
       glutil.RenderArray("TRIANGLE_FAN", 2, {l, u, r, u, r, d, l, d})
     end
     
-    if self.cs_x then
+    --[[if self.cs_x then
       gl.MatrixMode("PROJECTION")
 
       gl.PushMatrix()
@@ -511,9 +464,9 @@ do
       gl.Scale(scalefact, scalefact, 1)
       gl.Translate(-self.cs_x, -self.cs_y, 0)
       if self.cs_rotate then gl.Rotate(self.cs_rotate / 3.14159 * 180, 0, 0, 1) end
-    end
+    end]]
     
-    if self.DrawPre then self:DrawPre() end
+    if self.PreDraw then self:PreDraw() end
     
     if not self.DrawSkip then
       if self.Draw then self:Draw() end
@@ -525,21 +478,23 @@ do
       end
     end
     
-    if self.DrawPost then self:DrawPost() end
+    if self.PostDraw then self:PostDraw() end
     
-    if self.cs_x then
+    --[[if self.cs_x then
       gl.MatrixMode("PROJECTION")
       gl.PopMatrix()
-    end
+    end]]
   end
   
   function Region_Type:Update(quanta)
     if self._last_updated ~= quanta then
+      self._last_updated = quanta
+      self._update_children_done = false
       if self.Tick then self:Tick() end
     end
     
-    while self._last_updated ~= quanta do
-      self._last_updated = quanta
+    while not self._update_children_done do
+      self._update_children_done = true
       
       if self.children then
         for _, k in ipairs(self.children) do
@@ -551,12 +506,19 @@ do
   
   local globid = 0
   local weak_key_meta = {__mode = 'k'}
-  function Region(parent, name, suppress)
+  function Region(parent, name)
     local reg = setmetatable({}, Region_Type_mt)
-    if not parent and not suppress then parent = UIParent end
+    if not parent then parent = UIParent end
     reg.__name = name
-    reg.__cache = {_anchor_x = {}, _anchor_y = {}}
-    reg.__anchor_children = {_anchor_x = setmetatable({}, weak_key_meta), _anchor_y = setmetatable({}, weak_key_meta)}
+    reg.__axes = {}
+    reg.__axes.x = CreateAxis(name .. " x")
+    reg.__axes.y = CreateAxis(name .. " y")
+    reg.__point_left = reg.__axes.x:Get(0)
+    reg.__point_right = reg.__axes.x:Get(1)
+    reg.__point_top = reg.__axes.y:Get(0)
+    reg.__point_bottom = reg.__axes.y:Get(1)
+    reg.__width = reg.__axes.x:Get("size")
+    reg.__height = reg.__axes.y:Get("size")
     reg.__globid = globid
     globid = globid + 1
     if parent then reg:SetParent(parent) end
@@ -564,50 +526,14 @@ do
   end
 end
 
-local parents = {}
-
-function UI_CreateParent(width, height)
-  local parent = Region(nil, get_stack_entry(2), true)
-  parent:Detach()
-  function parent:GetWidth()
-    return width
-  end
-  function parent:GetHeight()
-    return height
-  end
-  function parent:GetLeft()
-    return 0
-  end
-  function parent:GetRight()
-    return self:GetWidth()
-  end
-  function parent:GetTop()
-    return 0
-  end
-  function parent:GetBottom()
-    return self:GetHeight()
-  end
-  function parent:GetPointOnAxis(axis, pt)
-    if axis == "x" or axis == "_anchor_x" then return pt * self:GetWidth() end
-    if axis == "y" or axis == "_anchor_y" then return pt * self:GetHeight() end
-  end
-  function parent:GetRelativeMousePosition()
-    return GetMouse()
-  end
-  parent.parent = nil
-  table.insert(parents, {parent = parent, width = width, height = height})
-  return parent
+-- init UIParent
+do
+  assert(not UIParent)
+  UIParent = Region(nil, "UIParent")
+  
+  UIParent:SetPoint("TOPLEFT", "origin", 0, 0)
+  UIParent:SetPoint("BOTTOMRIGHT", "origin", GetScreenX(), GetScreenY())
 end
-function UI_ReregisterParent(parent, width, height) -- ughhhh
-  table.insert(parents, {parent = parent, width = width, height = height})
-end
-
-function UI_Reset()
-  UIParent = nil
-  parents = {}
-  UIParent = UI_CreateParent(GetScreenX(), GetScreenY())
-end
-UI_Reset()
 
 local FrameTypes = {}
 FrameTypes.Frame = {}
@@ -667,7 +593,7 @@ local function TraverseUpWorker(start, x, y, keyed)
   return nil
 end
 
-function TraverseUp(val, button)
+function TraverseUp(button)
   local finger_id = button and button:match("finger_(%d+)")
   
   local x, y
@@ -688,7 +614,7 @@ function TraverseUp(val, button)
     print("finger", finger_id, x, y)
   end
   
-  local rv = TraverseUpWorker(parents[val].parent, x / GetScreenX() * parents[val].width, y / GetScreenY() * parents[val].height, false)
+  local rv = TraverseUpWorker(UIParent, x, y, false)
   
   return rv
 end
@@ -737,17 +663,15 @@ function UI_Key(button, ascii, event)
   end
   if not passdown then return end
   
-  for k in ipairs(parents) do
-    local frame_target = TraverseUp(k, button)
-    -- Otherwise, we first figure out what the topmost frame it's on is, with topmost being simply defined as "last in the render order but with the key over it".
-    -- Then we traverse up, looking for something that wants to eat it.
-    while frame_target do
-      if frame_target.Key then
-        passdown = frame_target:Key(button, ascii, event)
-        if not passdown then return end
-      end
-      frame_target = frame_target.parent
+  local frame_target = TraverseUp(button)
+  -- Otherwise, we first figure out what the topmost frame it's on is, with topmost being simply defined as "last in the render order but with the key over it".
+  -- Then we traverse up, looking for something that wants to eat it.
+  while frame_target do
+    if frame_target.Key then
+      passdown = frame_target:Key(button, ascii, event)
+      if not passdown then return end
     end
+    frame_target = frame_target.parent
   end
   
   -- Nobody cares. Send it to the global handler, if one exists.
