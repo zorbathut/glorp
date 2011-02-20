@@ -72,7 +72,7 @@ do
   local weak_value = {__mode = "v"}
   
   local Node_Type = {}
-  local Node_Type_mt = {__index = Node_Type, __tostring = function (self) return self.name end}
+  local Node_Type_mt = {__index = Node_Type, __tostring = function (self) return self.__name end}
   
   function Node_Type:Set(dependencies, command)
     self:Invalidate()
@@ -124,18 +124,18 @@ do
   function CreateNode(name)
     local nod = setmetatable({}, Node_Type_mt)
     nod.children = setmetatable({}, weak_key)
-    nod.name = name
+    nod.__name = name
     return nod
   end
   
   local Axis_Type = {}
-  local Axis_Type_mt = {__index = Axis_Type, __tostring = function (self) return self.name end}
+  local Axis_Type_mt = {__index = Axis_Type, __tostring = function (self) return self.__name end}
   
   function Axis_Type:Get(point)
     if self.explicit[point] then return self.explicit[point] end
     if self.implicit[point] then return self.implicit[point] end
     
-    self.implicit[point] = CreateNode(self.name .. " " .. tostring(point))
+    self.implicit[point] = CreateNode(self.__name .. " " .. tostring(point))
     
     self:Remake(point)
     
@@ -156,7 +156,7 @@ do
         self.explicit[point] = self.implicit[point]
         self.implicit[point] = nil
       else
-        self.explicit[point] = CreateNode(self.name .. " " .. tostring(point))
+        self.explicit[point] = CreateNode(self.__name .. " " .. tostring(point))
       end
       
       self:RemakeAll()
@@ -172,7 +172,7 @@ do
   function Axis_Type:Remake(point)
     if point == "size" then
       if self.exppoint < 2 then
-        self.implicit[point]:Set({}, function () return 20 end)  -- default values
+        self.implicit[point]:Set({}, function () return self.defsize end)  -- default values
       elseif self.exppoint == 2 then
         -- default values don't work, we're gonna have to calculate
         local deps = {}
@@ -198,13 +198,14 @@ do
       end
     end
   end
-  local function CreateAxis(name)
+  local function CreateAxis(name, default_size)
     local axi = setmetatable({}, Axis_Type_mt)
-    axi.name = name
+    axi.__name = name
     axi.explicit = {}
     axi.implicit = setmetatable({}, weak_value)
     axi.expsize = false
     axi.exppoint = 0
+    axi.defsize = default_size
     return axi
   end
   
@@ -337,21 +338,23 @@ do
   end
   
   
-  local function set_standard_anchor(self, axis, dest, target, src, offset)
-    local dept = {target:GetHandle(axis, src)}
-    self:SetHandle(axis, dest, dept, function () return dept[1]:Get() + offset end)
+  local function anchor_to_standard(self, selfaxis, dest, target, targetaxis, src, offset)
+    --print("SSA", self, selfaxis, dest, target, targetaxis, src, offset)
+    local dept = {target:GetHandle(targetaxis, src)}
+    self:SetHandle(selfaxis, dest, dept, function () return dept[1]:Get() + offset end)
   end
-  local function set_origin_anchor(self, axis, dest, offset)
+  local function anchor_standard_to_origin(self, axis, dest, offset)
+    --print("SOA", self, axis, dest, offset)
     self:SetHandle(axis, dest, {}, function () return offset end)
   end
   
   function Region_Type:SetAllPoints(target)
     target = target or self.parent
     assert(target)
-    set_standard_anchor(self, "x", 0, target, 0, 0)
-    set_standard_anchor(self, "x", 1, target, 1, 0)
-    set_standard_anchor(self, "y", 0, target, 0, 0)
-    set_standard_anchor(self, "y", 1, target, 1, 0)
+    anchor_to_standard(self, "x", 0, target, "x", 0, 0)
+    anchor_to_standard(self, "x", 1, target, "x", 1, 0)
+    anchor_to_standard(self, "y", 0, target, "y", 0, 0)
+    anchor_to_standard(self, "y", 1, target, "y", 1, 0)
     -- grunch
   end
   
@@ -368,22 +371,31 @@ do
     TOP = {nil, 0},
     BOTTOM = {nil, 1},
   }
-  function Region_Type:SetPoint(a, b, c, d, e, f, g)
-    if type(a) == "string" then
+  function Region_Type:SetPoint(a, b, c, d, e, f, g, h)
+    local origin = false
+    if a == "origin" then
+      origin = true
+      a, b, c, d, e, f, g = b, c, d, e, f, g, h
+      
+      if not (type(b) == "number" or b == nil) then
+        --the next values aren't coordinates, so we're just setting origin 0,0
+        a, b, c, d, e, f, g, h = 0, 0, a, b, c, d, e, f
+      end
+    elseif type(a) == "string" then
       if not strconv[a] then
         assert(false)
       end
       
-      a, b, c, d, e, f, g = strconv[a][1], strconv[a][2], b, c, d, e, f
+      a, b, c, d, e, f, g, h = strconv[a][1], strconv[a][2], b, c, d, e, f, g
     end
     
     if c == "origin" then
       local sx, sy, _, ox, oy = a, b, c, d, e
       if sx and ox then
-        set_origin_anchor(self, "x", sx, ox)
+        anchor_standard_to_origin(self, "x", sx, ox)
       end
       if sy and oy then
-        set_origin_anchor(self, "y", sy, oy)
+        anchor_standard_to_origin(self, "y", sy, oy)
       end
       
       return
@@ -394,15 +406,15 @@ do
         assert(false)
       end
       
-      a, b, c, d, e, f, g = a, b, c, strconv[d][1], strconv[d][2], e, f
+      a, b, c, d, e, f, g, h = a, b, c, strconv[d][1], strconv[d][2], e, f, g
     end
     
     local sx, sy, target, ex, ey, ofsx, ofsy = a, b, c, d, e, f, g
     if sx and ex then
-      set_standard_anchor(self, "x", sx, target, ex, ofsx or 0)
+      anchor_to_standard(self, origin and "originx" or "x", sx, target, "x", ex, ofsx or 0)
     end
     if sy and ey then
-      set_standard_anchor(self, "y", sy, target, ey, ofsy or 0)
+      anchor_to_standard(self, origin and "originy" or "y", sy, target, "y", ey, ofsy or 0)
     end
   end
   
@@ -452,6 +464,13 @@ do
       glutil.RenderArray("TRIANGLE_FAN", 2, {l, u, r, u, r, d, l, d})
     end
     
+    local pushed
+    local ox, oy, sx, sy = self.__origin_x:Get(), self.__origin_y:Get(), self.__origin_x_scale:Get(), self.__origin_y_scale:Get()
+    if ox ~= 0 or oy ~= 0 or sx ~= 1 or sy ~= 1 then
+      print("Draw context change:", ox, oy, sx, sy)
+      pushed = true
+    end
+    
     --[[if self.cs_x then
       gl.MatrixMode("PROJECTION")
 
@@ -480,6 +499,9 @@ do
     
     if self.PostDraw then self:PostDraw() end
     
+    if pushed then
+      print("Draw context retract")
+    end
     --[[if self.cs_x then
       gl.MatrixMode("PROJECTION")
       gl.PopMatrix()
@@ -509,18 +531,31 @@ do
   function Region(parent, name)
     local reg = setmetatable({}, Region_Type_mt)
     if not parent then parent = UIParent end
-    reg.__name = name
+    
+    reg.__globid = globid
+    globid = globid + 1
+    assert(globid ~= globid + 1) -- double bounds check, should never be hit
+    
+    reg.__name = "id" .. globid .. " " .. name
     reg.__axes = {}
-    reg.__axes.x = CreateAxis(name .. " x")
-    reg.__axes.y = CreateAxis(name .. " y")
+    
+    reg.__axes.x = CreateAxis(reg.__name .. " x", 40)
+    reg.__axes.y = CreateAxis(reg.__name .. " y", 40)
+    reg.__axes.originx = CreateAxis(reg.__name .. " originx", 1)
+    reg.__axes.originy = CreateAxis(reg.__name .. " originy", 1)
+    
     reg.__point_left = reg.__axes.x:Get(0)
     reg.__point_right = reg.__axes.x:Get(1)
     reg.__point_top = reg.__axes.y:Get(0)
     reg.__point_bottom = reg.__axes.y:Get(1)
     reg.__width = reg.__axes.x:Get("size")
     reg.__height = reg.__axes.y:Get("size")
-    reg.__globid = globid
-    globid = globid + 1
+    
+    reg.__origin_x = reg.__axes.originx:Get(0)
+    reg.__origin_y = reg.__axes.originy:Get(0)
+    reg.__origin_x_scale = reg.__axes.originx:Get("size")
+    reg.__origin_y_scale = reg.__axes.originy:Get("size")
+    
     if parent then reg:SetParent(parent) end
     return reg
   end
