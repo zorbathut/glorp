@@ -391,11 +391,11 @@ do
     
     if c == "origin" then
       local sx, sy, _, ox, oy = a, b, c, d, e
-      if sx and ox then
-        anchor_standard_to_origin(self, "x", sx, ox)
+      if sx then
+        anchor_standard_to_origin(self, "x", sx, ox or 0)
       end
-      if sy and oy then
-        anchor_standard_to_origin(self, "y", sy, oy)
+      if sy then
+        anchor_standard_to_origin(self, "y", sy, oy or 0)
       end
       
       return
@@ -467,23 +467,11 @@ do
     local pushed
     local ox, oy, sx, sy = self.__origin_x:Get(), self.__origin_y:Get(), self.__origin_x_scale:Get(), self.__origin_y_scale:Get()
     if ox ~= 0 or oy ~= 0 or sx ~= 1 or sy ~= 1 then
-      print("Draw context change:", ox, oy, sx, sy)
-      pushed = true
-    end
-    
-    --[[if self.cs_x then
+      pushed = gl.Get("PROJECTION_MATRIX")
       gl.MatrixMode("PROJECTION")
-
-      gl.PushMatrix()
-      
-      local sx, sy, ex, ey = self:GetBounds()
-      local cx, cy = (sx + ex) / 2, (sy + ey) / 2
-      local scalefact = (ex - sx) / self.cs_scale
-      gl.Translate(cx, cy, 0)
-      gl.Scale(scalefact, scalefact, 1)
-      gl.Translate(-self.cs_x, -self.cs_y, 0)
-      if self.cs_rotate then gl.Rotate(self.cs_rotate / 3.14159 * 180, 0, 0, 1) end
-    end]]
+      gl.Translate(ox, oy, 0)
+      gl.Scale(sx, sy, 0)
+    end
     
     if self.PreDraw then self:PreDraw() end
     
@@ -500,12 +488,9 @@ do
     if self.PostDraw then self:PostDraw() end
     
     if pushed then
-      print("Draw context retract")
-    end
-    --[[if self.cs_x then
       gl.MatrixMode("PROJECTION")
-      gl.PopMatrix()
-    end]]
+      gl.LoadMatrix(pushed)
+    end
   end
   
   function Region_Type:Update(quanta)
