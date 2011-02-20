@@ -512,9 +512,10 @@ if mode == "debug" or mode == "editor" then
   texcover:SetColor(1, 1, 1)
   function texcover:Tick()
     if instrumentation_GetTextureChanges() > 0 or instrumentation_GetShaderChanges() > 0 then
-      self:SetText(string.format("%1.1f / %1.1f", math.log(instrumentation_GetTextureChanges() + 1) / math.log(2), math.log(instrumentation_GetShaderChanges() + 1) / math.log(2)))
+      self:SetText(string.format("%1.1f / %1.1f / %1.1f", math.log(instrumentation_GetTextureChanges() + 1) / math.log(2), math.log(instrumentation_GetShaderChanges() + 1) / math.log(2), math.log(instrumentation_GetInvalidations() + 1) / math.log(2)))
       instrumentation_ResetTextureChanges()
       instrumentation_ResetShaderChanges()
+      instrumentation_ResetInvalidations()
     end
   end
 end

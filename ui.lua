@@ -70,9 +70,12 @@ end
 do
   local weak_key = {__mode = "k"}
   local weak_value = {__mode = "v"}
+  local weak_keyvalue = {__mode = "kv"}
   
   local Node_Type = {}
   local Node_Type_mt = {__index = Node_Type, __tostring = function (self) return self.__name end}
+  
+  local invalidations = 0
   
   function Node_Type:Set(dependencies, command)
     self:Invalidate()
@@ -108,7 +111,7 @@ do
   end
   function Node_Type:Invalidate()
     if self.cached then
-      print("Invalidating", tostring(self))
+      invalidations = invalidations + 1
       self.cache = nil
       self.cached = false
       for k in pairs(self.children) do
@@ -131,6 +134,13 @@ do
     nod.children = setmetatable({}, weak_key)
     nod.__name = name
     return nod
+  end
+  
+  function instrumentation_GetInvalidations()
+    return invalidations
+  end
+  function instrumentation_ResetInvalidations()
+    invalidations = 0
   end
   
   local Axis_Type = {}
@@ -214,19 +224,21 @@ do
     return axi
   end
   
-  local axis_conversions = {x = setmetatable({}, weak_key), y = setmetatable({}, weak_key)}
+  local axis_conversions = {x = setmetatable({}, weak_keyvalue), y = setmetatable({}, weak_keyvalue)}
   local function GetAxisConversion(axis, src, dst)
     local subs = axis_conversions[axis]
-    if not subs[src] then
-      subs[src] = setmetatable({}, weak_key)
+    local tab = subs[src] -- cache to keep it around in case the GC happens to hit at just the wrong moment
+    if not tab then
+      tab = setmetatable({}, weak_keyvalue)
+      subs[src] = tab
     end
     
-    if not subs[src][dst] then
+    if not tab[dst] then
       local oaxis = "origin" .. axis
         
       local nod = CreateNode(string.format("axis conversion (%s) (%s)", tostring(src), tostring(dst)))
-      subs[src][dst] = nod
-      nod.backlink = subs[src]  -- to keep this table from going away
+      tab[dst] = nod
+      nod.backlink = tab  -- to keep this table from going away
       
       local function generatePath(item)
         local path = {}
@@ -250,8 +262,6 @@ do
         
         local ofs = 0
         local scale = 1
-        
-        print("startin")
         
         for i = 1, #srcpath do
           local item = srcpath[i]
@@ -286,8 +296,6 @@ do
         end
         
         nod:ReplaceDependencies(deps)
-        
-        print("endin")
         
         if scale ~= 1 or ofs ~= 0 then
           print(string.format("Ofs/scale from %s to %s, got scale by %f and offset by %f", tostring(src), tostring(dst), scale, ofs))
