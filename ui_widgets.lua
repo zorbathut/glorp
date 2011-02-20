@@ -124,8 +124,10 @@ end
 
 FrameTypes.Text = {}
 function FrameTypes.Text:SetText(text)
-  self.text = text
-  self:RecalculateBounds()
+  if self.text ~= text then
+    self.text = text
+    self:RecalculateBounds()
+  end
 end
 function FrameTypes.Text:SetSize(size)
   self.size = size
@@ -217,8 +219,10 @@ end
 
 FrameTypes.Text_Multiline = {}
 function FrameTypes.Text_Multiline:SetText(text)
-  self.text = text
-  self:RecreateSubtext()
+  if self.text ~= text then
+    self.text = text
+    self:RecreateSubtext()
+  end
 end
 function FrameTypes.Text_Multiline:SetSize(size)
   self.size = size

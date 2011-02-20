@@ -79,6 +79,10 @@ do
     
     assert(command)
     
+    self:ReplaceDependencies(dependencies)
+    self.command = command
+  end
+  function Node_Type:ReplaceDependencies(dependencies)
     if self.dependencies then
       for _, v in pairs(self.dependencies) do
         v:RemoveChild(self)
@@ -86,7 +90,6 @@ do
     end
     
     self.dependencies = dependencies
-    self.command = command
     
     if self.dependencies then
       for _, v in pairs(self.dependencies) do
@@ -95,17 +98,19 @@ do
     end
   end
   function Node_Type:Get()
-    if self.cache then return self.cache end
+    if self.cached then return self.cache end
     assert(not self.executing)  -- loop detection, error more usefully
     self.executing = true
+    self.cached = true
     self.cache = self.command(self.dependencies)
-    assert(self.cache)
     self.executing = false
     return self.cache
   end
   function Node_Type:Invalidate()
-    if self.cache then
+    if self.cached then
+      print("Invalidating", tostring(self))
       self.cache = nil
+      self.cached = false
       for k in pairs(self.children) do
         k:Invalidate()
       end
@@ -193,8 +198,8 @@ do
       else
         local ka, va = next(self.explicit)
         if ka == "size" then ka, va = next(self.explicit, ka) end
-        assert(va)
-        self.implicit[point]:Set({self:Get("size"), va}, function (params) return va:Get() + (point - ka) * params[1]:Get() end)
+        assert(ka and va)
+        self.implicit[point]:Set({self:Get("size"), va}, function (params) assert(va:Get()) return va:Get() + (point - ka) * params[1]:Get() end)
       end
     end
   end
@@ -217,16 +222,79 @@ do
     end
     
     if not subs[src][dst] then
-      local nod = CreateNode(string.format("axis conversion (%s) (%s)", src, dst))
+      local oaxis = "origin" .. axis
+        
+      local nod = CreateNode(string.format("axis conversion (%s) (%s)", tostring(src), tostring(dst)))
+      subs[src][dst] = nod
       nod.backlink = subs[src]  -- to keep this table from going away
       
-      assert(false)
-      -- generate the path from src to dst
-      -- we need a way to set the node deps without refreshing, I think. let's think on this one.
-      --local function RefreshData()
-        --nod:Set() -- we make the change here
-      --end
-      --RefreshData()
+      local function generatePath(item)
+        local path = {}
+        while item do
+          table.insert(path, item)
+          item = item.__parent_node:Get()
+        end
+        return path
+      end
+      
+      nod:Set({}, function ()
+        local srcpath = generatePath(src.__parent_node:Get())
+        local dstpath = generatePath(dst.__parent_node:Get())
+        
+        while #srcpath > 0 and #dstpath > 0 and srcpath[#srcpath] == dstpath[#dstpath] do
+          table.remove(srcpath)
+          table.remove(dstpath)
+        end
+        
+        local deps = {src.__parent_node, dst.__parent_node}
+        
+        local ofs = 0
+        local scale = 1
+        
+        print("startin")
+        
+        for i = 1, #srcpath do
+          local item = srcpath[i]
+          local lofs = item.__axes[oaxis]:Get(0)
+          local lscale = item.__axes[oaxis]:Get("size")
+          table.insert(deps, lofs)
+          table.insert(deps, lscale)
+          table.insert(deps, item.__parent_node)
+          
+          if lofs:Get() ~= 0 or lscale:Get() ~= 1 then
+            print("lofs/lscale", lofs:Get(), lscale:Get())
+          end
+          
+          ofs = ofs * lscale:Get() + lofs:Get()
+          scale = scale * lscale:Get()
+        end
+        
+        for i = #dstpath, 1, -1 do
+          local item = dstpath[i]
+          local lofs = item.__axes[oaxis]:Get(0)
+          local lscale = item.__axes[oaxis]:Get("size")
+          table.insert(deps, lofs)
+          table.insert(deps, lscale)
+          table.insert(deps, item.__parent_node)
+          
+          if lofs:Get() ~= 0 or lscale:Get() ~= 1 then
+            print("lofs/lscale", lofs:Get(), lscale:Get())
+          end
+          
+          ofs = (ofs - lofs:Get()) / lscale:Get()
+          scale = scale / lscale:Get()
+        end
+        
+        nod:ReplaceDependencies(deps)
+        
+        print("endin")
+        
+        if scale ~= 1 or ofs ~= 0 then
+          print(string.format("Ofs/scale from %s to %s, got scale by %f and offset by %f", tostring(src), tostring(dst), scale, ofs))
+        end
+        
+        return {offset = ofs, scale = scale}
+      end)
     end
     
     return subs[src][dst]
@@ -363,8 +431,8 @@ do
   
   local function anchor_to_standard(self, selfaxis, dest, target, targetaxis, src, offset)
     local handle = target:GetHandle(targetaxis, src)
-    local convert = GetAxisConversion(targetaxis, src, dest)
-    self:SetHandle(selfaxis, dest, {handle, convert}, function () return (handle:Get() + convert:Get().offset) * convert:Get().scale + offset end)
+    local convert = GetAxisConversion(targetaxis, target, self)
+    self:SetHandle(selfaxis, dest, {handle, convert}, function () return handle:Get() * convert:Get().scale + convert:Get().offset + offset end)
   end
   local function anchor_standard_to_origin(self, axis, dest, offset)
     self:SetHandle(axis, dest, {}, function () return offset end)
