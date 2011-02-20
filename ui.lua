@@ -209,6 +209,29 @@ do
     return axi
   end
   
+  local axis_conversions = {x = setmetatable({}, weak_key), y = setmetatable({}, weak_key)}
+  local function GetAxisConversion(axis, src, dst)
+    local subs = axis_conversions[axis]
+    if not subs[src] then
+      subs[src] = setmetatable({}, weak_key)
+    end
+    
+    if not subs[src][dst] then
+      local nod = CreateNode(string.format("axis conversion (%s) (%s)", src, dst))
+      nod.backlink = subs[src]  -- to keep this table from going away
+      
+      assert(false)
+      -- generate the path from src to dst
+      -- we need a way to set the node deps without refreshing, I think. let's think on this one.
+      --local function RefreshData()
+        --nod:Set() -- we make the change here
+      --end
+      --RefreshData()
+    end
+    
+    return subs[src][dst]
+  end
+  
   local Region_Type = {}
   local Region_Type_mt = {__index = Region_Type, __tostring = function (self) return "<frame " .. (self.__name or "(unnamed)") .. " " .. toaddress(self) .. ">" end}
   
@@ -284,7 +307,7 @@ do
       parent:resort_children()
     end
     
-    -- some point we'll need to refresh everything that refers to this table
+    self.__parent_node:Invalidate()
   end
   function Region_Type:Detach()
     if self.parent then
@@ -339,12 +362,11 @@ do
   
   
   local function anchor_to_standard(self, selfaxis, dest, target, targetaxis, src, offset)
-    --print("SSA", self, selfaxis, dest, target, targetaxis, src, offset)
-    local dept = {target:GetHandle(targetaxis, src)}
-    self:SetHandle(selfaxis, dest, dept, function () return dept[1]:Get() + offset end)
+    local handle = target:GetHandle(targetaxis, src)
+    local convert = GetAxisConversion(targetaxis, src, dest)
+    self:SetHandle(selfaxis, dest, {handle, convert}, function () return (handle:Get() + convert:Get().offset) * convert:Get().scale + offset end)
   end
   local function anchor_standard_to_origin(self, axis, dest, offset)
-    --print("SOA", self, axis, dest, offset)
     self:SetHandle(axis, dest, {}, function () return offset end)
   end
   
@@ -512,7 +534,6 @@ do
   end
   
   local globid = 0
-  local weak_key_meta = {__mode = 'k'}
   function Region(parent, name)
     local reg = setmetatable({}, Region_Type_mt)
     if not parent then parent = UIParent end
@@ -540,6 +561,9 @@ do
     reg.__origin_y = reg.__axes.originy:Get(0)
     reg.__origin_x_scale = reg.__axes.originx:Get("size")
     reg.__origin_y_scale = reg.__axes.originy:Get("size")
+    
+    reg.__parent_node = CreateNode(reg.__name .. " parent")
+    reg.__parent_node:Set({}, function () return reg.parent end)
     
     if parent then reg:SetParent(parent) end
     return reg
