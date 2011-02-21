@@ -72,7 +72,7 @@ if not disable_fonts_for_ogl_1 then
       
       float dens = smoothstep(0.5 - shift, 0.5 + shift, alph);
       
-      gl_FragColor = vec4(gl_Color.rgb, gl_Color.a * dens);
+      gl_FragColor = vec4(gl_Color.rgb, gl_Color.a * pow(dens, 0.5));
     }
   ]])
   text_shader = glutil.Program()

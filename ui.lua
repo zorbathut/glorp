@@ -179,6 +179,42 @@ do
     
     self.explicit[point]:Set(dependencies, command)
   end
+  function Axis_Type:Clear(point)
+    if self.explicit[point] then
+      self.implicit[point] = self.explicit[point]
+      self.explicit[point] = nil
+      
+      if point == "size" then
+        self.expsize = false
+      else
+        self.exppoint = self.exppoint - 1
+      end
+      
+      self:RemakeAll()
+    end
+  end
+  function Axis_Type:ClearPoints(point)
+    if point == "all" then
+      self:ClearAll()
+    elseif point == "alignment" then
+      while true do
+        local nk = next(self.explicit)
+        if nk == "size" then nk = next(self.explicit, nk) end
+        if not nk then break end
+        self:Clear(nk)
+      end
+    else
+      self:Clear(point)
+    end
+  end
+  function Axis_Type:ClearAll()
+    while next(self.explicit) do
+      self:Clear(next(self.explicit))
+    end
+    
+    assert(not self.expsize)
+    assert(self.exppoint == 0)
+  end
   function Axis_Type:RemakeAll()
     for k in pairs(self.implicit) do
       self:Remake(k)
@@ -316,6 +352,21 @@ do
   end
   function Region_Type:SetHandle(axis, coord, deps, func)
     return self.__axes[axis]:Set(coord, deps, func)
+  end
+  
+  function Region_Type:ClearPoints(axes, types)
+    if axes == "alignment" then
+      self:ClearPoints("x", types)
+      self:ClearPoints("y", types)
+    elseif axes == "origin" then
+      self:ClearPoints("originx", types)
+      self:ClearPoints("originy", types)
+    elseif axes == "all" then
+      self:ClearPoints("alignment", types)
+      self:ClearPoints("origin", types)
+    else
+      self.__axes[axes]:ClearPoints(types)
+    end
   end
   
   function Region_Type:Exists()
