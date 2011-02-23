@@ -437,6 +437,8 @@ if gl then
 
 
   function glutil.RenderArray(mode, vertex_size, vertices, color_size, color, texture_size, texture)
+    --print("drawing", mode, vertices and #vertices or 0, color and #color or 0, texture and #texture or 0)
+    
     gl.EnableClientState("VERTEX_ARRAY")
     gl.VertexPointer(vertex_size, "FLOAT", vertices)
     if color_size then

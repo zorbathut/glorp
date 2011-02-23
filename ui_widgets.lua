@@ -334,7 +334,7 @@ function FrameTypes.Text_Multiline:RecreateSubtextCore()
     return 0
   end
 end
-function FrameTypes.Text_Multiline:PreDraw()
+function FrameTypes.Text_Multiline:Draw()
   self.__textLayout:Get() -- does all the processing to rebuild the text layout
 end
 function FrameTypes.Text_Multiline:_Init()

@@ -370,7 +370,10 @@ end
 local ud = {}
 function tick_loop(...)
   ud = {}
-  UIParent:Update(ud)
+  
+  perfbar(0.5, 0, 0.5, function ()
+    UIParent:Update(ud)
+  end)
   
   if wedothisfirst then
     wedothisfirst()

@@ -194,7 +194,7 @@ void meltdown() {
 bool perfbar_enabled = false;
 void set_perfbar(bool x) {perfbar_enabled = x;}
 
-class GlorpThinLayer : public ThinLayer {
+class GlorpThinLayer : public ThinLayer, boost::noncopyable {
 public:
   void Render() const {
     {
@@ -238,7 +238,7 @@ public:
   }
 };
 
-class WrappedTex {
+class WrappedTex : boost::noncopyable {
 private:
   Texture *tex;
   Image *img;
@@ -281,6 +281,10 @@ public:
   
   const string &getfname() const {
     return fname;
+  }
+  
+  bool operator==(const WrappedTex &rhs) const {
+    return this == &rhs;
   }
   
   ~WrappedTex() {
@@ -685,7 +689,8 @@ void luainit(int argc, const char **argv) {
         .def("GetInternalHeight", &WrappedTex::GetInternalHeight)
         .def("SetTexture", &WrappedTex::SetTexture)
         .def("GetPixel", &WrappedTex::GetPixel)
-        .def(tostring(self)),
+        .def(tostring(self))
+        .def(const_self == other<const WrappedTex&>()),
       class_<PerfBarManager, DontKillMeBro<PerfBarManager> >("Perfbar_Init")
         .def(constructor<float, float, float>())
         .def("Destroy", &PerfBarManager::Destroy),

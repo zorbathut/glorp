@@ -307,10 +307,6 @@ do
           table.insert(deps, lscale)
           table.insert(deps, item.__parent_node)
           
-          if lofs:Get() ~= 0 or lscale:Get() ~= 1 then
-            print("lofs/lscale", lofs:Get(), lscale:Get())
-          end
-          
           ofs = ofs * lscale:Get() + lofs:Get()
           scale = scale * lscale:Get()
         end
@@ -323,19 +319,11 @@ do
           table.insert(deps, lscale)
           table.insert(deps, item.__parent_node)
           
-          if lofs:Get() ~= 0 or lscale:Get() ~= 1 then
-            print("lofs/lscale", lofs:Get(), lscale:Get())
-          end
-          
           ofs = (ofs - lofs:Get()) / lscale:Get()
           scale = scale / lscale:Get()
         end
         
         nod:ReplaceDependencies(deps)
-        
-        if scale ~= 1 or ofs ~= 0 then
-          print(string.format("Ofs/scale from %s to %s, got scale by %f and offset by %f", tostring(src), tostring(dst), scale, ofs))
-        end
         
         return {offset = ofs, scale = scale}
       end)
@@ -622,19 +610,13 @@ do
       gl.Scale(sx, sy, 0)
     end
     
-    if self.PreDraw then self:PreDraw() end
+    if self.Draw then self:Draw() end
     
-    if not self.DrawSkip then
-      if self.Draw then self:Draw() end
-      
-      if self.children then
-        for _, k in ipairs(self.children) do
-          k:Render()
-        end
+    if self.children then
+      for _, k in ipairs(self.children) do
+        k:Render()
       end
     end
-    
-    if self.PostDraw then self:PostDraw() end
     
     if pushed then
       gl.MatrixMode("PROJECTION")
@@ -659,6 +641,11 @@ do
       end
     end
   end
+  
+  --function Region_Type_mt:__newindex(k, v)
+    --print(k, v)
+    --rawset(self, k, v)
+  --end
   
   local globid = 0
   function Region(parent, name)
