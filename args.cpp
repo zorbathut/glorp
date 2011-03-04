@@ -182,17 +182,20 @@ void initFlags(int *argcp, const char ***argvp, int ignoreargs, const string &se
       lines.push_back(make_pair(dt, FS_FILE));
   }
   
-  int consumed_end = ignoreargs + 1;
-  int eaten = 0;
-  for(; consumed_end < argc; consumed_end++) {
-    if(argv[consumed_end][0] != '-' || argv[consumed_end][1] != '-') break;
-    lines.push_back(make_pair(argv[consumed_end] + 2, FS_CLI));
-    eaten = eaten + 1; // oh shazbot
+  vector<const char *> remains;
+  for(int i = 0; i < ignoreargs + 1; i++)
+    remains.push_back(argv[i]);
+  
+  for(int i = ignoreargs + 1; i < argc; i++) {
+    if(argv[i][0] == '-' && argv[i][1] == '-') {
+      lines.push_back(make_pair(argv[i] + 2, FS_CLI));
+    } else {
+      remains.push_back(argv[i]);
+    }
   }
   
-  std::copy(argv + ignoreargs + 1, argv + consumed_end, argv + argc);
-  *argcp = *argcp - eaten;
-  argv[*argcp] = NULL;
+  remains.push_back(NULL);
+  std::copy(remains.begin(), remains.end(), argv);
   
   for(int i = 0; i < lines.size(); i++) {
     const char *arg = lines[i].first.c_str();

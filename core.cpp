@@ -194,10 +194,12 @@ void meltdown() {
 bool perfbar_enabled = false;
 void set_perfbar(bool x) {perfbar_enabled = x;}
 
+DEFINE_int(renderer_repeats, 1, "Number of times to repeat the render pass");
+
 class GlorpThinLayer : public ThinLayer, boost::noncopyable {
 public:
   void Render() const {
-    {
+    for(int i = 0; i < FLAGS_renderer_repeats; i++) {
       PerfStack pb(0.5, 0.0, 0.0);
       
       lua_getglobal(L, "generic_wrap");
