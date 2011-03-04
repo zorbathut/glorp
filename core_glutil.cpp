@@ -17,12 +17,13 @@ using namespace std;
 
 
 #ifndef IPHONE
-vector<int> to_delete_lists;
-vector<int> to_delete_shaders;
-vector<int> to_delete_programs;
-vector<GLuint> to_delete_framebuffers;
-vector<GLuint> to_delete_renderbuffers;
-vector<GLuint> to_delete_textures;
+static vector<int> to_delete_lists;
+static vector<int> to_delete_shaders;
+static vector<int> to_delete_programs;
+static vector<GLuint> to_delete_framebuffers;
+static vector<GLuint> to_delete_renderbuffers;
+static vector<GLuint> to_delete_textures;
+static vector<GLuint> to_delete_buffers;
 
 class GlListID : boost::noncopyable {
   int id;
@@ -114,10 +115,25 @@ class GlTexture : boost::noncopyable {
 public:
   GlTexture() {
     glGenTextures(1, &id);
-    dprintf("glorp texid %d\n", id);
   }
   ~GlTexture() {
     to_delete_textures.push_back(id);
+  }
+  
+  int get() const {
+    return id;
+  }
+};
+
+class GlBuffer : boost::noncopyable {
+  GLuint id;
+  
+public:
+  GlBuffer() {
+    glGenBuffers(1, &id);
+  }
+  ~GlBuffer() {
+    to_delete_buffers.push_back(id);
   }
   
   int get() const {
@@ -150,7 +166,10 @@ void glorp_glutil_init(lua_State *L) {
         .def("get", &GlRenderbuffer::get),
       class_<GlTexture>("GlTexture")
         .def(constructor<>())
-        .def("get", &GlTexture::get)
+        .def("get", &GlTexture::get),
+      class_<GlBuffer>("GlBuffer")
+        .def(constructor<>())
+        .def("get", &GlBuffer::get)
       #endif
     ];
   }
@@ -164,11 +183,13 @@ void glorp_glutil_tick() {
   for(int i = 0; i < to_delete_framebuffers.size(); i++) glDeleteFramebuffers(1, &to_delete_framebuffers[i]);
   for(int i = 0; i < to_delete_renderbuffers.size(); i++) glDeleteRenderbuffers(1, &to_delete_renderbuffers[i]);
   for(int i = 0; i < to_delete_textures.size(); i++) glDeleteTextures(1, &to_delete_textures[i]);
+  for(int i = 0; i < to_delete_buffers.size(); i++) glDeleteBuffers(1, &to_delete_buffers[i]);
   to_delete_lists.clear();
   to_delete_shaders.clear();
   to_delete_programs.clear();
   to_delete_framebuffers.clear();
   to_delete_renderbuffers.clear();
   to_delete_textures.clear();
+  to_delete_buffers.clear();
   #endif
 }

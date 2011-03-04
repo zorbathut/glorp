@@ -18,8 +18,8 @@
 using namespace std;
 
 
-vector<ALuint> to_delete_buffers;
-vector<ALuint> to_delete_sources;
+static vector<ALuint> to_delete_buffers;
+static vector<ALuint> to_delete_sources;
 
 class AlBufferID : boost::noncopyable {
   ALuint id;
