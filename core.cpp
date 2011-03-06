@@ -696,13 +696,9 @@ void luainit(int argc, const char **argv) {
       class_<PerfBarManager, DontKillMeBro<PerfBarManager> >("Perfbar_Init")
         .def(constructor<float, float, float>())
         .def("Destroy", &PerfBarManager::Destroy),
-      //class_<SoundSource, DontKillMeBro<SoundSource> >("SourceSource_Make")
-        //.def("Stop", &SoundSource::Stop),
       def("Texture", &GetTex, adopt(result)),
       def("SetNoTexture", &SetNoTex),
       def("IsKeyDown", &IsKeyDownFrameAdapter),
-      //def("PlaySound_Core", &DoASound),
-      //def("ControlSound_Core", &ControllableSound),
       def("TriggerExit", &TriggerExit),
       def("GetMouseX", &gmx),
       def("GetMouseY", &gmy),
@@ -813,21 +809,6 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
 
   System::Init();
   
-  ALCdevice* pDevice = NULL;
-  ALCcontext* pContext = NULL;
-  if (FLAGS_sound) {
-    pDevice = alcOpenDevice(NULL);
-    if (pDevice) {
-      CHECK(pDevice);
-      ALCcontext* pContext = alcCreateContext(pDevice, NULL);
-      CHECK(pContext);
-      alcMakeContextCurrent(pContext);
-      CHECK(alGetError() == AL_NO_ERROR);
-      
-      audio_enabled = true;
-    }
-  }
-  
   #ifdef IPHONE
     init_osx();
   #endif
@@ -844,6 +825,21 @@ void glorp_init(const string &name, int width, int height, int argc, const char 
       printf("%s: %s\n", itr->first.c_str(), itr->second.c_str());
     }
     return;
+  }
+  
+  ALCdevice* pDevice = NULL;
+  ALCcontext* pContext = NULL;
+  if (FLAGS_sound) {
+    pDevice = alcOpenDevice(NULL);
+    if (pDevice) {
+      CHECK(pDevice);
+      ALCcontext* pContext = alcCreateContext(pDevice, NULL);
+      CHECK(pContext);
+      alcMakeContextCurrent(pContext);
+      CHECK(alGetError() == AL_NO_ERROR);
+      
+      audio_enabled = true;
+    }
   }
   
   window()->SetTitle(name);

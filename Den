@@ -644,10 +644,10 @@ do
     return "pngcrush -brute -rem alla -cc $SOURCE $TARGET"
   end
   function converts.wav(dst)
-    return "oggenc --downmix -q #oggquality -o $TARGET $SOURCE || oggenc -q #oggquality -o $TARGET $SOURCE", dst:gsub("%.wav", ".ogg")
+    return "oggenc -q #oggquality -o $TARGET $SOURCE", dst:gsub("%.wav", ".ogg")
   end
   function converts.flac(dst)
-    return [[(#FLAC -d $SOURCE -c | oggenc --downmix -q #oggquality -o $TARGET -) || (#FLAC -d $SOURCE -c | oggenc -q #oggquality -o $TARGET -)]], dst:gsub("%.flac", ".ogg")
+    return [[(#FLAC -d $SOURCE -c | oggenc -q #oggquality -o $TARGET -)]], dst:gsub("%.flac", ".ogg")
   end
   if osd.build_overrides then
     for k, v in pairs(osd.build_overrides) do

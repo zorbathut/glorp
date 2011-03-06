@@ -2,6 +2,8 @@
 local params = ...
 local platform, mode = params.platform, params.mode
 
+params.gtable = {}
+
 print("JIT STATUS")
 print(jit)
 
