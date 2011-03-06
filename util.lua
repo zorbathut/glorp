@@ -29,7 +29,6 @@ function export_items_ro(tab, items)
   local lookup = {}
   for _, v in pairs(items) do
     if not tab[v] then
-      print("Can't find", v)
       assert(tab[v], v)
     end
     lookup[v] = tab[v]

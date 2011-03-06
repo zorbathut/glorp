@@ -259,7 +259,6 @@ if gl then
     return prog
   end
 
-  print(platform)
   if platform ~= "iphone" and platform ~= "iphone_sim" then
     local snatch = {
       ShaderSource = true,
@@ -302,10 +301,9 @@ if gl then
     function glutil.CompileShader(shader)
       snatch.CompileShader(shader.id:get())
       local infolog = snatch.GetShaderInfoLog(shader.id:get())
-      print(infolog)
-      print(mode)
       local compstatus = glutil.GetShader(shader, "COMPILE_STATUS")
       if (infolog ~= "" and mode) or compstatus ~= "TRUE" then
+        print(infolog)
         print("Failed to build shader", compstatus)
         assert(false)
       end
@@ -380,7 +378,6 @@ if gl then
       if not attrib_lookup[pid] then attrib_lookup[pid] = {} end
       local loca = snatch.GetAttribLocation(pid, text)
       assert(loca)
-      print("ALOOKUP", pid, text, loca)
       attrib_lookup[pid][text] = loca
     end
     --[[function glutil.VertexAttribI(program, text, ...)

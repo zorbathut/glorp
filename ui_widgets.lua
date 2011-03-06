@@ -3,11 +3,6 @@ local params, FrameTypes = ...
 local platform, mode = params.platform, params.mode
 
 local glv = tonumber(gl.GetString("VERSION"):match("^([^ ]*).*$"))
-
-print(gl.GetString("VERSION"))
-print(gl.GetString("VERSION"):match("^([^ ]*).*$"))
-print(glv)
-
 local disable_fonts_for_ogl_1 = false
 if glv and glv < 2 then
   disable_fonts_for_ogl_1 = true
