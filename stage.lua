@@ -28,16 +28,17 @@ function runfile_worker(file, global, optional, ...)
     setfenv(dat, global)
   end
   
-  dat(params, ...)
+  return dat(params, ...)
 end
 function runfile(file, global, ...)
-  runfile_worker(file, global, false, ...)
+  return runfile_worker(file, global, false, ...)
 end
 function runfile_optional(file, global, ...)
-  runfile_worker(file, global, true, ...)
+  return runfile_worker(file, global, true, ...)
 end
 
-runfile("constants.lua", _G)
+params.constants = runfile("constants.lua", _G)
+assert(params.constants)
 
 runfile("util.lua", _G)
 runfile("ui.lua", _G)
@@ -55,7 +56,7 @@ if not jit and mode == "debug" then
   pepperfish_profiler:start()
 end
 
-runfile("init.lua", _G, true)
+runfile_optional("init.lua", _G)
 
 local mainmenu
 local runninggame

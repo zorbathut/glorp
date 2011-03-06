@@ -1,7 +1,8 @@
 
+local params = ...
 
 local version = gl.GetString("VERSION"):match("^(%d+%.%d+).*")
-if tonumber(version) < gl_version_expected then
+if tonumber(version) < params.constants.gl_version_expected then
   local tex = CreateFrame("Text_Multiline")
   
   tex:SetText("This game requires some nontrivial graphics card capabilities. Unfortunately, your graphics card doesn't seem to be capable of them. You might be able to solve this by updating your drivers, but it's also possible that you simply don't have a graphics card that is able to do them.\n\nThis means you can't play the game. Sorry! I'd really love it if you could, but with limited time to write an entire game, certain things (like compatibility) must be sacrificed. Come back next month for another game!")
