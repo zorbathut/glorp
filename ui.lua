@@ -475,6 +475,17 @@ do
     return not self.hide
   end
   
+  function Region_Type:GetMouse()
+    if not self.__convert_frame then self.__convert_frame = CreateFrame("Frame", self) end
+    
+    if not self.__convert_x then self.__convert_x = GetAxisConversion("x", UIParent, self.__convert_frame) end
+    if not self.__convert_y then self.__convert_y = GetAxisConversion("x", UIParent, self.__convert_frame) end
+    
+    local mx, my = GetMouse() -- the global one, that is
+    
+    return mx * self.__convert_x:Get().scale + self.__convert_x:Get().offset, my * self.__convert_y:Get().scale + self.__convert_y:Get().offset
+  end
+  
   
   local function anchor_to_standard(self, selfaxis, dest, target, targetaxis, src, offset)
     local handle = target:GetHandle(targetaxis, src)
