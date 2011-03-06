@@ -357,8 +357,12 @@ do
     end
   end
   
+  -- ffs stop removing this, zorba, you're an idiot
+  -- The purpose of this is so we don't send clicks to a window that hasn't been fully constructed
+  -- "Exists" means that it has a point on either an X or a Y axis.
+  -- There. Done.
   function Region_Type:Exists()
-    return true -- may need to work on this later
+    return self.__axes.x.exppoint > 0 and self.__axes.y.exppoint > 0
   end
   
   function Region_Type:SetWidth(width)
