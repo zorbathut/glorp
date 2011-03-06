@@ -4,9 +4,6 @@ local platform, mode = params.platform, params.mode
 
 params.gtable = {}
 
-print("JIT STATUS")
-print(jit)
-
 set_wrap_platform(platform)
 
 local show_in_menu = true
@@ -57,6 +54,8 @@ if not jit and mode == "debug" then
   pepperfish_profiler = newProfiler()
   pepperfish_profiler:start()
 end
+
+runfile("init.lua", _G, true)
 
 local mainmenu
 local runninggame
@@ -135,7 +134,6 @@ function imm_end()
   if runninggame then runninggame.UIRoot.Update = runninggame_runupdate end
 end
 function minimenu_resume_button:Click()
-  print("clique")
   imm_end()
 end
 
@@ -146,7 +144,6 @@ minimenu_return:SetSize(30)
 minimenu_return:SetColor(1, 1, 1)
 minimenu_return:SetPoint("CENTER", UIParent, "CENTER", 0, 50)
 function minimenu_return_button:Click()
-  print("clique")
   imm_end()
   Handle("exit_game")
   inminimenu = false
@@ -219,7 +216,6 @@ local function imm_render()
 end
 
 local function imm_key(button, ascii, event)
-  print("immkey", button, ascii, event)
   if (button == "arrow_down") and (event == "press" or event == "press_double") then
     minimenu_pos = minimenu_pos + 1
     if minimenu_pos == #minimenu_entries + 1 then minimenu_pos = 1 end
@@ -404,7 +400,6 @@ local last_perf_dump = os.time()
 local matrix_type_list = {"PROJECTION", "TEXTURE", "MODELVIEW"}
 local function ClearMatrices(matrix)
   if gl.Get(matrix .. "_STACK_DEPTH") > 1 then
-    print("Clearing matrix " .. matrix .. ", " .. gl.Get(matrix .. "_STACK_DEPTH"))
     gl.MatrixMode(matrix)
     repeat
       gl.PopMatrix()
@@ -450,33 +445,41 @@ function render(...)
     TestMatrices(v)
   end
 end
+
+local ssbg
+local ssmessage
+
 function key(button, ascii, event)
   if button == "printscreen" and event == "press" then
-    print("printscr")
     
     local fname = string.format("%s_%d.png", GetMidName(), os.time())
     
     local path = GetDesktopDirectory() .. "/" .. fname
     assert(ScreenshotTo(path))
     
-    if ssmessage then ssmessage:Detach() ssmessage = nil end
+    if ssbg then ssbg:Detach() ssbg = nil end
     
-    ssmessage = CreateFrame("Text_Multiline", overlay)
-    ssmessage:SetPoint("TOPLEFT", UIParent, "TOPLEFT")
-    ssmessage:SetPoint("RIGHT", UIParent, "RIGHT")
-    ssmessage:SetHeight(1000)
+    ssbg = CreateFrame("Frame", overlay)
+    ssmessage = CreateFrame("Text_Multiline", ssbg)
+    ssmessage:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 20, 20)
+    ssmessage:SetPoint("RIGHT", UIParent, "RIGHT", -20, nil)
+    ssmessage:SetSize(20)
     ssmessage.tixleft = 240
     ssmessage.tixfade = 60
-    ssmessage:SetLayer(100000000)
+    ssbg:SetLayer(100000000)
+    ssbg:SetPoint("TOPLEFT", ssmessage, "TOPLEFT", -10, -10)
+    ssbg:SetPoint("BOTTOMRIGHT", ssmessage, "BOTTOMRIGHT", 10, 10)
     local txt = "Screenshot saved to " .. GetDesktopDirectory() .. "\\" .. fname
+    ssmessage:SetText(txt)
     function ssmessage:Tick()
-      print("tixtix", self.tixleft)
       self.tixleft = self.tixleft - 1
-      if self.tixleft == 0 then self:Detach() ssmessage = nil end
+      if self.tixleft == 0 then ssbg:Detach() ssbg = nil return end
       if self.tixleft > self.tixfade then
-        self:SetText("\1Cffffffff\1" .. txt)
+        self:SetColor(1, 1, 1)
+        ssbg:SetBackgroundColor(0, 0, 0, 0.5)
       else
-        self:SetText(("\1Cffffff%02x\1"):format(self.tixleft / self.tixfade * 255) .. txt)
+        self:SetColor(1, 1, 1, self.tixleft / self.tixfade)
+        ssbg:SetBackgroundColor(0, 0, 0, 0.5 * self.tixleft / self.tixfade)
       end
     end
     ssmessage:Tick()
