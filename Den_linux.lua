@@ -21,7 +21,7 @@ rv.create_runnable = function(dat)
   local liboutpath = params.builddir
 
   local dlls = {}
-  table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, "data/libopengal.so.1"), ("%s/%s"):format(liboutpath, "lib_release/bin/libopengal.so"), ursa.util.copy{}})
+  table.insert(dlls, ursa.rule{("%s%s"):format(liboutpath, "data/libopengal.so.1"), ("%s/%s"):format(liboutpath, "lib_release/lib/libopengal.so"), ursa.util.copy{}})
   
   return {deps = {dlls, dat.mainprog, liboutpath .. "lib_release/bin/libopengal.so"}, cli = ("%s%s.prog"):format(params.builddir, params.name)}
 end
