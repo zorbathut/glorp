@@ -62,6 +62,12 @@
 #include "box2d.h"
 #endif
 
+#ifdef GLORP_LFS
+extern "C" {
+  #include "lfs.h"
+}
+#endif
+
 using namespace std;
 
 lua_State *L;
@@ -737,6 +743,10 @@ void luainit(int argc, const char **argv) {
     
     #ifdef GLORP_BOX2D
     glorp_box2d_init(L);
+    #endif
+    
+    #ifdef GLORP_LFS
+    luaopen_lfs(L);
     #endif
   }
 

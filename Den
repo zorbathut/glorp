@@ -440,7 +440,7 @@ if platform == "linux" then
   libs.libfltk = ursa.rule{builddir .. "lib_release/lib/libfltk.a", lib, ursa.util.copy{}}
 end
 
-if params.box2d then
+if params.libs.box2d then
   -- now let's box2d it up a notch
   headers.box2d = {}
   local path = "glorp/libs/Box2D_v2.1.2"
@@ -468,6 +468,25 @@ if params.box2d then
   local lib = ursa.rule{builddir .. "lib_build/box2d/Build/Box2D/libBox2D.a", {files}, ursa.util.system_template{('cd %slib_build/box2d/Build && CFLAGS="%s" CXXFLAGS="%s" LDFLAGS="%s -L/usr/lib" cmake -DBOX2D_INSTALL=OFF -DBOX2D_INSTALL_DOC=OFF -DBOX2D_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, libcflags, libcflags, libldflags)}}
   
   libs.box2d = ursa.rule{builddir .. "lib_release/lib/libbox2d.a", lib, ursa.util.copy{}}
+end
+
+if params.libs.lfs then
+  -- now let's lfs it up a notch
+  headers.lfs = {}
+  local path = "glorp/libs/luafilesystem"
+  
+  local files = {}
+  
+  ursa.token.rule{"lfs_files", nil, function () return ursa.system{("cd %s && find . -type f | sed s*\\\\./**"):format(path)} end}
+  for item in ursa.token{"lfs_files"}:gmatch("([^\n]+)") do
+    table.insert(files, ursa.rule{builddir .. "lib_build/lfs/" .. item, path .. "/" .. item, ursa.util.copy{}})
+  end
+  
+  table.insert(headers.lfs, ursa.rule{builddir .. "lib_release/include/lfs.h", path .. "/src/lfs.h", ursa.util.copy{}})
+  
+  local lib = ursa.rule{builddir .. "lib_build/lfs/liblfs.a", {files, headers.lua}, ursa.util.system_template{('cd %slib_build/lfs && %s %s %s -c src/lfs.c -o src/lfs.o && ar rcs liblfs.a src/lfs.o'):format(builddir, glop.libcc, libcflags, libldflags)}}
+  
+  libs.lfs = ursa.rule{builddir .. "lib_release/lib/liblfs.a", lib, ursa.util.copy{}}
 end
 
 ursa.token.rule{"version", nil, ("git describe --always --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
@@ -520,7 +539,7 @@ do
 end
 
 local buildables = {
-  [params.name] = {dynfiles = "main version lgl lal", glorpfiles = "core core_glutil core_alutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg opengal glop libvorbisfile libvorbis libogg libflac portaudio" .. (params.box2d and " box2d" or "")},
+  [params.name] = {dynfiles = "main version lgl lal", glorpfiles = "core core_glutil core_alutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = osd.gles and "main_iphone" or (platform == "osx") and "os_ui_osx" or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg opengal glop libvorbisfile libvorbis libogg libflac portaudio" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
@@ -536,8 +555,11 @@ end
 local depsed = {}
 
 local buildflags = ""
-if params.box2d then
+if params.libs.box2d then
   buildflags = buildflags .. " -DGLORP_BOX2D"
+end
+if params.libs.lfs then
+  buildflags = buildflags .. " -DGLORP_LFS"
 end
 
 local function build_object(src, prefix, params)
@@ -663,7 +685,7 @@ do
         local data_items = {}
         for k in ursa.token{token .. "_files"}:gmatch("[^\n]+") do
           -- narsty hack for level_.lev.lua
-          if params.box2d and k:match("^level_.*%.lev%.lua$") then
+          if params.libs.box2d and k:match("^level_.*%.lev%.lua$") then
             local dst = destprefix .. k
             local src = sourceprefix .. k
             
@@ -709,7 +731,7 @@ do
   table.insert(data_deps, copy_a_lot("luaglorp", "data/", "glorp/"))
   
   -- Box2d lua files
-  if params.box2d then
+  if params.libs.box2d then
     ursa.token.rule{"luabox2d_files", nil, "cd glorp && ls *.lua | grep box2d", always_rebuild = true}
     table.insert(data_deps, copy_a_lot("luabox2d", "data/", "glorp/"))
   end
