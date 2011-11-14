@@ -8,6 +8,8 @@ local resolution = {1024, 768}
 local libs = {
   box2d = false,
   lfs = false,
+  curl = false,
+  chromium = false,
 }
 
 local gl_version_expected = 1.0

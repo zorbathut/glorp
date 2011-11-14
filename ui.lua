@@ -512,8 +512,12 @@ do
   
   local strconv = {
     TOPLEFT = {0, 0},
+    TOPCENTER = {0.5, 0},
     TOPRIGHT = {1, 0},
+    CENTERLEFT = {0, 0.5},
+    CENTERRIGHT = {1, 0.5},
     BOTTOMLEFT = {0, 1},
+    BOTTOMCENTER = {0.5, 1},
     BOTTOMRIGHT = {1, 1},
     CENTER = {0.5, 0.5},
     CENTERX = {0.5, nil},
