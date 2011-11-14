@@ -817,17 +817,6 @@ if not noluajit and optflags == "-O2" then
   ursa.command{"package", osd.installers("datafiles")}
 end
 
--- editor!
-if params.targets[1] == "mild" then
-  local mildparms = {}
-  mildparms.builddir = ursa.absolute_from{builddir}
-  mildparms.cc = ursa.token{"CC"}
-  
-  local builded = ursa.embed{"glorp/mild", "Den", {mildparms}}
-  
-  ursa.command{"mild", builded, builddir .. "mild/tiled.exe"}
-end
-
 clean_dirs = {}
 table.insert(clean_dirs, "build")
 table.insert(clean_dirs, "glorp/glop/build")
