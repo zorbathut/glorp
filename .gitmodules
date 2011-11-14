@@ -4,9 +4,6 @@
 [submodule "logal"]
 	path = logal
 	url = git@github.com:zorbathut/logal.git
-[submodule "mild"]
-	path = mild
-	url = git@github.com:zorbathut/mild.git
 [submodule "opengal32"]
 	path = opengal32
 	url = git@github.com:zorbathut/opengal32.git
