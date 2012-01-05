@@ -1,6 +1,3 @@
-[submodule "glop"]
-	path = glop
-	url = git@github.com:zorbathut/glop.git
 [submodule "logal"]
 	path = logal
 	url = git@github.com:zorbathut/logal.git

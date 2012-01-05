@@ -1,0 +1,3 @@
+* Look over all the den_ OS-specific files
+* We're moving glorp lua to data/glorp
+* Switch to a standard mingw
