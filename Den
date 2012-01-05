@@ -84,11 +84,11 @@ local function addHeadersFor(lib)
   assert(headers[lib])
 end
 
-addHeadersFor("opengal")
-ursa.command{"test", {libs.opengal, headers.opengal}}
+--[[local testy = "libogg"
+addHeadersFor(testy)
+ursa.command{"test", {libs[testy], headers[testy]}}
 ursa.build{"test"}
-
-do return end
+do return end]]
 
 local libcflags = string.format("%s -I%s/build/%s/lib_release/include", ursa.token{"CCFLAGS"}, ursa.token{"pwd"}, platform)
 local libldflags = string.format("%s -L%s/build/%s/lib_release/lib", ursa.token{"LDFLAGS"}, ursa.token{"pwd"}, platform)
@@ -139,6 +139,18 @@ local buildables = {
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
+
+-- TEST CODE: build all libraries
+local tb = {}
+for _, v in pairs(buildables) do
+  for k in string.gmatch(v.libs, "([^%s]+)") do
+    addHeadersFor(k)
+    table.insert(tb, headers[k])
+    table.insert(tb, libs[k])
+  end
+end
+ursa.build{tb}
+do return end
 
 if platform == "linux" then
   for _, v in pairs(buildables) do
@@ -223,7 +235,7 @@ local function build_program(name)
   if platform == "cygwin" then
     for k in (item.resources or ""):gmatch("([^%s]+)") do
       local dst = (builddir .. "glorp/%s.res"):format(k)
-      ursa.rule{dst, "glorp/" .. k .. ".rc", ursa.util.system_template{"nice windres $SOURCE -O coff -o $TARGET"}}
+      ursa.rule{dst, "glorp/resources/cygwin/" .. k .. ".rc", ursa.util.system_template{"nice windres $SOURCE -O coff -o $TARGET"}}
       table.insert(objs, dst)
     end
   end

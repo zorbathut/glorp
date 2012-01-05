@@ -56,9 +56,9 @@ function rv.installers()
   table.insert(binaries, ursa.rule{rv.appprefix .. "Contents/Resources/data/reporter", params.builddir .. "reporter.prog", ursa.util.system_template{"strip -S -x -o $TARGET $SOURCE"}})
 
   -- here's our bootstrapper for sane version errors
-  table.insert(binaries, ursa.rule{rv.appprefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/SystemVersionCheck", ursa.util.copy{}})
+  table.insert(binaries, ursa.rule{rv.appprefix .. "Contents/MacOS/" .. params.longname .. "-SystemVersionCheck", "glorp/resources/osx/SystemVersionCheck", ursa.util.copy{}})
 
-  local icon = ursa.rule{rv.appprefix .. "Contents/Resources/mandible.icns", "glorp/resources/mandicon.png", ursa.util.system_template{("glorp/resources/makeicns -in $SOURCE -out $TARGET")}}
+  local icon = ursa.rule{rv.appprefix .. "Contents/Resources/mandible.icns", "glorp/resources/osx/mandicon.png", ursa.util.system_template{("glorp/resources/osx/makeicns -in $SOURCE -out $TARGET")}}
   
   local infoplist = ursa.rule{rv.appprefix .. "Contents/Info.plist", "#version", function ()
     print("Writing info.plist")

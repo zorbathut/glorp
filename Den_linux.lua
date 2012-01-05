@@ -46,7 +46,7 @@ function rv.installers()
   for i = 0, 2 do
     table.insert(dfn, rv.dataprefix .. "data/mandible_icon-" .. i .. ".png")
   end
-  table.insert(data, ursa.rule{dfn, "glorp/resources/mandicomulti.ico", ursa.util.system_template{"convert $SOURCE " .. rv.dataprefix .. "data/mandible_icon.png"}})
+  table.insert(data, ursa.rule{dfn, "glorp/resources/linux/mandicomulti.ico", ursa.util.system_template{"convert $SOURCE " .. rv.dataprefix .. "data/mandible_icon.png"}})
   
   cull_data({data})
 

@@ -2,13 +2,18 @@ local params = ...
 
 local rv = {}
 
+
+-- -Wl,-subsystem,windows
+
 token_literal("CC", "/cygdrive/c/mingw/bin/gcc")
-token_literal("CCFLAGS", "-mwindows -DWIN32")
+token_literal("CCFLAGS", "-DWIN32")
 
 token_literal("CXX", "/cygdrive/c/mingw/bin/g++")
-token_literal("CXXFLAGS", "-mwindows -DWIN32")
+token_literal("CXXFLAGS", "-DWIN32")
 
-token_literal("LDFLAGS", "-static-libgcc -mwindows -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp -lpsapi")
+--token_literal("LDFLAGS", "-static-libgcc -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp -lpsapi")
+
+token_literal("LDFLAGS", "")
 
 token_literal("FLAC", "\"/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe\"")
 
