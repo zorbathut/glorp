@@ -1,21 +1,24 @@
 local params = ...
 
-local rv = {}
-
 token_literal("CC", "gcc")
-token_literal("CCFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386 -DMACOSX")
+token_literal("CCFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386")
 
 token_literal("CXX", "g++")
-token_literal("CXXFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386 -DMACOSX")
-token_literal("LDFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386 -framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
+token_literal("CXXFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386")
+
+token_literal("LDFLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -arch i386")
+
+token_literal("FINALCXXFLAGS", "-DMACOSX")
+token_literal("FINALLDFLAGS", "-framework OpenGL -framework Carbon -framework AGL -framework ApplicationServices -framework IOKit -framework AppKit")
+
+token_literal("FLAC", "flac")
 
 token_literal("LUA_FLAGS", "-isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -DLUA_USE_LINUX -arch i386")
 
-ursa.token.rule{"FLAC", nil, function () return "flac" end}
-
-rv.lua_buildtype = "macosx"
+local rv = {}
 
 rv.extension = ".prog"  -- have to use something or it'll conflict
+rv.lua_buildtype = "macosx"
 
 local basepath = "build/osx/" .. params.longname .. ".app"
 

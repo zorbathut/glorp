@@ -24,7 +24,7 @@ for item in ursa.token{"libvorbis_files"}:gmatch("([^\n]+)") do
   end
 end
 
-local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg, libs.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="#CC" CFLAGS="#CCFLAGS" CPPFLAGS="#CCFLAGS -I%s/build/%s/lib_release/include" LDFLAGS="#LDFLAGS -L%s/build/%s/lib_release/lib" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, ursa.token{"pwd"}, platform, ursa.token{"pwd"}, platform)}}
+local makefile = ursa.rule{builddir .. "lib_build/libvorbis/Makefile", {files, headers.libogg, libs.libogg}, ursa.util.system_template{('cd %slib_build/libvorbis && CC="#CC" CFLAGS="#CCFLAGS" CPPFLAGS="#CCFLAGS -I%s/build/%s/lib_release/include" LDFLAGS="#LDFLAGS -L%s/build/%s/lib_release/lib" ./configure --enable-shared=no --enable-static=yes --disable-oggtest'):format(builddir, ursa.token{"PWD"}, platform, ursa.token{"PWD"}, platform)}}
 
 ursa.rule{{builddir .. "lib_build/libvorbis/lib/.libs/libvorbis.a", builddir .. "lib_build/libvorbis/lib/.libs/libvorbisfile.a"}, makefile, ('cd %slib_build/libvorbis && make -j1'):format(builddir)}
 

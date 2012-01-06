@@ -1,20 +1,23 @@
 local params = ...
 
-local rv = {}
-
-ursa.token.rule{"FLAC", nil, function () return "flac" end}
-
-rv.extension = ".prog"  -- have to use something or it'll conflict
-
 token_literal("CC", "gcc")
-token_literal("CCFLAGS", "-m32 -DLINUX")
+token_literal("CCFLAGS", "-m32")
 
 token_literal("CXX", "g++")
-token_literal("CXXFLAGS", "-m32 -DLINUX")
-token_literal("LDFLAGS", "-m32 -lGL -lGLU -lrt")
+token_literal("CXXFLAGS", "-m32")
+
+token_literal("LDFLAGS", "-m32")
+
+token_literal("FINALCXXFLAGS", "-DWIN32")
+token_literal("FINALLDFLAGS", " -lGL -lGLU -lrt")
+
+token_literal("FLAC", "flac")
 
 token_literal("LUA_FLAGS", "-DLUA_USE_LINUX -m32")
 
+local rv = {}
+
+rv.extension = ".prog"  -- have to use something or it'll conflict
 rv.lua_buildtype = "linux"
 
 local runnable_deps

@@ -18,7 +18,7 @@ for file in ursa.token{"libpng files"}:gmatch("([^\n]+)") do
   table.insert(libpng_files, ursa.rule{builddir .. "lib_build/libpng/" .. file, libpng_dir .. "/" .. file, ursa.util.copy{}})
 end
 
-local makefile = ursa.rule{{builddir .. "lib_build/libpng/Makefile"}, {libpng_files, headers.zlib, libs.zlib}, ursa.util.system_template{('cd %s/lib_build/libpng && CC=#CC CFLAGS="#CCFLAGS" LDFLAGS="#LDFLAGS" ./configure --disable-dependency-tracking'):format(builddir)}}
+local makefile = ursa.rule{{builddir .. "lib_build/libpng/Makefile"}, {libpng_files, headers.zlib, libs.zlib}, ursa.util.system_template{('cd #BUILDDIR/lib_build/libpng && CC=#CC CPPFLAGS="#CCFLAGS -I#PWD/#BUILDDIR/lib_release/include" CFLAGS="#CCFLAGS" LDFLAGS="#LDFLAGS -L#PWD/#BUILDDIR/lib_release/lib" ./configure --disable-dependency-tracking'):format(builddir)}}
 
 local lib = ursa.rule{builddir .. "/lib_build/libpng/.libs/libpng14.a", {makefile, libpng_files}, ('cd %s/lib_build/libpng && make -j5'):format(builddir)}
 

@@ -32,7 +32,7 @@ end
 local objs = {}
 for item in ursa.token{"luabind_files"}:gmatch("([^\n]+)") do
   if item:match("%.cpp$") then
-    table.insert(objs, ursa.rule{builddir .. "lib_build/luabind/" .. item:gsub(".cpp", ".o"), {headers.lua, headers.luabind, builddir .. "lib_build/luabind/" .. item}, ursa.util.system_template{("nice #CC #optflags -o $TARGET -c %s -I#builddir/lib_release/include -Iglorp/libs/boost_1_45_0 #CXXFLAGS -g"):format(builddir .. "lib_build/luabind/" .. item)}})
+    table.insert(objs, ursa.rule{builddir .. "lib_build/luabind/" .. item:gsub(".cpp", ".o"), {headers.lua, headers.luabind, builddir .. "lib_build/luabind/" .. item}, ursa.util.system_template{("nice #CC #optflags -o $TARGET -c %s -I#BUILDDIR/lib_release/include -Iglorp/libs/boost_1_45_0 #CXXFLAGS -g"):format(builddir .. "lib_build/luabind/" .. item)}})
   end
 end
 

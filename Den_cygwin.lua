@@ -1,23 +1,21 @@
 local params = ...
 
-local rv = {}
-
-
--- -Wl,-subsystem,windows
-
 token_literal("CC", "/cygdrive/c/mingw/bin/gcc")
-token_literal("CCFLAGS", "-DWIN32")
+token_literal("CCFLAGS", "")
 
 token_literal("CXX", "/cygdrive/c/mingw/bin/g++")
-token_literal("CXXFLAGS", "-DWIN32")
-
---token_literal("LDFLAGS", "-static-libgcc -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp -lpsapi")
+token_literal("CXXFLAGS", "")
 
 token_literal("LDFLAGS", "")
+
+token_literal("FINALCXXFLAGS", "-Wl,-subsystem,windows -DWIN32")
+token_literal("FINALLDFLAGS", "-Wl,-subsystem,windows -mno-cygwin -static-libgcc -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp -lpsapi")
 
 token_literal("FLAC", "\"/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe\"")
 
 token_literal("LUA_FLAGS", "")
+
+local rv = {}
 
 rv.extension = ".exe"
 rv.lua_buildtype = "cygwin"
@@ -97,8 +95,8 @@ function rv.installers()
     end}
     
     return {
-      ursa.rule{("build/%s-%s.zip"):format(params.midname, v), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{"cd #builddir/deploy ; zip -9 -r ../../../$TARGET *"}},
-      ursa.rule{exedest, {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version", params.builddir .. "installer.nsi"}, ursa.util.system_template{"cd #builddir && /cygdrive/c/Program\\ Files\\ \\(x86\\)/NSIS/makensis.exe installer.nsi"}},
+      ursa.rule{("build/%s-%s.zip"):format(params.midname, v), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{"cd #BUILDDIR/deploy ; zip -9 -r ../../../$TARGET *"}},
+      ursa.rule{exedest, {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version", params.builddir .. "installer.nsi"}, ursa.util.system_template{"cd #BUILDDIR && /cygdrive/c/Program\\ Files\\ \\(x86\\)/NSIS/makensis.exe installer.nsi"}},
     }
   end, always_rebuild = true}
   

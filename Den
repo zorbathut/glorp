@@ -15,7 +15,7 @@ require "ursa"
 function token_literal(name, data)
   ursa.token.rule{name, "!" .. data, function () return data end}
 end
-ursa.token.rule{"pwd", nil, function () return ursa.system{"pwd"}:gsub("/cygdrive/c", "c:") end}
+ursa.token.rule{"PWD", nil, function () return ursa.system{"pwd"}:gsub("/cygdrive/c", "c:") end}
 
 ------------------------------------------------------------------
 -- CONFIGURATION, DERIVING INFO
@@ -62,7 +62,7 @@ else
 end
 
 local builddir_pre = "build/" .. platform
-ursa.token.rule{"builddir", "!" .. builddir_pre, function () return builddir_pre end}
+token_literal("BUILDDIR", builddir_pre)
 local builddir = builddir_pre .. "/"
 
 -- This loads in all our OS-dependent stuff
@@ -84,14 +84,15 @@ local function addHeadersFor(lib)
   assert(headers[lib])
 end
 
---[[local testy = "libogg"
+-- Test code to build a single library easily
+--[[local testy = "libpng"
 addHeadersFor(testy)
 ursa.command{"test", {libs[testy], headers[testy]}}
 ursa.build{"test"}
 do return end]]
 
-local libcflags = string.format("%s -I%s/build/%s/lib_release/include", ursa.token{"CCFLAGS"}, ursa.token{"pwd"}, platform)
-local libldflags = string.format("%s -L%s/build/%s/lib_release/lib", ursa.token{"LDFLAGS"}, ursa.token{"pwd"}, platform)
+local libcflags = string.format("%s -I%s/build/%s/lib_release/include", ursa.token{"CCFLAGS"}, ursa.token{"PWD"}, platform)
+local libldflags = string.format("%s -L%s/build/%s/lib_release/lib", ursa.token{"LDFLAGS"}, ursa.token{"PWD"}, platform)
 
 ursa.token.rule{"version", nil, ("git describe --always --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
 
@@ -173,7 +174,7 @@ end
 local function build_object(src, prefix, params)
   local compiler = ursa.token{"CXX"}
   if params.compiler then compiler = compiler:gsub("g%+%+", params.compiler) end
-  local cli = ("%s %s %s -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost_1_45_0 -I%sglorp -I%slib_release/include %s %s "):format(compiler, params.flags or "", optflags, buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, src)
+  local cli = ("%s %s %s -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost_1_45_0 -I%sglorp -I%slib_release/include %s %s %s "):format(compiler, params.flags or "", optflags, buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, ursa.token{"FINALCXXFLAGS"}, src)
   
   local sig = src .. "." .. prefix
   
@@ -257,7 +258,7 @@ local function build_program(name)
   end
   
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, extradeps}, ursa.util.system_template{("nice glorp/gcc_wrapper $TARGET #CC #optflags -o $TARGET -g %s $SOURCES -L#builddir/lib_release/lib -lm #LDFLAGS %s"):format(sg, eg)}}
+  ursa.rule{dst, {objs, extradeps}, ursa.util.system_template{("nice glorp/gcc_wrapper $TARGET #CC #optflags -o $TARGET -g %s $SOURCES -L#BUILDDIR/lib_release/lib -lm #LDFLAGS #FINALLDFLAGS %s"):format(sg, eg)}}
   return dst
 end
 

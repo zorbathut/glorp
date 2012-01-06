@@ -24,7 +24,7 @@ local lib
 if platform == "cygwin" then
   -- cmake makes this very hard
   local sedreplace = " && " .. ("sed -i -e s@/usr/bin/gcc.exe@%s.exe@g -e s@/usr/bin/c++.exe@%s.exe@g -e s@/cygdrive/c@c:@g -e \"s@enable-auto-import@enable-auto-import %s@\" `find . -type f | grep -v empty`"):format(ursa.token{"CC"}, ursa.token{"CC"}, ursa.token{"LDFLAGS"})
-  local opengalcflags = ursa.token{"CCFLAGS"} .. " -I" .. ursa.token{"pwd"} .. "/glorp/libs/directx_cygwin/include"
+  local opengalcflags = ursa.token{"CCFLAGS"} .. " -I" .. ursa.token{"PWD"} .. "/glorp/libs/directx_cygwin/include"
   local lib = ursa.rule{{builddir .. "lib_build/opengalsoft/build/libOpenGAL32.dll.a", builddir .. "lib_build/opengalsoft/build/OpenGAL32-1.dll"}, {files}, ursa.util.system_template{('cd %slib_build/opengalsoft/build && CFLAGS="%s" CXXFLAGS="%s" cmake -DCMAKE_BUILD_TYPE=Release -DALSA=OFF -DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF -DDLOPEN=OFF -DEXTRA_LIBS=winmm ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, opengalcflags, opengalcflags)}}
   
   libs.opengal = ursa.rule{builddir .. "lib_release/lib/libOpenGAL32.dll.a", builddir .. "lib_build/opengalsoft/build/libOpenGAL32.dll.a", ursa.util.copy{}}
@@ -37,7 +37,7 @@ else
     po = "ON"
   end
   
-  local lib = ursa.rule{builddir .. "lib_build/opengalsoft/build/libopengal." .. ext, {files, headers.portaudio, libs.portaudio}, ursa.util.system_template{('cd %slib_build/opengalsoft/build && CFLAGS="#CCFLAGS -I%s/build/%s/lib_release/include" CXXFLAGS="#CXXFLAGS -I%s/build/%s/lib_release/include" LDFLAGS="#LDFLAGS -L/usr/lib -L%s/build/%s/lib_release/lib" cmake -DCMAKE_BUILD_TYPE=Release DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=%s -DPULSEAUDIO=OFF -DEXAMPLES=OFF .. && make'):format(builddir, ursa.token{"pwd"}, platform, ursa.token{"pwd"}, platform, ursa.token{"pwd"}, platform, po)}}
+  local lib = ursa.rule{builddir .. "lib_build/opengalsoft/build/libopengal." .. ext, {files, headers.portaudio, libs.portaudio}, ursa.util.system_template{('cd %slib_build/opengalsoft/build && CFLAGS="#CCFLAGS -I%s/build/%s/lib_release/include" CXXFLAGS="#CXXFLAGS -I%s/build/%s/lib_release/include" LDFLAGS="#LDFLAGS -L/usr/lib -L%s/build/%s/lib_release/lib" cmake -DCMAKE_BUILD_TYPE=Release DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=%s -DPULSEAUDIO=OFF -DEXAMPLES=OFF .. && make'):format(builddir, ursa.token{"PWD"}, platform, ursa.token{"PWD"}, platform, ursa.token{"PWD"}, platform, po)}}
   
   if platform == "osx" then
     libs.opengal = ursa.rule{builddir .. "lib_release/lib/libopengal.dylib", builddir .. "lib_build/opengalsoft/build/libopengal.dylib", ursa.util.copy{}}
