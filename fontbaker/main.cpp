@@ -8,9 +8,6 @@
 // line height
 // dist-per-pixel
 
-#include "init.h"
-#include "debug.h"
-
 #include <png.h>
 
 #include <ft2build.h>
@@ -19,8 +16,10 @@
 
 #include <vector>
 #include <algorithm>
+#include <string>
 
 #include <cmath>
+#include <cassert>
 
 using namespace std;
 
@@ -41,8 +40,8 @@ struct Image {
       dat[i].resize(x);
   }
   void copyfrom(const Image &img, int ox, int oy) {
-    CHECK(img.dat[0].size() + ox <= dat[0].size());
-    CHECK(img.dat.size() + oy <= dat.size());
+    assert(img.dat[0].size() + ox <= dat[0].size());
+    assert(img.dat.size() + oy <= dat.size());
     
     for(int y = 0; y < img.dat.size(); y++)
       copy(img.dat[y].begin(), img.dat[y].end(), dat[y + oy].begin() + ox);
@@ -94,7 +93,7 @@ struct Bucket {
       int idx = items[i].first.dat[0].size();
       int idy = items[i].first.dat.size();
       
-      CHECK(idx <= image_width);
+      assert(idx <= image_width);
       
       bool found = false;
       
@@ -125,7 +124,7 @@ struct Bucket {
             
             found = true;
             
-            dprintf("Placed %d at %dx%d-%dx%d\n", items[i].second, tx, ty, tx + idx, ty + idy);
+            printf("Placed %d at %dx%d-%dx%d\n", items[i].second.id, tx, ty, tx + idx, ty + idy);
           }
         }
       }
@@ -137,10 +136,10 @@ struct Bucket {
     png_infop  info_ptr;
   
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    CHECK(png_ptr);
+    assert(png_ptr);
   
     info_ptr = png_create_info_struct(png_ptr);
-    CHECK(info_ptr);
+    assert(info_ptr);
 
     png_init_io(png_ptr, fil);
     
@@ -193,31 +192,29 @@ struct Closest {
 };
 
 int main(int argc, char **argv) {
-  initProgram(&argc, const_cast<const char ***>(&argv));
-  
   Bucket bucket;
   
-  CHECK(argc == 3);
+  assert(argc == 3);
   
-  dprintf("%s\n", argv[1]);
+  printf("%s\n", argv[1]);
   out_prefix = argv[2];
   
   FT_Library freetype;
-  CHECK(FT_Init_FreeType(&freetype) == 0);
+  assert(FT_Init_FreeType(&freetype) == 0);
   
   FT_Face font;
-  CHECK(FT_New_Face(freetype, argv[1], 0, &font) == 0);
+  assert(FT_New_Face(freetype, argv[1], 0, &font) == 0);
   
-  dprintf("%d glyphs, %08x flags, %d units, %d strikes\n", font->num_glyphs, font->face_flags, font->units_per_EM, font->num_fixed_sizes);
+  printf("%ld glyphs, %08lx flags, %d units, %d strikes\n", font->num_glyphs, font->face_flags, font->units_per_EM, font->num_fixed_sizes);
   
-  CHECK(FT_Set_Pixel_Sizes(font, 0, pixheight * supersample) == 0);
+  assert(FT_Set_Pixel_Sizes(font, 0, pixheight * supersample) == 0);
   
   const int bord = (128 + distmult - 1) / distmult + 1;
   
   for(int kar = 32; kar < 128; kar++) {
-    CHECK(FT_Load_Char(font, kar, FT_LOAD_RENDER|FT_LOAD_MONOCHROME) == 0);
+    assert(FT_Load_Char(font, kar, FT_LOAD_RENDER|FT_LOAD_MONOCHROME) == 0);
     
-    dprintf("%dx%d %08x\n", font->glyph->bitmap.width, font->glyph->bitmap.rows, font->glyph->bitmap.buffer);
+    printf("%dx%d %08x\n", font->glyph->bitmap.width, font->glyph->bitmap.rows, (int)font->glyph->bitmap.buffer);
     
     Image img;
     
@@ -277,7 +274,7 @@ int main(int argc, char **argv) {
     bucket.AddItem(img, dat);
   }
   
-  dprintf("resolve\n");
+  printf("resolve\n");
   vector<Data> results = bucket.Resolve();
   
   sort(results.begin(), results.end());
@@ -285,7 +282,7 @@ int main(int argc, char **argv) {
   float ascend = 0;
   float descend = 0;
   for(int i = 0; i < results.size(); i++) {
-    dprintf("Ascend: %c, %f/%f", i, -results[i].oy, results[i].ey - results[i].sy + results[i].oy);
+    printf("Ascend: %c, %f/%f", i, -results[i].oy, results[i].ey - results[i].sy + results[i].oy);
     ascend = max(ascend, -results[i].oy - bord);
     descend = max(descend, results[i].ey - results[i].sy + results[i].oy - bord);
   }

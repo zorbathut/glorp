@@ -50,12 +50,16 @@ params.midname = params.longname:gsub("[^%w]", "")
 ursa.token.rule{"os_name", nil, "uname -o || uname"}
 
 local platform
+local os_files = "os_universal"
 if ursa.token{"os_name"} == "Cygwin" then
   platform = "cygwin"
+  os_files = os_files .. " os_win32"
 elseif ursa.token{"os_name"} == "Darwin" then
   platform = "osx"
+  os_files = os_files .. " os_posix os_osx"
 elseif ursa.token{"os_name"} == "GNU/Linux" then
   platform = "linux"
+  os_files = os_files .. " os_posix os_linux"
 else
   print("unknown OS", ursa.token{"os_name"})
   assert(false)
@@ -66,7 +70,7 @@ token_literal("BUILDDIR", builddir_pre)
 local builddir = builddir_pre .. "/"
 
 -- This loads in all our OS-dependent stuff
-local osd = assert(loadfile("glorp/Den_" .. platform .. ".lua")){name = params.name, longname = params.longname, midname = params.midname, builddir = builddir}
+local osd = assert(loadfile("glorp/Den_os_" .. platform .. ".lua")){name = params.name, longname = params.longname, midname = params.midname, builddir = builddir}
 
 
 ------------------------------------------------------------------
@@ -101,13 +105,16 @@ local genfiles = {}
 ursa.rule{builddir .. "glorp/version.cpp", {"!" .. params.longname, "!" .. params.font, "!" .. params.resolution[1], "!" .. params.resolution[2], "#version", "!" .. platform}, function ()
   print("Writing file version.cpp")
   local fil = io.open(builddir .. "glorp/version.cpp", "w")
-  fil:write(([[extern const char game_version[] = "%s";]]):format(ursa.token{"version"}) .. "\n")
-  fil:write(([[extern const char game_fullname[] = "%s";]]):format(params.longname) .. "\n")
-  fil:write(([[extern const char game_midname[] = "%s";]]):format(params.midname) .. "\n")
-  fil:write(([[extern const char game_slug[] = "%s";]]):format(params.name) .. "\n")
-  fil:write(([[extern const char game_platform[] = "%s";]]):format(platform) .. "\n")
-  fil:write(([[extern const int game_xres = %d;]]):format(params.resolution[1]) .. "\n")
-  fil:write(([[extern const int game_yres = %d;]]):format(params.resolution[2]) .. "\n")
+  fil:write([[#include "version.h"]] .. "\n")
+  fil:write([[namespace Glorp { namespace Version {]] .. "\n")
+  fil:write(([[const char gameVersion[] = "%s";]]):format(ursa.token{"version"}) .. "\n")
+  fil:write(([[const char gameFullname[] = "%s";]]):format(params.longname) .. "\n")
+  fil:write(([[const char gameMidname[] = "%s";]]):format(params.midname) .. "\n")
+  fil:write(([[const char gameSlug[] = "%s";]]):format(params.name) .. "\n")
+  fil:write(([[const char gamePlatform[] = "%s";]]):format(platform) .. "\n")
+  fil:write(([[const int gameXres = %d;]]):format(params.resolution[1]) .. "\n")
+  fil:write(([[const int gameYres = %d;]]):format(params.resolution[2]) .. "\n")
+  fil:write([[}}]] .. "\n")
   fil:close()
 end}
 table.insert(genfiles, ursa.rule{builddir .. "glorp/constants.lua", {"!" .. params.gl_version_expected, "!" .. params.resolution[1], "!" .. params.resolution[2], "#version"}, function ()
@@ -135,13 +142,16 @@ end
 ------------------------------------------------------------------
 -- BUILD
 
+local core_files = "debug util parse args init " .. os_files
+
 local buildables = {
-  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "core core_glutil core_alutil core_xutil debug debug_911_on os_version os util parse args init perfbar box2d sound", cfiles = "glorp/GLee", mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
-  ["reporter"] = {dynfiles = "version", glorpfiles = "reporter_main debug_911_off os_ui os debug util parse args init", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
-  ["font_baker"] = {glorpfiles = "font_baker debug_911_off os debug util parse args init", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
+  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "debug_911_on debug util parse args init core main " .. os_files, cfiles = "glorp/GLee", mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
+  ["reporter"] = {dynfiles = "version", glorpfiles = "reporter/main", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
+  ["font_baker"] = {glorpfiles = "fontbaker/main", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
 
 -- TEST CODE: build all libraries
+--[[
 local tb = {}
 for _, v in pairs(buildables) do
   for k in string.gmatch(v.libs, "([^%s]+)") do
@@ -151,7 +161,7 @@ for _, v in pairs(buildables) do
   end
 end
 ursa.build{tb}
-do return end
+do return end]]
 
 if platform == "linux" then
   for _, v in pairs(buildables) do
@@ -258,13 +268,16 @@ local function build_program(name)
   end
   
   local dst = builddir .. name .. osd.extension
-  ursa.rule{dst, {objs, extradeps}, ursa.util.system_template{("nice glorp/gcc_wrapper $TARGET #CC #optflags -o $TARGET -g %s $SOURCES -L#BUILDDIR/lib_release/lib -lm #LDFLAGS #FINALLDFLAGS %s"):format(sg, eg)}}
+  ursa.rule{dst, {objs, extradeps}, ursa.util.system_template{("nice glorp/gcc_wrapper $TARGET #CXX #optflags -o $TARGET -g %s $SOURCES -L#BUILDDIR/lib_release/lib -lm #LDFLAGS #FINALLDFLAGS %s"):format(sg, eg)}}
   return dst
 end
 
 local mainprog = build_program(params.name)
 local reporter = build_program("reporter")
 local font_baker = build_program("font_baker")
+
+ursa.build{mainprog}
+do return end
 
 ------------------------------------------------------------------
 -- PACKAGING
