@@ -20,12 +20,12 @@ namespace Glorp {
     if(!ofs)
       return "";
     
-    const deque<string> &debuglog = debugLog();
+    deque<string> &debuglog = debugLog();
     for(int i = 0; i < debuglog.size(); i++) {
       while(debuglog[i].size() && debuglog[i][debuglog[i].size() - 1] == '\n')
         debuglog[i].erase(debuglog[i].begin() + debuglog[i].size() - 1);
       
-      ofs << dbgrecord()[i] << '\n';
+      ofs << debugLog()[i] << '\n';
     }
     
     if(ofs)
@@ -50,8 +50,8 @@ namespace Glorp {
       }
       
       vector<string> params;
-      boost::assign::push_back(params)(Version::gameSlug)(fname)(string(Version::gameSlug) + "-" + Version::gameVersion + "-" + Version::gamePlatform)(crashfname)(StringPrintf("%d", crashline))(StringPrintf("%d", exesize()))(message);
-      SpawnProcess("data/reporter", params);
+      boost::assign::push_back(params)(Version::gameSlug)(fname)(string(Version::gameSlug) + "-" + Version::gameVersion + "-" + Version::gamePlatform)(crashfname)(Format("%d", crashline))(Format("%d", exeSize()))(message);
+      spawn("data/reporter", params);
     }
   };
 }

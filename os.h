@@ -11,6 +11,7 @@ namespace Glorp {
   void spawn(const string &exec, const vector<string> &params);
   vector<const void*> stackDump();
   void stackOutput();
+  int exeSize();
   
   // directories/fs
   string directoryDesktop();
