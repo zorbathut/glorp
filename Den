@@ -89,7 +89,7 @@ local function addHeadersFor(lib)
 end
 
 -- Test code to build a single library easily
---[[local testy = "libpng"
+--[[local testy = "libogg"
 addHeadersFor(testy)
 ursa.command{"test", {libs[testy], headers[testy]}}
 ursa.build{"test"}
@@ -114,6 +114,8 @@ ursa.rule{builddir .. "glorp/version.cpp", {"!" .. params.longname, "!" .. param
   fil:write(([[const char gamePlatform[] = "%s";]]):format(platform) .. "\n")
   fil:write(([[const int gameXres = %d;]]):format(params.resolution[1]) .. "\n")
   fil:write(([[const int gameYres = %d;]]):format(params.resolution[2]) .. "\n")
+  fil:write(([[const bool resizable = false;]]) .. "\n")
+  fil:write(([[const int stencil = 0;]]) .. "\n")
   fil:write([[}}]] .. "\n")
   fil:close()
 end}
@@ -145,7 +147,7 @@ end
 local core_files = "debug util parse args init " .. os_files
 
 local buildables = {
-  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "debug_911_on debug util parse args init " .. os_files, cfiles = "glorp/GLee", mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
+  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "core debug_911_on debug util parse args init " .. os_files, cfiles = "glorp/GLee", mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter/main", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "fontbaker/main", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
@@ -163,12 +165,8 @@ end
 ursa.build{tb}
 do return end]]
 
-if platform == "linux" then
-  for _, v in pairs(buildables) do
-    if v.glorpfiles:find("os_ui") then
-      v.libs = v.libs .. " libfltk"
-    end
-  end
+if platform == "cygwin" then
+  buildables[params.name].libs = buildables[params.name].libs .. " dx"
 end
 
 local depsed = {}
@@ -275,9 +273,6 @@ end
 local mainprog = build_program(params.name)
 local reporter = build_program("reporter")
 local font_baker = build_program("font_baker")
-
-ursa.build{mainprog}
-do return end
 
 ------------------------------------------------------------------
 -- PACKAGING

@@ -1,4 +1,22 @@
 
+#include "core.h"
+#include "debug.h"
+
+namespace Glorp {
+  Core::Core() { }
+  Core::~Core() { }
+
+  Core::UpdateResult Core::Update() {
+    dprintf("Update");
+    return UR_RENDER;
+  }
+  
+  void Core::Render() {
+    dprintf("Render");
+  }
+}
+
+/*
 #include <AL/al.h>
 #include <AL/alc.h>
 
@@ -52,3 +70,4 @@ void main(int argc, const char **argv) {
   }
 }
 
+*/

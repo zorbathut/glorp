@@ -12,6 +12,8 @@ namespace Glorp {
     extern const char gamePlatform[];
     extern const int gameXres;
     extern const int gameYres;
+    extern const bool resizable;
+    extern const int stencil;
   }
 }
 

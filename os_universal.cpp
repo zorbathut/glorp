@@ -16,7 +16,7 @@ using namespace std;
 DEFINE_bool(addr2line, false, "Call addr2line for stack traces");
 
 namespace Glorp {
-  int exesize();
+  int exeSize();
   
   static string loc_exename;
   void set_exename(int *argc, const char ***argv) {
@@ -37,12 +37,12 @@ namespace Glorp {
       loc_exename += ".exe";  // lazy hack
     }
     
-    exesize(); // check to make sure we can get the actual exe size, cache the result
+    exeSize(); // check to make sure we can get the actual exe size, cache the result
   }
     
   ADD_INITTER(set_exename, -100);
 
-  int exesize() {
+  int exeSize() {
     static int exesize = 0;
     if (exesize) return exesize;
     
