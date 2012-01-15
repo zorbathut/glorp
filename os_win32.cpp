@@ -3,6 +3,7 @@
 #include "debug.h"
 #include "version.h"
 #include "core.h"
+#include "init.h"
 
 #include "GLee.h"
 
@@ -127,6 +128,10 @@ namespace Glorp {
     PROCESS_INFORMATION pi;
     CHECK(CreateProcess(NULL, (char*)texec.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &sinfo, &pi));
     CloseHandle(&pi);
+  }
+
+  void beginShutdown() {
+    s_shutdown = true;
   }
   
   class SignalHandler {
@@ -280,6 +285,13 @@ namespace Glorp {
   int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
   {
     // let's get this thing started
+    initProgram(&__argc, const_cast<const char ***>(&__argv));
+
+    if (Core::Prestartup())
+    {
+      return 0;
+    }
+
     QueryPerformanceFrequency(&s_timerFrequency);
 
     const wchar_t *const kClassName = L"GlorpWin32";
