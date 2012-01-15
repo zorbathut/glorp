@@ -38,7 +38,7 @@ namespace Glorp {
     return false;
   }
 
-  Core::Core() : m_alcDevice(0), m_alcContext(0) {
+  Core::Core() : m_alcDevice(0), m_alcContext(0), m_audioEnabled(false), L(0), m_luaCrashed(false) {
     if(FLAGS_sound) {
       m_alcDevice = alcOpenDevice(NULL);
       if(m_alcDevice) {
@@ -52,9 +52,11 @@ namespace Glorp {
         }
       }
     }
+    lua_init();
   }
 
   Core::~Core() {
+    lua_shutdown();
     alcMakeContextCurrent(NULL);
     if (m_alcContext) {
       alcDestroyContext(m_alcContext);
@@ -67,28 +69,52 @@ namespace Glorp {
   }
 
   void Core::Event(const KeyEvent &event) {
+    if (FLAGS_development && event.key == Keys::F12 && event.pressed) {
+      lua_shutdown();
+      lua_init();
+    } else {
+      // lua event here
+    }
   }
 
   Core::UpdateResult Core::Update() {
+    if (L && !m_luaCrashed) {
+      // lua event here, see if we should update (we should)
+    }
     return UR_RENDER;
   }
   
   void Core::Render() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    glErrorCheck();
+    if (L && !m_luaCrashed) {
+      // lua event
+      gllClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+      // call the UI layer here, *not* lua
+      // lua event
+    } else {
+      glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glTranslatef(-1, 1, -1);
-    glScalef(2.0f / Version::gameXres, -2.0f / Version::gameYres, 1.0f);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glScalef(2.0f / Version::gameXres, -2.0f / Version::gameYres, 1.0f);
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
 
-    glBegin(GL_TRIANGLES);
-    glColor3f(1, 1, 1);
-    glVertex3f(0, 0, 0);
-    glVertex3f(100, 0, 0);
-    glVertex3f(0, 100, 0);
-    glEnd();
+      glBegin(GL_QUADS);
+      int scal = 50;
+      for(int x = -5; x < 5; x++) {
+        for(int y = -2; y < 2; y++) {
+          if((x + y) % 2 == 0) {
+            glColor3d(1., 1., 1.);
+          } else {
+            glColor3d(1., 0., 0.);
+          }
+          glVertex2d((x + 0.) * scal, (y + 0.) * scal);
+          glVertex2d((x + 1.) * scal, (y + 0.) * scal);
+          glVertex2d((x + 1.) * scal, (y + 1.) * scal);
+          glVertex2d((x + 0.) * scal, (y + 1.) * scal);
+        }
+      }
+      glEnd();
+    }
   }
 }

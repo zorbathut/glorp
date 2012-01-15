@@ -6,6 +6,8 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 
+#include <lua.hpp>
+
 namespace Glorp {
   class Core {
   public:
@@ -26,6 +28,12 @@ namespace Glorp {
     ALCcontext* m_alcContext;
 
     bool m_audioEnabled;
+
+    lua_State *L;
+    bool m_luaCrashed;
+
+    void lua_init();
+    void lua_shutdown();
   };
 }
 
