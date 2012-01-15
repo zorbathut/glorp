@@ -460,14 +460,19 @@ namespace Glorp {
             POINT cursor_pos;
             GetCursorPos(&cursor_pos);
             ScreenToClient(s_window, &cursor_pos);
-            dprintf("%d/%d", cursor_pos.x, cursor_pos.y);
 
-            KeyEvent event;
-            event.timestamp = 0;  // this is somewhat buggy
-            event.pressed = false;
-            event.mouse_x = cursor_pos.x;
-            event.mouse_y = cursor_pos.y;
-            events.push_back(event);
+            if (s_mouse_x != cursor_pos.x || s_mouse_y != cursor_pos.y)
+            {
+              KeyEvent event;
+              event.timestamp = 0;  // this is somewhat buggy
+              event.pressed = false;
+              event.mouse_x = cursor_pos.x;
+              event.mouse_y = cursor_pos.y;
+              events.push_back(event);
+
+              s_mouse_x = cursor_pos.x;
+              s_mouse_y = cursor_pos.y;
+            }
           }
 
           DIDEVICEOBJECTDATA buffer[c_di_bufferSize];
