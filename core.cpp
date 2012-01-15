@@ -1,18 +1,48 @@
 
 #include "core.h"
 #include "debug.h"
+#include "version.h"
+
+#include "GLee.h"
+
+void glErrorCheck() {
+  GLenum err = glGetError();
+  if (err != GL_NO_ERROR)
+  {
+    CHECK(false, "OPENGL ERROR - %d", err);
+  }
+}
 
 namespace Glorp {
   Core::Core() { }
   Core::~Core() { }
 
+  void Core::Event(const KeyEvent &event) {
+    dprintf("%d %d/%d %d/%d (%c)", event.timestamp, event.mouse_x, event.mouse_y, event.key.index, event.pressed, event.key.index); 
+  }
+
   Core::UpdateResult Core::Update() {
-    dprintf("Update");
+    Sleep(1);
     return UR_RENDER;
   }
   
   void Core::Render() {
-    dprintf("Render");
+    glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glErrorCheck();
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glTranslatef(-1, 1, -1);
+    glScalef(2.0f / Version::gameXres, -2.0f / Version::gameYres, 1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glBegin(GL_TRIANGLES);
+    glColor3f(1, 1, 1);
+    glVertex3f(0, 0, 0);
+    glVertex3f(100, 0, 0);
+    glVertex3f(0, 100, 0);
+    glEnd();
   }
 }
 

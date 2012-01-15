@@ -9,7 +9,7 @@ token_literal("CXXFLAGS", "")
 token_literal("LDFLAGS", "")
 
 token_literal("FINALCXXFLAGS", "-Wl,-subsystem,windows -DWIN32")
-token_literal("FINALLDFLAGS", "-Wl,-subsystem,windows -mno-cygwin -static-libgcc -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp -lpsapi -ldinput -ldinput8")
+token_literal("FINALLDFLAGS", "-Wl,--large-address-aware -Wl,-subsystem,windows -mno-cygwin -static-libgcc -lopengl32 -lmingw32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -ldinput -ldxguid -lglu32 -lws2_32 -limagehlp -lpsapi -ldinput -ldinput8")
 
 token_literal("FLAC", "\"/cygdrive/c/Program\ Files\ \(x86\)/FLAC/flac.exe\"")
 

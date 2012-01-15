@@ -4,6 +4,8 @@
 #include "version.h"
 #include "core.h"
 
+#include "GLee.h"
+
 #define _WIN32_IE 0x0500 // ffff
 
 #include <windows.h>
@@ -26,7 +28,10 @@ namespace Glorp {
   static bool s_focused = false;
   static bool s_shutdown = false;
 
-  HWND s_window = 0;
+  static int s_mouse_x = 0;
+  static int s_mouse_y = 0;
+
+  static HWND s_window = 0;
 
   static int s_width = 0;
   static int s_height = 0;
@@ -39,6 +44,59 @@ namespace Glorp {
   const int c_bpp = 32;
   const int c_depth = 16;
   
+  const Key c_keyIndex[] = {0,
+    27, '1', '2', '3', '4',
+    '5', '6', '7', '8', '9',
+    '0', '-', '=', 8, 9,
+    'q', 'w', 'e', 'r', 't',
+    'y', 'u', 'i', 'o', 'p',
+    '[', ']', 13, Keys::LeftControl, 'a',
+    's', 'd', 'f', 'g', 'h',
+    'j', 'k', 'l', ';', '\'',
+    '`', Keys::LeftShift, '\\', 'z', 'x',
+    'c', 'v', 'b', 'n', 'm',                                 // 50
+    ',', '.', '/', Keys::RightShift, Keys::PadMultiply,
+    Keys::LeftAlt, ' ', Keys::CapsLock, Keys::F1, Keys::F2,
+    Keys::F3, Keys::F4, Keys::F5, Keys::F6, Keys::F7,
+    Keys::F8, Keys::F9, Keys::F10, Keys::NumLock, Keys::ScrollLock,
+    Keys::Pad7, Keys::Pad8, Keys::Pad9, Keys::PadSubtract, Keys::Pad4,
+    Keys::Pad5, Keys::Pad6, Keys::PadAdd, Keys::Pad1, Keys::Pad2,
+    Keys::Pad3, Keys::Pad0, Keys::PadDecimal, -1, -1,
+    -1, Keys::F11, Keys::F12, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,                                      // 100
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,                                      // 150
+    -1, -1, -1, -1, -1,
+    Keys::PadEnter, Keys::RightControl, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    Keys::PadDivide, -1, Keys::PrintScreen, Keys::RightAlt, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, Keys::Pause, -1, Keys::Home, Keys::Up,                     // 200
+    Keys::PageUp, -1, Keys::Left, -1, Keys::Right,
+    -1, Keys::End, Keys::Down, Keys::PageDown, Keys::Insert,
+    Keys::Delete, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,                                      // 250
+    -1, -1, -1, -1, -1};
+
   void outputDebug(const string &str) {
     OutputDebugString(str.c_str());
   }
@@ -152,7 +210,7 @@ namespace Glorp {
   // However, key events are ignored, as input is handled by DirectInput in WindowThink().
   LRESULT CALLBACK HandleMessage(HWND window_handle, UINT message, WPARAM wparam, LPARAM lparam) {
     // Extract information from the parameters
-    unsigned short wparam1 = LOWORD(wparam), wparam2 = HIWORD(wparam);
+    unsigned short wparam1 = LOWORD(wparam)/*, wparam2 = HIWORD(wparam)*/;
     unsigned short lparam1 = LOWORD(lparam), lparam2 = HIWORD(lparam);
 
   	// Handle each message
@@ -213,6 +271,10 @@ namespace Glorp {
     // Pass on remaining messages to the default handler
     
     return DefWindowProcW(window_handle, message, wparam, lparam);
+  }
+
+  bool EventSort(const KeyEvent &lhs, const KeyEvent &rhs) {
+    return lhs.timestamp < rhs.timestamp;
   }
 
   int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -371,10 +433,12 @@ namespace Glorp {
     prop_buffer_size.diph.dwHow = DIPH_DEVICE;
     prop_buffer_size.dwData = c_di_bufferSize;
     s_di_keyboard->SetProperty(DIPROP_BUFFERSIZE, &prop_buffer_size.diph);
+    s_di_mouse->SetProperty(DIPROP_BUFFERSIZE, &prop_buffer_size.diph);
 
     {
       Core core;
 
+      // MAIN LOOP HERE
       while (true) {
         MSG message;
         while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE)) {
@@ -382,8 +446,113 @@ namespace Glorp {
           DispatchMessage(&message);
         }
 
-        if (s_shutdown)
+        if (s_shutdown) {
+          break;
+        }
+
         {
+          vector<KeyEvent> events;
+
+          // Hack: Insert the mouse position with GetCursorPos().
+          // If we want to be super-accurate then we need to do some crazy synching work with GetCursorPos() and DX deltas
+          // Right now, though, we really don't care about that.
+          {
+            POINT cursor_pos;
+            GetCursorPos(&cursor_pos);
+            ScreenToClient(s_window, &cursor_pos);
+            dprintf("%d/%d", cursor_pos.x, cursor_pos.y);
+
+            KeyEvent event;
+            event.timestamp = 0;  // this is somewhat buggy
+            event.pressed = false;
+            event.mouse_x = cursor_pos.x;
+            event.mouse_y = cursor_pos.y;
+            events.push_back(event);
+          }
+
+          DIDEVICEOBJECTDATA buffer[c_di_bufferSize];
+          unsigned long num_items = 0;
+          HRESULT hr = 0;
+
+          num_items = c_di_bufferSize;
+          hr = s_di_keyboard->GetDeviceData(sizeof(buffer[0]), buffer, &num_items, 0);
+          if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED) {
+            s_di_keyboard->Acquire();
+            hr = s_di_keyboard->GetDeviceData(sizeof(buffer[0]), buffer, &num_items, 0);
+          }
+          if (!FAILED(hr)) {
+            for (int i = 0; i < (int)num_items; i++) {
+              if (buffer[i].dwOfs < 255 && c_keyIndex[buffer[i].dwOfs] != -1) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.pressed = buffer[i].dwData;
+                event.key = c_keyIndex[buffer[i].dwOfs];
+                events.push_back(event);
+              }
+            }
+          }
+
+          num_items = c_di_bufferSize;
+          hr = s_di_mouse->GetDeviceData(sizeof(buffer[0]), buffer, &num_items, 0);
+          if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED) {
+            s_di_mouse->Acquire();
+            hr = s_di_mouse->GetDeviceData(sizeof(buffer[0]), buffer, &num_items, 0);
+          }
+          if (!FAILED(hr)) {
+            for (int i = 0; i < (int)num_items; i++) {
+              /*if (buffer[i].dwOfs == DIMOFS_X) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.mouse_x = buffer[i].dwData;
+                events.push_back(event);
+              } else if (buffer[i].dwOfs == DIMOFS_Y) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.mouse_y = buffer[i].dwData;
+                events.push_back(event);
+              } else*/ if (buffer[i].dwOfs == DIMOFS_BUTTON0) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.key = Keys::MouseLButton;
+                event.pressed = buffer[i].dwData;
+                events.push_back(event);
+              } else if (buffer[i].dwOfs == DIMOFS_BUTTON1) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.key = Keys::MouseRButton;
+                events.push_back(event);
+              } else if (buffer[i].dwOfs == DIMOFS_BUTTON2) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.key = Keys::MouseMButton;
+                events.push_back(event);
+              }
+            }
+          }
+
+          // Okay, we've got our events. Next, sort:
+          sort(events.begin(), events.end(), EventSort);
+
+          // And now we want to go through and flesh out the mouse positions
+          for (int i = 0; i < events.size(); ++i) {
+            if (events[i].mouse_x != KeyEvent::MOUSEPOS_UNKNOWN)
+              s_mouse_x = events[i].mouse_x;
+            if (events[i].mouse_y != KeyEvent::MOUSEPOS_UNKNOWN)
+              s_mouse_y = events[i].mouse_y;
+
+            events[i].mouse_x = s_mouse_x;
+            events[i].mouse_y = s_mouse_y;
+          }
+
+          // Finally, start plowing events into the core
+          for (int i = 0; i < events.size(); ++i) {
+            if (i + 1 != events.size() && events[i].timestamp == events[i + 1].timestamp && events[i].key == Keys::NoKey && events[i + 1].key == Keys::NoKey)
+              continue; // this is a first of a mouse event pair, ignore it
+            core.Event(events[i]);
+          }
+        }
+
+        if (s_shutdown) {
           break;
         }
 

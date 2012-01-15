@@ -4,6 +4,7 @@ local headers = params.headers
 local libs = params.libs
 local platform = params.platform
 local builddir = params.builddir
+local addHeadersFor = params.addHeadersFor
 
 -- I suppose we can opengal it up a notch
 headers.opengal = {}
@@ -22,10 +23,12 @@ end
 
 local lib
 if platform == "cygwin" then
+  addHeadersFor("dx")
+
   -- cmake makes this very hard
   local sedreplace = " && " .. ("sed -i -e s@/usr/bin/gcc.exe@%s.exe@g -e s@/usr/bin/c++.exe@%s.exe@g -e s@/cygdrive/c@c:@g -e \"s@enable-auto-import@enable-auto-import %s@\" `find . -type f | grep -v empty`"):format(ursa.token{"CC"}, ursa.token{"CC"}, ursa.token{"LDFLAGS"})
-  local opengalcflags = ursa.token{"CCFLAGS"} .. " -I" .. ursa.token{"PWD"} .. "/glorp/libs/directx_cygwin/include"
-  local lib = ursa.rule{{builddir .. "lib_build/opengalsoft/build/libOpenGAL32.dll.a", builddir .. "lib_build/opengalsoft/build/OpenGAL32-1.dll"}, {files}, ursa.util.system_template{('cd %slib_build/opengalsoft/build && CFLAGS="%s" CXXFLAGS="%s" cmake -DCMAKE_BUILD_TYPE=Release -DALSA=OFF -DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF -DDLOPEN=OFF -DEXTRA_LIBS=winmm ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, opengalcflags, opengalcflags)}}
+  local opengalcflags = ursa.token{"CCFLAGS"} .. " -I" .. ursa.token{"PWD"} .. "/build/lib_release/include"
+  local lib = ursa.rule{{builddir .. "lib_build/opengalsoft/build/libOpenGAL32.dll.a", builddir .. "lib_build/opengalsoft/build/OpenGAL32-1.dll"}, {files, headers.dx}, ursa.util.system_template{('cd %slib_build/opengalsoft/build && CFLAGS="%s" CXXFLAGS="%s" cmake -DCMAKE_BUILD_TYPE=Release -DALSA=OFF -DSOLARIS=OFF -DOSS=OFF -DWINMM=OFF -DPORTAUDIO=OFF -DPULSEAUDIO=OFF -DEXAMPLES=OFF -DDLOPEN=OFF -DEXTRA_LIBS=winmm ..' .. sedreplace .. ' && make && (rmdir c\\: || true)'):format(builddir, opengalcflags, opengalcflags)}}
   
   libs.opengal = ursa.rule{builddir .. "lib_release/lib/libOpenGAL32.dll.a", builddir .. "lib_build/opengalsoft/build/libOpenGAL32.dll.a", ursa.util.copy{}}
   ursa.rule{builddir .. "lib_release/bin/OpenGAL32-1.dll", builddir .. "lib_build/opengalsoft/build/OpenGAL32-1.dll", ursa.util.copy{}}
