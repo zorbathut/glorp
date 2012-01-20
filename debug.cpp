@@ -3,6 +3,7 @@
 
 #include "debug_911.h"
 #include "os.h"
+#include "args.h"
 
 #include <stdarg.h>
 
@@ -44,11 +45,11 @@ namespace Glorp {
     return 0;
   };
 
-  static bool first = false;
+  static bool first = true;
   void CheckHandler(const char *file, int line, const char *message) {
     if (first) {
-      first = true;
-      stackOutput();
+      first = false;
+      //stackOutput();
       Prepare911(file, line, message);
     }
   }

@@ -38,7 +38,16 @@ namespace Glorp {
     return false;
   }
 
-  Core::Core() : m_alcDevice(0), m_alcContext(0), m_audioEnabled(false), L(0), m_luaCrashed(false) {
+  Core::Core() :
+        m_alcDevice(0),
+        m_alcContext(0),
+        m_audioEnabled(false),
+        m_L(0),
+        m_luaCrashed(false),
+        m_event_system_update_begin(LUA_NOREF),
+        m_event_system_update_end(LUA_NOREF),
+        m_event_system_mouse(LUA_NOREF),
+        m_event_system_key(LUA_NOREF) {
     if(FLAGS_sound) {
       m_alcDevice = alcOpenDevice(NULL);
       if(m_alcDevice) {
@@ -52,11 +61,11 @@ namespace Glorp {
         }
       }
     }
-    lua_init();
+    l_init();
   }
 
   Core::~Core() {
-    lua_shutdown();
+    l_shutdown();
     alcMakeContextCurrent(NULL);
     if (m_alcContext) {
       alcDestroyContext(m_alcContext);
@@ -70,26 +79,24 @@ namespace Glorp {
 
   void Core::Event(const KeyEvent &event) {
     if (FLAGS_development && event.key == Keys::F12 && event.pressed) {
-      lua_shutdown();
-      lua_init();
+      l_shutdown();
+      l_init();
     } else {
       // lua event here
     }
   }
 
   Core::UpdateResult Core::Update() {
-    if (L && !m_luaCrashed) {
-      // lua event here, see if we should update (we should)
-    }
+    // I don't even know what we do here, honestly. Figure this out later when we have a more complex rendering path?
     return UR_RENDER;
   }
   
   void Core::Render() {
-    if (L && !m_luaCrashed) {
-      // lua event
-      gllClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    if (m_L && !m_luaCrashed) {
+       l_callEvent(m_L, m_event_system_update_begin);
+      glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
       // call the UI layer here, *not* lua
-      // lua event
+      l_callEvent(m_L, m_event_system_update_end);
     } else {
       glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 

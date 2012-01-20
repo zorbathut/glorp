@@ -9,7 +9,7 @@ namespace Glorp {
   void outputDebug(const string &str);
   void crash() __attribute__ ((noreturn));
   void spawn(const string &exec, const vector<string> &params);
-  vector<const void*> stackDump();
+  void stackDump(vector<const void*> *data);
   void stackOutput();
   int exeSize();
   

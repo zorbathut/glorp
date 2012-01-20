@@ -29,11 +29,26 @@ namespace Glorp {
 
     bool m_audioEnabled;
 
-    lua_State *L;
+    lua_State *m_L;
     bool m_luaCrashed;
 
-    void lua_init();
-    void lua_shutdown();
+    void l_init();
+    void l_shutdown();
+
+    int l_register(lua_State *L);
+    void l_retrieve(lua_State *L, int id);
+
+    // Event tables here
+    int l_registerEvent(lua_State *L, const char *event);
+    void l_callEvent(lua_State *L, int event);
+
+    int m_func_wrap;
+
+    int m_event_system_update_begin;
+    int m_event_system_update_end;
+
+    int m_event_system_mouse;
+    int m_event_system_key;
   };
 }
 

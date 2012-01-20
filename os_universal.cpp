@@ -73,7 +73,8 @@ namespace Glorp {
   }
   
   void stackOutput() {
-    vector<const void *> stack = stackDump();
+    vector<const void *> stack;
+    stackDump(&stack);
     
     vector<pair<string, string> > tokens;
     if(FLAGS_addr2line) {

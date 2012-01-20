@@ -16,7 +16,7 @@ namespace Glorp
   int rdprintf();
 }
 
-#define dprintf(format, args...) Glorp::rdprintf("%10.10s:%4d: " format, __FILE__, __LINE__, ## args)
+#define dprintf(format, args...) Glorp::rdprintf("%16.16s:%4d: " format, __FILE__, __LINE__, ## args)
 #define CHECK(x, args...) (__builtin_expect(!!(x), 1) ? (void)(1) : (dprintf("Error at %s:%d - %s\n", __FILE__, __LINE__, #x), dprintf("" args), Glorp::CheckHandler(__FILE__, __LINE__, 0)))
 #define printf FAILURE
 

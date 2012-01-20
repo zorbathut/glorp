@@ -1,4 +1,14 @@
 
+-- pack/unpack, remove if luajit supports these
+function table.pack(...)
+  local t = {...}
+  t.n = select("#", ...)
+  return t
+end
+function table.unpack(t)
+  return unpack(t, 1, t.n)
+end
+
 -- split into lines, remove various cruft from the error dumps
 local function stripTraceback(err)
   local linz = {}
@@ -52,13 +62,13 @@ end
 
 local function wrap(target, ...)
   assert(target)
-  local dt = {..., n = select('#', ...)}
-  local rv, err = xpcall(function () return target(unpack(dt, 1, dt.n)) end, function (ter) return {ter, debug.traceback()} end)
+  local dt = table.pack(...)
+  local rv, err = xpcall(function () return table.pack(target(table.unpack(dt))) end, function (ter) return {ter, debug.traceback()} end)
   if not rv then
     displayError(err)
     return
   else
-    return err
+    return table.unpack(err)
   end
 end
 
@@ -77,8 +87,23 @@ function loadfile(file)
   return dat, rv
 end
 
+local setup_env = {}
+for k, v in pairs(_G) do
+  setup_env[k] = v
+end
+setup_env._G = setup_env
+setup_env.External = _G
+setup_env.loadfile = function (param)
+  local func, rv = loadfile(param)
+  if func then func = setfenv(func, setup_env) end
+  return func, rv
+end
+setup_env.params = ...
+setup_env.Wrap = wrap
+
 -- kick off the rest of the init
 wrap(function ()
-  loadfile("glorp/init.lua")()
+  setup_env.loadfile("glorp/init.lua")()
 end)
 
+return setup_env

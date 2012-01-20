@@ -153,9 +153,7 @@ namespace Glorp {
     return pmc.WorkingSetSize;
   }
   
-  vector<const void*> stackDump() {
-    vector<const void*> stack;
-    
+  void stackDump(vector<const void*> *data) {
     CONTEXT *context = s_crashContext;
     
     CONTEXT ctx;
@@ -164,14 +162,13 @@ namespace Glorp {
       HINSTANCE kernel32 = LoadLibrary("Kernel32.dll");
       typedef void ( * RtlCaptureContextFunc ) ( CONTEXT * ContextRecord );
       RtlCaptureContextFunc rtlCaptureContext = (RtlCaptureContextFunc) GetProcAddress( kernel32, "RtlCaptureContext" );
-      
       rtlCaptureContext(&ctx);
       context = &ctx;
     }
 
     STACKFRAME frame;
     memset(&frame, 0, sizeof(frame));
-    
+
     frame.AddrPC.Offset = context->Eip;
     frame.AddrPC.Mode = AddrModeFlat;
     frame.AddrStack.Offset = context->Esp;
@@ -180,10 +177,8 @@ namespace Glorp {
     frame.AddrFrame.Mode = AddrModeFlat;
 
     while(StackWalk(IMAGE_FILE_MACHINE_I386, GetCurrentProcess(), GetCurrentThread(), &frame, context, 0, SymFunctionTableAccess, SymGetModuleBase, 0)) {
-      stack.push_back((const void*)frame.AddrPC.Offset);
+      data->push_back((const void*)frame.AddrPC.Offset);
     }
-
-    return stack;
   }
   
   static const string directory_delimiter = "\\";
@@ -284,6 +279,8 @@ namespace Glorp {
 
   int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
   {
+    dprintf("-------------------------------------------------------------------------------------");
+
     // let's get this thing started
     initProgram(&__argc, const_cast<const char ***>(&__argv));
 

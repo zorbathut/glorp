@@ -75,18 +75,25 @@ namespace Glorp {
     return 0;
   }
 
-  void Core::lua_init() {
-    CHECK(!L);
-    if (L)
-      lua_shutdown();
+  void Core::l_init() {
+    CHECK(!m_L);
+    if (m_L)
+      l_shutdown();
 
     m_luaCrashed = false;
 
-    L = lua_open();   /* opens Lua */
+    m_L = lua_open();   /* opens Lua */
+    lua_State *L = m_L;
     luaL_openlibs(L);
 
     luaopen_lgl(L);
     luaopen_lal(L);
+
+    CHECK(lua_gettop(L) == 2);
+
+    lua_pop(L, 2);
+
+    CHECK(lua_gettop(L) == 0);
 
     // replace the RNG
     lua_getglobal(L, "math");
@@ -100,10 +107,17 @@ namespace Glorp {
     lua_pushcfunction(L, debug_print);
     lua_setglobal(L, "print");
 
+    // push registry
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, "Glorp");
+
+    CHECK(lua_gettop(L) == 0);
+
     // the bulk of the lua init
     {
       int error = luaL_loadfile(L, "data/glorp/init_bootstrap.lua");
       if(error) {
+        lua_pop(L, 1);
         error = luaL_loadfile(L, "glorp/init_bootstrap.lua");
       }
       if(error) {
@@ -113,16 +127,89 @@ namespace Glorp {
         return;
       }
 
-      if (lua_pcall(L, 0, 0, 0))
+      if (lua_pcall(L, 0, 1, 0))
       {
         dprintf("Init crashed!");
+        CHECK(0);
         m_luaCrashed = true;
         lua_pop(L, 1);
       }
+
+      CHECK(lua_gettop(L) == 1);
+
+      lua_getfield(L, 1, "Wrap");
+      m_func_wrap = l_register(L);
+
+      m_event_system_update_begin = l_registerEvent(L, "System.Update.Begin");
+      m_event_system_update_end = l_registerEvent(L, "System.Update.End");
+
+      m_event_system_mouse = l_registerEvent(L, "System.Mouse");
+      m_event_system_key = l_registerEvent(L, "System.Key");
+
+      // kick off the load of the actual game
+      lua_getfield(L, 1, "Wrap");
+      lua_getfield(L, 1, "InitComplete");
+      if (lua_pcall(L, 1, 0, 0))
+      {
+        dprintf("Init crashed!");
+        CHECK(0);
+        m_luaCrashed = true;
+        lua_pop(L, 1);
+      }
+
+      lua_pop(L, 1);
     }
+
+    CHECK(lua_gettop(L) == 0);
   }
-  void Core::lua_shutdown() {
-    lua_close(L);
-    L = 0;
+  void Core::l_shutdown() {
+    lua_close(m_L);
+    m_L = 0;
+  }
+
+  int Core::l_register(lua_State *L) {
+    lua_pushstring(L, "Glorp");
+    lua_gettable(L, LUA_REGISTRYINDEX);
+
+    lua_pushvalue(L, -2);
+    int ref = luaL_ref(L, -2);
+    lua_pop(L, 2);
+
+    return ref;
+  }
+  void Core::l_retrieve(lua_State *L, int index) {
+    assert(index != LUA_NOREF);
+
+    lua_pushstring(L, "Glorp");
+    lua_gettable(L, LUA_REGISTRYINDEX);
+
+    lua_rawgeti(L, -1, index);
+    assert(!lua_isnil(L, -1));
+    lua_replace(L, -2);
+  }
+
+  int Core::l_registerEvent(lua_State *L, const char *event) {
+    l_retrieve(L, m_func_wrap);
+    lua_getfield(L, -2, "CreateEvent");
+    lua_pushvalue(L, LUA_GLOBALSINDEX);
+    lua_pushstring(L, event);
+    if (lua_pcall(L, 3, 1, 0)) {
+      dprintf("register pcall error");
+      m_luaCrashed = true;
+      CHECK(0);
+      lua_pop(L, 1);
+      return LUA_NOREF;
+    }
+    return l_register(L);
+  }
+  void Core::l_callEvent(lua_State *L, int event) {
+    l_retrieve(L, m_func_wrap);
+    l_retrieve(L, event);
+    if (lua_pcall(L, 1, 0, 0)) {
+      dprintf("call event error");
+      m_luaCrashed = true;
+      CHECK(0);
+      lua_pop(L, 1);
+    }
   }
 }
