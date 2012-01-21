@@ -89,11 +89,14 @@ local function addHeadersFor(lib)
 end
 
 -- Test code to build a single library easily
---[[local testy = "libogg"
-addHeadersFor(testy)
-ursa.command{"test", {libs[testy], headers[testy]}}
-ursa.build{"test"}
-do return end]]
+print(params.targets[1])
+if params.targets[1] == "libtest" then
+  local testy = params.targets[2]
+  addHeadersFor(testy)
+  ursa.command{"test", {libs[testy], headers[testy]}}
+  ursa.build{"test"}
+  do return end
+end
 
 local libcflags = string.format("%s -I%s/build/%s/lib_release/include", ursa.token{"CCFLAGS"}, ursa.token{"PWD"}, platform)
 local libldflags = string.format("%s -L%s/build/%s/lib_release/lib", ursa.token{"LDFLAGS"}, ursa.token{"PWD"}, platform)
@@ -147,7 +150,7 @@ end
 local core_files = "debug util parse args init " .. os_files
 
 local buildables = {
-  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "core core_lua debug_911_on debug util parse args init " .. os_files, cfiles = "glorp/GLee", mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
+  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "core core_lua debug_911_on debug util parse args init " .. os_files, cfiles = "glorp/GLee", mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio frames" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter/main", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "fontbaker/main", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
