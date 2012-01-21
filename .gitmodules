@@ -4,3 +4,6 @@
 [submodule "opengal32"]
 	path = opengal32
 	url = git@github.com:zorbathut/opengal32.git
+[submodule "libs/frames"]
+	path = libs/frames
+	url = git@github.com:zorbathut/frames.git
