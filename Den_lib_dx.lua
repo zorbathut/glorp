@@ -18,9 +18,9 @@ headers.dx = {}
 -- now we copy shit to the right place
 
 for file in ursa.token{"dx inc files"}:gmatch("([^\n]+)") do
-  table.insert(headers.dx, ursa.rule{builddir .. "lib_release/include" .. file, dx_dir_inc .. "/" .. file, ursa.util.copy{}})
+  table.insert(headers.dx, ursa.rule{builddir .. "lib_release/include/" .. file, dx_dir_inc .. "/" .. file, ursa.util.copy{}})
 end
 for file in ursa.token{"dx lib files"}:gmatch("([^\n]+)") do
-  table.insert(headers.dx, ursa.rule{builddir .. "lib_release/lib" .. file, dx_dir_lib .. "/" .. file, ursa.util.copy{}})
+  table.insert(headers.dx, ursa.rule{builddir .. "lib_release/lib/" .. file, dx_dir_lib .. "/" .. file, ursa.util.copy{}})
 end
 
