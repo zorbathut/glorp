@@ -8,6 +8,8 @@
 
 #include <lua.hpp>
 
+#include <frames/environment.h>
+
 namespace Glorp {
   class Core {
   public:
@@ -49,6 +51,8 @@ namespace Glorp {
 
     int m_event_system_mouse;
     int m_event_system_key;
+    
+    Frames::Environment *m_env;
   };
 }
 

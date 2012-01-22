@@ -150,7 +150,7 @@ end
 local core_files = "debug util parse args init " .. os_files
 
 local buildables = {
-  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "core core_lua debug_911_on debug util parse args init " .. os_files, cfiles = "glorp/GLee", mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "dx lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio frames" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
+  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "core core_lua debug_911_on debug util parse args init " .. os_files, cfiles = "glorp/GLee", mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "boost dx lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio frames" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter/main", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "fontbaker/main", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
@@ -185,7 +185,7 @@ end
 local function build_object(src, prefix, params)
   local compiler = ursa.token{"CXX"}
   if params.compiler then compiler = compiler:gsub("g%+%+", params.compiler) end
-  local cli = ("%s %s %s -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -Iglorp/libs/boost_1_45_0 -I%sglorp -I%slib_release/include %s %s %s "):format(compiler, params.flags or "", optflags, buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, ursa.token{"FINALCXXFLAGS"}, src)
+  local cli = ("%s %s %s -Wall -Wno-sign-compare -Wno-uninitialized -g -DDPRINTF_MARKUP %s -Iglorp -Iglorp/.. -I%sglorp -I%slib_release/include %s %s %s "):format(compiler, params.flags or "", optflags, buildflags, builddir, builddir, ursa.token{"CXXFLAGS"}, ursa.token{"FINALCXXFLAGS"}, src)
   
   local sig = src .. "." .. prefix
   

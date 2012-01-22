@@ -47,7 +47,9 @@ namespace Glorp {
         m_event_system_update_begin(LUA_NOREF),
         m_event_system_update_end(LUA_NOREF),
         m_event_system_mouse(LUA_NOREF),
-        m_event_system_key(LUA_NOREF) {
+        m_event_system_key(LUA_NOREF),
+        m_env(0)
+  {
     if(FLAGS_sound) {
       m_alcDevice = alcOpenDevice(NULL);
       if(m_alcDevice) {

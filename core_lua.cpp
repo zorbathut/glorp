@@ -80,6 +80,8 @@ namespace Glorp {
     if (m_L)
       l_shutdown();
 
+    m_env = new Frames::Environment();
+    
     m_luaCrashed = false;
 
     m_L = lua_open();   /* opens Lua */
@@ -165,6 +167,9 @@ namespace Glorp {
   void Core::l_shutdown() {
     lua_close(m_L);
     m_L = 0;
+    
+    delete m_env;
+    m_env = 0;
   }
 
   int Core::l_register(lua_State *L) {
