@@ -16,6 +16,8 @@
 
 #include <ctime>
 
+#include <frames/frame.h>
+
 using namespace std;
 
 namespace Glorp {
@@ -81,6 +83,7 @@ namespace Glorp {
       l_shutdown();
 
     m_env = new Frames::Environment();
+    m_env->ResizeRoot(Version::gameXres, Version::gameYres);
     
     m_luaCrashed = false;
 
@@ -163,6 +166,15 @@ namespace Glorp {
     }
 
     CHECK(lua_gettop(L) == 0);
+
+    Frames::FramePtr frame = m_env->CreateFrame(m_env->GetRoot());
+
+    frame->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 40);
+    frame->SetPoint(Frames::X, 1, m_env->GetRoot(), 1, -40);
+    frame->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 40);
+    frame->SetPoint(Frames::Y, 1, m_env->GetRoot(), 1, -40);
+
+    frame->SetBackground(1, 1, 1);
   }
   void Core::l_shutdown() {
     lua_close(m_L);

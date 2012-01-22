@@ -97,7 +97,7 @@ namespace Glorp {
     if (m_L && !m_luaCrashed) {
        l_callEvent(m_L, m_event_system_update_begin);
       glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-      // call the UI layer here, *not* lua
+      m_env->Render();
       l_callEvent(m_L, m_event_system_update_end);
     } else {
       glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
