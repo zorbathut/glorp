@@ -16,11 +16,24 @@
 
 #include <ctime>
 
+#undef printf
 #include <frames/frame.h>
+#define printf FAILURE
 
 using namespace std;
 
 namespace Glorp {
+
+  class FramesLogger : public Frames::Configuration::Logger {
+  public:
+    virtual void LogDebug(const std::string &log) {
+      dprintf("Frames debug: %s", log.c_str());
+    }
+    virtual void LogError(const std::string &log) {
+      dprintf("Frames error: %s", log.c_str());
+    }
+  };
+  static FramesLogger frames_logger;
 
   // get our own rng. why? because it turns out that lua does weird things with RNGs across coroutines
   boost::lagged_fibonacci9689 rngstate(time(NULL));
@@ -82,7 +95,10 @@ namespace Glorp {
     if (m_L)
       l_shutdown();
 
-    m_env = new Frames::Environment();
+    Frames::Configuration config;
+    config.logger = &frames_logger;
+
+    m_env = new Frames::Environment(config);
     m_env->ResizeRoot(Version::gameXres, Version::gameYres);
     
     m_luaCrashed = false;
