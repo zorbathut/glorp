@@ -167,7 +167,7 @@ namespace Glorp {
 
     CHECK(lua_gettop(L) == 0);
 
-    Frames::FramePtr frame = m_env->CreateFrame(m_env->GetRoot());
+    Frames::FramePtr frame = Frames::Frame::Create(m_env->GetRoot());
 
     frame->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 40);
     frame->SetPoint(Frames::X, 1, m_env->GetRoot(), 1, -40);
