@@ -317,19 +317,21 @@ namespace Glorp {
         window_style |= WS_MAXIMIZEBOX | WS_THICKFRAME;
     }
 
+    DWORD window_style_ex = 0;
+
     // Specify the window dimensions and get the border size
     RECT window_rectangle;
     window_rectangle.left = 0;
     window_rectangle.right = Version::gameXres;
     window_rectangle.top = 0;
     window_rectangle.bottom = Version::gameYres;
-    if (!AdjustWindowRectEx(&window_rectangle, window_style, false, window_style))
+    if (!AdjustWindowRectEx(&window_rectangle, window_style, false, window_style_ex))
     {
       CHECK(false);
       return 0;
     }
 
-    s_window = CreateWindowExW(0, kClassName, L"Glop window", window_style, CW_USEDEFAULT, CW_USEDEFAULT, window_rectangle.right - window_rectangle.left, window_rectangle.bottom - window_rectangle.top, NULL, NULL, GetModuleHandle(0), NULL);
+    s_window = CreateWindowExW(window_style_ex, kClassName, L"Glop window", window_style, CW_USEDEFAULT, CW_USEDEFAULT, window_rectangle.right - window_rectangle.left, window_rectangle.bottom - window_rectangle.top, NULL, NULL, GetModuleHandle(0), NULL);
 
     if (!s_window)
     {
