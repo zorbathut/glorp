@@ -13,7 +13,7 @@ ursa.token.rule{"glew files", nil, ("cd %s/include && find . -type f | sed s*\\\
 headers.glew = {}
 for file in ursa.token{"glew files"}:gmatch("([^\n]+)") do
   table.insert(headers.glew, ursa.rule{builddir .. "lib_release/include/" .. file, glew_dir .. "/include/" .. file, ursa.util.system_template{([[sed
-      -e "s/ifdef GLEW_STATIC/if true/"
+      -e "s/ifdef GLEW_STATIC/if 1/"
       
       $SOURCE > $TARGET && chmod +x $TARGET]]):format():gsub("\n", " ")}})
 end
