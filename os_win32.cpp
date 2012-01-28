@@ -1,8 +1,9 @@
 
 #include "os.h"
+
+#include "core.h"
 #include "debug.h"
 #include "version.h"
-#include "core.h"
 #include "init.h"
 
 #define _WIN32_IE 0x0500 // ffff

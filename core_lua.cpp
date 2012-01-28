@@ -207,6 +207,14 @@ namespace Glorp {
     ok->SetWidth(80);
 
     ok->SetBackground(0, 1, 0, 0.5);
+
+    Frames::FramePtr aframe = Frames::Frame::Create(m_env->GetRoot());
+    Frames::FramePtr bframe = Frames::Frame::Create(m_env->GetRoot());
+    Frames::FramePtr cframe = Frames::Frame::Create(m_env->GetRoot());
+
+    aframe->SetPoint(Frames::X, 0, bframe, 0, 0);
+    bframe->SetPoint(Frames::X, 0, cframe, 0, 0);
+    cframe->SetPoint(Frames::X, 0, aframe, 0, 0);
   }
   void Core::l_shutdown() {
     lua_close(m_L);

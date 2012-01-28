@@ -1,14 +1,15 @@
 #ifndef GLORP_CORE
 #define GLORP_CORE
 
+// so it doesn't catch the printf define
+#include <frames/environment.h>
+
 #include "input.h"
 
 #include <AL/al.h>
 #include <AL/alc.h>
 
 #include <lua.hpp>
-
-#include <frames/environment.h>
 
 namespace Glorp {
   class Core {
