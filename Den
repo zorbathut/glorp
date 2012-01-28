@@ -136,7 +136,7 @@ end})
 -- logal build
 local logal_deps
 do
-  local logal = ursa.embed{"glorp/logal", "Den", {{}}}
+  local logal = ursa.embed{"glorp/libs/logal", "Den", {{}}}
   
   logal.lgl_generate(ursa.absolute_from{builddir .. "glorp/lgl.cpp"}, "")
   logal.lal_generate(ursa.absolute_from{builddir .. "glorp/lal.cpp"}, "")

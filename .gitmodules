@@ -1,8 +1,8 @@
 [submodule "logal"]
-	path = logal
+	path = libs/logal
 	url = git@github.com:zorbathut/logal.git
 [submodule "opengal32"]
-	path = opengal32
+	path = libs/opengal32
 	url = git@github.com:zorbathut/opengal32.git
 [submodule "libs/frames"]
 	path = libs/frames

@@ -8,7 +8,7 @@ local addHeadersFor = params.addHeadersFor
 
 -- I suppose we can opengal it up a notch
 headers.opengal = {}
-local path = "glorp/opengal32"
+local path = "glorp/libs/opengal32"
 
 local files = {}
 
