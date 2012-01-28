@@ -21,7 +21,7 @@ for item in ursa.token{"libogg_files"}:gmatch("([^\n]+)") do
   end
 end
 
-local makefile = ursa.rule{{builddir .. "lib_build/libogg/Makefile", builddir .. "lib_build/libogg/include/ogg/config_types.h"}, files, ursa.util.system_template{('cd %slib_build/libogg && CC="#CC" CFLAGS="#CCFLAGS" LDFLAGS="#LDFLAGS" ./configure --enable-shared=no --enable-static=yes'):format(builddir, ursa.token{"CC"}, libcflags, libldflags)}}
+local makefile = ursa.rule{{builddir .. "lib_build/libogg/Makefile", builddir .. "lib_build/libogg/include/ogg/config_types.h"}, files, ursa.util.system_template{('cd %slib_build/libogg && CC="#CC" CFLAGS="#CCFLAGS" LDFLAGS="#LDFLAGS" ./configure --enable-shared=no --enable-static=yes --disable-dependency-tracking'):format(builddir, ursa.token{"CC"}, libcflags, libldflags)}}
 
 local lib = ursa.rule{builddir .. "lib_build/libogg/src/.libs/libogg.a", makefile, ('cd %slib_build/libogg && make -j1'):format(builddir)}
 

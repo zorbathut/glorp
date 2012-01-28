@@ -5,8 +5,6 @@
 #include "core.h"
 #include "init.h"
 
-#include "GLee.h"
-
 #define _WIN32_IE 0x0500 // ffff
 
 #include <windows.h>
@@ -18,6 +16,8 @@
 #include <dinput.h>
 
 #include <algorithm>
+
+#include <GL/glew.h>
 
 using namespace std;
 

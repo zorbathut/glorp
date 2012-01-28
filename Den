@@ -150,7 +150,7 @@ end
 local core_files = "debug util parse args init " .. os_files
 
 local buildables = {
-  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "core core_lua debug_911_on debug util parse args init " .. os_files, cfiles = "glorp/GLee", mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "boost dx lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio frames" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
+  [params.name] = {dynfiles = "version lgl lal", glorpfiles = "core core_lua debug_911_on debug util parse args init " .. os_files, mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "boost dx lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio frames glew" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter/main", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
   ["font_baker"] = {glorpfiles = "fontbaker/main", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
@@ -237,9 +237,9 @@ local function build_program(name)
   for k in (item.glorpfiles or ""):gmatch("([^%s]+)") do
     table.insert(objs, build_object("glorp/" .. k .. ".cpp", prefix, {builddata = item, flags = item.flags}))
   end
-  for k in (item.cfiles or ""):gmatch("([^%s]+)") do
+  --[[for k in (item.cfiles or ""):gmatch("([^%s]+)") do
     table.insert(objs, build_object(k .. ".c", prefix, {builddata = item, compiler = "gcc", flags = item.flags}))
-  end
+  end]] -- currently not used
   for k in (item.mmfiles or ""):gmatch("([^%s]+)") do
     table.insert(objs, build_object("glorp/" .. k .. ".mm", prefix, {builddata = item, flags = (item.flags or "") .. " -x objective-c++"}))
   end

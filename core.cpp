@@ -5,7 +5,7 @@
 #include "os.h"
 #include "version.h"
 
-#include "GLee.h"
+#include "GL/glew.h"
 
 DEFINE_bool(help, false, "Get help");
 DEFINE_bool(development, false, "Development tools");
@@ -63,6 +63,7 @@ namespace Glorp {
         }
       }
     }
+    glewInit();
     l_init();
   }
 
@@ -95,7 +96,7 @@ namespace Glorp {
   
   void Core::Render() {
     if (m_L && !m_luaCrashed) {
-       l_callEvent(m_L, m_event_system_update_begin);
+      l_callEvent(m_L, m_event_system_update_begin);
       glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
       m_env->Render();
       l_callEvent(m_L, m_event_system_update_end);
