@@ -183,14 +183,32 @@ namespace Glorp {
 
     CHECK(lua_gettop(L) == 0);
 
-    Frames::FramePtr frame = Frames::Frame::Create(m_env->GetRoot());
+    Frames::FramePtr winframe = Frames::Frame::Create(m_env->GetRoot());
 
-    frame->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 40);
-    frame->SetPoint(Frames::X, 1, m_env->GetRoot(), 1, -40);
-    frame->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 40);
-    frame->SetPoint(Frames::Y, 1, m_env->GetRoot(), 1, -40);
+    winframe->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 40);
+    winframe->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 40);
+    winframe->SetWidth(300);
+    winframe->SetHeight(600);
 
-    frame->SetBackground(1, 1, 1);
+    winframe->SetBackground(0.3, 0.3, 0.3);
+
+    Frames::FramePtr title = Frames::Frame::Create(winframe);
+
+    title->SetPoint(Frames::X, 0, winframe, 0, 10);
+    title->SetPoint(Frames::X, 1, winframe, 1, -10);
+    title->SetPoint(Frames::Y, 0, winframe, 0, 10);
+    title->SetHeight(20);
+
+    title->SetBackground(1, 1, 0, 0.5);
+
+    Frames::FramePtr ok = Frames::Frame::Create(winframe);
+
+    ok->SetPoint(Frames::X, 1, winframe, 1, -10);
+    ok->SetPoint(Frames::Y, 1, winframe, 1, -10);
+    ok->SetHeight(20);
+    ok->SetWidth(80);
+
+    ok->SetBackground(0, 1, 0, 0.5);
   }
   void Core::l_shutdown() {
     lua_close(m_L);
