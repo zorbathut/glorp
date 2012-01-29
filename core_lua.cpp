@@ -181,7 +181,7 @@ namespace Glorp {
 
     CHECK(lua_gettop(L) == 0);
 
-    Frames::FramePtr winframe = Frames::Frame::Create(m_env->GetRoot());
+    Frames::FramePtr winframe = Frames::Frame::CreateTagged(m_env->GetRoot());
 
     winframe->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 40);
     winframe->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 40);
@@ -190,7 +190,7 @@ namespace Glorp {
 
     winframe->SetBackground(0.3, 0.3, 0.3);
 
-    Frames::FramePtr title = Frames::Frame::Create(winframe);
+    Frames::FramePtr title = Frames::Frame::CreateTagged(winframe);
 
     title->SetPoint(Frames::X, 0, winframe, 0, 10);
     title->SetPoint(Frames::X, 1, winframe, 1, -10);
@@ -199,7 +199,7 @@ namespace Glorp {
 
     title->SetBackground(1, 1, 0, 0.5);
 
-    Frames::FramePtr ok = Frames::Frame::Create(winframe);
+    Frames::FramePtr ok = Frames::Frame::CreateTagged(winframe);
 
     ok->SetPoint(Frames::X, 1, winframe, 1, -10);
     ok->SetPoint(Frames::Y, 1, winframe, 1, -10);
@@ -208,9 +208,9 @@ namespace Glorp {
 
     ok->SetBackground(0, 1, 0, 0.5);
 
-    Frames::FramePtr aframe = Frames::Frame::Create(m_env->GetRoot());
-    Frames::FramePtr bframe = Frames::Frame::Create(m_env->GetRoot());
-    Frames::FramePtr cframe = Frames::Frame::Create(m_env->GetRoot());
+    Frames::FramePtr aframe = Frames::Frame::CreateTagged(m_env->GetRoot());
+    Frames::FramePtr bframe = Frames::Frame::CreateTagged(m_env->GetRoot());
+    Frames::FramePtr cframe = Frames::Frame::CreateTagged(m_env->GetRoot());
 
     aframe->SetPoint(Frames::X, 0, bframe, 0, 0);
     bframe->SetPoint(Frames::X, 0, cframe, 0, 0);
