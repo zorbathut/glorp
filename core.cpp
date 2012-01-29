@@ -7,6 +7,8 @@
 
 #include "GL/glew.h"
 
+#include <frames/frame.h>
+
 DEFINE_bool(help, false, "Get help");
 DEFINE_bool(development, false, "Development tools");
 DEFINE_bool(permit_ogl1, false, "Permit OpenGL 1.0 renderer. Note this may crash in many fascinating manners or fail to render important parts of the game, this is strictly for local testing, here there be dragons");
