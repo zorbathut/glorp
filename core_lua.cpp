@@ -88,6 +88,10 @@ namespace Glorp {
     return 0;
   }
 
+  void PrintWoopWoop() {
+    dprintf("Woop woop!");
+  }
+
   void Core::l_init() {
     CHECK(!m_L);
     if (m_L)
@@ -218,6 +222,8 @@ namespace Glorp {
 
     Frames::Frame *gcframe = Frames::Frame::CreateTagged(m_env->GetRoot());
     gcframe->Obliterate();
+
+    aframe->EventMoveAttach(PrintWoopWoop);
   }
   void Core::l_shutdown() {
     lua_close(m_L);
