@@ -16,6 +16,7 @@
 
 #undef printf
 #include <frames/frame.h>
+#include <frames/texture.h>
 #define printf FAILURE
 
 using namespace std;
@@ -224,6 +225,18 @@ namespace Glorp {
     gcframe->Obliterate();
 
     aframe->EventMoveAttach(PrintWoopWoop);
+
+    Frames::Texture *tex = Frames::Texture::CreateTagged(m_env->GetRoot());
+    tex->SetPoint(Frames::X, 0.5, m_env->GetRoot(), 0.5, 0);
+    tex->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.5, 0);
+    tex->SetBackground(1, 1, 1, 0.1);
+    tex->SetTexture("Den");
+
+    Frames::Texture *tex2 = Frames::Texture::CreateTagged(m_env->GetRoot());
+    tex2->SetPoint(Frames::X, 0.5, m_env->GetRoot(), 0.6, 0);
+    tex2->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.6, 0);
+    tex2->SetBackground(1, 1, 1, 0.1);
+    tex2->SetTexture("Den");
   }
   void Core::l_shutdown() {
     lua_close(m_L);
