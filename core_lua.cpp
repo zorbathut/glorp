@@ -230,13 +230,13 @@ namespace Glorp {
     tex->SetPoint(Frames::X, 0.5, m_env->GetRoot(), 0.5, 0);
     tex->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.5, 0);
     tex->SetBackground(1, 1, 1, 0.1);
-    tex->SetTexture("Den");
+    tex->SetTexture("awesome_med.png");
 
     Frames::Texture *tex2 = Frames::Texture::CreateTagged(m_env->GetRoot());
-    tex2->SetPoint(Frames::X, 0.5, m_env->GetRoot(), 0.6, 0);
-    tex2->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.6, 0);
+    tex2->SetPoint(Frames::X, 0.5, m_env->GetRoot(), 0.8, 0);
+    tex2->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.8, 0);
     tex2->SetBackground(1, 1, 1, 0.1);
-    tex2->SetTexture("Den");
+    tex2->SetTexture("mind-in-pictures-january-12_1_thumb.jpg");
   }
   void Core::l_shutdown() {
     lua_close(m_L);

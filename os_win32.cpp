@@ -7,6 +7,7 @@
 #include "init.h"
 
 #define _WIN32_IE 0x0500 // ffff
+#define DIRECTINPUT_VERSION 0x0800
 
 #include <windows.h>
 #include <shlobj.h>
