@@ -17,6 +17,7 @@
 #undef printf
 #include <frames/frame.h>
 #include <frames/texture.h>
+#include <frames/mask.h>
 #define printf FAILURE
 
 using namespace std;
@@ -226,13 +227,20 @@ namespace Glorp {
 
     aframe->EventMoveAttach(PrintWoopWoop);
 
-    Frames::Texture *tex = Frames::Texture::CreateTagged(m_env->GetRoot());
+
+    Frames::Mask *mask = Frames::Mask::CreateTagged(m_env->GetRoot());
+    mask->SetPoint(Frames::X, 0, m_env->GetRoot(), 0.5, 0);
+    mask->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0.5, 0);
+    mask->SetPoint(Frames::X, 1, m_env->GetRoot(), 1, 0);
+    mask->SetPoint(Frames::Y, 1, m_env->GetRoot(), 1, 0);
+
+    Frames::Texture *tex = Frames::Texture::CreateTagged(mask);
     tex->SetPoint(Frames::X, 0.5, m_env->GetRoot(), 0.5, 0);
     tex->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.5, 0);
     tex->SetBackground(1, 1, 1, 0.1);
     tex->SetTexture("awesome_med.png");
 
-    Frames::Texture *tex2 = Frames::Texture::CreateTagged(m_env->GetRoot());
+    Frames::Texture *tex2 = Frames::Texture::CreateTagged(mask);
     tex2->SetPoint(Frames::X, 0.5, m_env->GetRoot(), 0.8, 0);
     tex2->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.8, 0);
     tex2->SetBackground(1, 1, 1, 0.1);
