@@ -18,6 +18,7 @@
 #include <frames/frame.h>
 #include <frames/texture.h>
 #include <frames/mask.h>
+#include <frames/text.h>
 #define printf FAILURE
 
 using namespace std;
@@ -245,6 +246,21 @@ namespace Glorp {
     tex2->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.8, 0);
     tex2->SetBackground(1, 1, 1, 0.1);
     tex2->SetTexture("mind-in-pictures-january-12_1_thumb.jpg");
+    
+    Frames::Text *texu = Frames::Text::CreateTagged(m_env->GetRoot());
+    texu->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 120);
+    texu->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 120);
+    texu->SetBackground(1, 0, 0, 0.1);
+    texu->SetText("ARMENIAN.");
+    texu->SetLayer(3);
+
+    Frames::Frame *passover = Frames::Frame::CreateTagged(m_env->GetRoot());
+    passover->SetPoint(Frames::X, 0.5, m_env->GetRoot(), 0.5, 0);
+    passover->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.5, 0);
+    passover->SetBackground(0, 1, 0, 0.1);
+    passover->SetWidth(300);
+    passover->SetHeight(300);
+    passover->SetLayer(2);
   }
   void Core::l_shutdown() {
     lua_close(m_L);
