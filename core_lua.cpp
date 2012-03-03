@@ -255,6 +255,23 @@ namespace Glorp {
     texu->SetSize(30);
     texu->SetLayer(3);
 
+    Frames::Text *texix = Frames::Text::CreateTagged(m_env->GetRoot());
+    texix->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 400);
+    texix->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 80);
+    texix->SetBackground(0, 1, 0, 0.1);
+    texix->SetText("lend me your arms,\nfast as thunderbolts,\nfor a pillow on my journey.");
+    texix->SetSize(50);
+    texix->SetLayer(3);
+
+    Frames::Text *texite = Frames::Text::CreateTagged(m_env->GetRoot());
+    texite->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 100);
+    texite->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 300);
+    texite->SetWidth(400);
+    texite->SetBackground(0, 0, 1, 0.1);
+    texite->SetText("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis urna libero, elementum id commodo et, mollis et neque. Sed suscipit ornare purus, sed pellentesque felis luctus eu. Maecenas gravida, odio quis fermentum pretium, libero metus lacinia justo, a fringilla neque nisl vel lacus. Praesent elementum mauris et ligula dictum porttitor. Pellentesque a risus quam. Aliquam tincidunt interdum viverra. Nam quis nisi neque. Nam non risus tellus, ac ullamcorper eros. Mauris vestibulum odio sit amet leo ullamcorper ultricies. Fusce eget imperdiet ante. Pellentesque dapibus dignissim elit, id rutrum magna ullamcorper vitae.\n\nIn elementum dolor in mi placerat sollicitudin. Sed in quam quam, suscipit dignissim nisi. Suspendisse potenti. Sed nec iaculis justo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla dignissim elit augue, eget hendrerit sem. Donec vel arcu est, vel pellentesque lectus. Nunc congue eleifend egestas. Donec sit amet cursus velit. Vestibulum eget nulla a enim egestas luctus et ac velit.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam erat volutpat. In nulla lorem, consectetur in pharetra sit amet, sagittis a neque. Sed lacinia, dolor sit amet scelerisque tincidunt, quam eros convallis ipsum, sit amet rutrum ligula purus quis nulla. Nunc quis nibh massa. Praesent vel augue risus. Cras commodo eleifend felis, interdum pharetra orci mattis sit amet. Cras lobortis, odio vel semper tempor, magna nunc aliquet dui, eu molestie tellus ligula et orci. Vestibulum pulvinar massa nec erat tempus a tincidunt arcu rhoncus. Morbi dictum sapien vel turpis consectetur ut mollis eros feugiat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Etiam eget libero eget metus aliquam lobortis. Praesent feugiat tortor vel mi auctor a vehicula dolor pulvinar. Maecenas ac tortor velit, sit amet facilisis justo.");
+    texite->SetSize(12);
+    texite->SetLayer(3);
+
     Frames::Frame *passover = Frames::Frame::CreateTagged(m_env->GetRoot());
     passover->SetPoint(Frames::X, 0.5, m_env->GetRoot(), 0.5, 0);
     passover->SetPoint(Frames::Y, 0.5, m_env->GetRoot(), 0.5, 0);
