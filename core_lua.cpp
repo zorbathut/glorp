@@ -251,7 +251,8 @@ namespace Glorp {
     texu->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 120);
     texu->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 120);
     texu->SetBackground(1, 0, 0, 0.1);
-    texu->SetText("ARMENIAN.");
+    texu->SetText("The quick brown fox jumps over the lazy dog.");
+    texu->SetSize(30);
     texu->SetLayer(3);
 
     Frames::Frame *passover = Frames::Frame::CreateTagged(m_env->GetRoot());
