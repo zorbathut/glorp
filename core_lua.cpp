@@ -140,6 +140,10 @@ namespace Glorp {
 
     CHECK(lua_gettop(L) == 0);
 
+    m_env->RegisterLua(L);
+
+    CHECK(lua_gettop(L) == 0);
+
     // the bulk of the lua init
     {
       int error = luaL_loadfile(L, "data/glorp/init_bootstrap.lua");
