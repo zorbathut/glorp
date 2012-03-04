@@ -115,6 +115,7 @@ ursa.rule{builddir .. "glorp/version.cpp", {"!" .. params.longname, "!" .. param
   fil:write(([[const char gameMidname[] = "%s";]]):format(params.midname) .. "\n")
   fil:write(([[const char gameSlug[] = "%s";]]):format(params.name) .. "\n")
   fil:write(([[const char gamePlatform[] = "%s";]]):format(platform) .. "\n")
+  fil:write(([[const char gameFontDefault[] = "%s";]]):format(params.font) .. "\n")
   fil:write(([[const int gameXres = %d;]]):format(params.resolution[1]) .. "\n")
   fil:write(([[const int gameYres = %d;]]):format(params.resolution[2]) .. "\n")
   fil:write(([[const bool resizable = false;]]) .. "\n")
@@ -152,7 +153,6 @@ local core_files = "debug util parse args init " .. os_files
 local buildables = {
   [params.name] = {dynfiles = "version lgl lal", glorpfiles = "core core_lua debug_911_on debug util parse args init " .. os_files, mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", resources = "resource", libs = "boost dx lua luabind zlib libpng libjpeg opengal libvorbis libogg libflac portaudio frames glew libfreetype" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
   ["reporter"] = {dynfiles = "version", glorpfiles = "reporter/main", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
-  ["font_baker"] = {glorpfiles = "fontbaker/main", libs = "zlib libpng libfreetype", flags = "-DSUPPRESS_GLOP"},
 }
 
 -- TEST CODE: build all libraries
@@ -275,12 +275,9 @@ end
 
 local mainprog = build_program(params.name)
 local reporter = build_program("reporter")
-local font_baker = build_program("font_baker")
 
 ------------------------------------------------------------------
 -- PACKAGING
-
-table.insert(genfiles, ursa.rule{{builddir .. "glorp/font.lua", builddir .. "glorp/font.png"}, {font_baker, params.font}, string.format("build/%s/font_baker%s %s build/%s/glorp/", platform, osd.extension, params.font, platform)})
 
 ursa.token.rule{"oggquality", "!6", function () return "6" end}  -- heh.
 

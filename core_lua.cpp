@@ -102,6 +102,7 @@ namespace Glorp {
 
     Frames::Configuration config;
     config.logger = &frames_logger;
+    config.fontDefaultId = Version::gameFontDefault;
 
     m_env = new Frames::Environment(config);
     m_env->ResizeRoot(Version::gameXres, Version::gameYres);
