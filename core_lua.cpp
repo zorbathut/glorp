@@ -263,6 +263,9 @@ namespace Glorp {
     texix->SetSize(50);
     texix->SetLayer(3);
 
+    texix->SetWidth(texix->GetWidth() - 50);
+    texix->SetHeight(texix->GetHeight() - 20);
+
     Frames::Text *texite = Frames::Text::CreateTagged(m_env->GetRoot());
     texite->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 100);
     texite->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 300);
