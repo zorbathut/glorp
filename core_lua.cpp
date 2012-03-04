@@ -249,7 +249,7 @@ namespace Glorp {
     tex2->SetTexture("mind-in-pictures-january-12_1_thumb.jpg");
     
     Frames::Text *texu = Frames::Text::CreateTagged(m_env->GetRoot());
-    texu->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 120);
+    texu->SetPoint(Frames::X, 0, m_env->GetRoot(), 0, 60);
     texu->SetPoint(Frames::Y, 0, m_env->GetRoot(), 0, 120);
     texu->SetBackground(1, 0, 0, 0.1);
     texu->SetText("AVAVAVAVAVAVAVAV");
