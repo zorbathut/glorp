@@ -1,5 +1,9 @@
 This release includes many free or open-source packages, all of which I am truly thankful for.
 
+I use Frames as a UI library. Frames is a library of my own. I may someday be selling it commercially, but for now it's available only under the GPL. Check it out at https://github.com/zorbathut/frames .
+
+Frames includes Don Clugston's Fast Delegate library. Its license requires that I provide you with a link to the license text: "http://www.codeproject.com/info/cpol10.aspx". Done.
+
 libogg, libvorbis, and libflac are included under the terms of their respective licenses. The text of those licenses are below.
 
 I rely very heavily on Lua 5.1. I am actually not sure if its license requires that I reproduce it here. I shall do so anyway. It is below. I also rely on Luabind, whose near-identical license is also below, and Luajit, which, well, you can see where this is going.
@@ -25,6 +29,7 @@ zlib and libpng are included. Thankfully, their license does not require me to b
 Finally, PortAudio is included on at least one operating system (OSX, right now.) License below.
 
 This relies on my own Logal library and Glorp framework. Glorp uses a library called Glop, which was developed by several friends of mine and later modified by me. This entire mess was built using Ursa. All of these projects are available using extremely permissive licenses, either BSD or the standard Lua license. Check them out at http://github.com/zorbathut .
+
 
 =============== LIBOGG LICENSE
 
