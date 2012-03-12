@@ -141,6 +141,7 @@ namespace Glorp {
     CHECK(lua_gettop(L) == 0);
 
     m_env->RegisterLua(L);
+    m_env->RegisterLuaFramesBuiltin(L);
 
     CHECK(lua_gettop(L) == 0);
 

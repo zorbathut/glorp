@@ -1,6 +1,4 @@
 
-print("IU")
-
 function InsertItem(root, path, item)
   local last = root
   local lastword

@@ -10,4 +10,3 @@ function CreateEvent(root, name)
     end
   end
 end
-
