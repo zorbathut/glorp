@@ -12,8 +12,9 @@ addHeadersFor("libjpeg")
 addHeadersFor("libpng")
 addHeadersFor("zlib")
 addHeadersFor("libfreetype")
+addHeadersFor("lua")
 
-local results = ursa.embed{"glorp/libs/frames", "Den_embed", {{cxx = ursa.token{"CXX"}, cxxflags = "-I../../../" .. builddir .. "lib_release/include " .. ursa.token{"CXXFLAGS"}, build = "../../../" .. builddir .. "lib_build/frames", prefix = "../../../" .. builddir .. "lib_release", dependencies = {headers.boost, headers.glew, headers.libjpeg, headers.libpng, headers.zlib, headers.libfreetype}}}}
+local results = ursa.embed{"glorp/libs/frames", "Den_embed", {{cxx = ursa.token{"CXX"}, cxxflags = "-I../../../" .. builddir .. "lib_release/include " .. ursa.token{"CXXFLAGS"}, build = "../../../" .. builddir .. "lib_build/frames", prefix = "../../../" .. builddir .. "lib_release", dependencies = {headers.boost, headers.glew, headers.libjpeg, headers.libpng, headers.zlib, headers.libfreetype, headers.lua}}}}
 
 headers.frames = results.headers
 libs.frames = results.lib

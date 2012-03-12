@@ -7,4 +7,6 @@ function InitComplete()
   
   print(External.Frames)
   dump(External.Frames)
+  
+  print(External.Frames.Text(External.Frames.Root))
 end
