@@ -42,7 +42,7 @@ local function testy()
   
   -- obliterate test, tbi
   local gcframe = Frames.Frame(Frames.Root)
-  --gcframe:Obliterate()
+  gcframe:Obliterate()
   
   -- mask/texture test
   local mask = Frames.Mask(Frames.Root)
