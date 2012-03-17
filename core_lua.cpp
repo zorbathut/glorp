@@ -140,8 +140,8 @@ namespace Glorp {
 
     CHECK(lua_gettop(L) == 0);
 
-    m_env->RegisterLua(L);
-    m_env->RegisterLuaFramesBuiltin(L);
+    m_env->LuaRegister(L);
+    m_env->LuaRegisterFramesBuiltin(L);
 
     CHECK(lua_gettop(L) == 0);
 
@@ -195,11 +195,11 @@ namespace Glorp {
     CHECK(lua_gettop(L) == 0);
   }
   void Core::l_shutdown() {
-    lua_close(m_L);
-    m_L = 0;
-    
     delete m_env;
     m_env = 0;
+
+    lua_close(m_L);
+    m_L = 0;
   }
 
   int Core::l_register(lua_State *L) {
