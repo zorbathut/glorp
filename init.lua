@@ -89,9 +89,7 @@ local function testy()
   
   texite:SetHeight(100)
   
-  --texite:SetScroll(-1, -1)
-  
-  table.insert(External.Event.System.Update.Begin, function () texite:SetCursor((texite:GetCursor() + 1) % #texite:GetText()) end)
+  --table.insert(External.Event.System.Update.Begin, function () texite:SetCursor((texite:GetCursor() + 1) % #texite:GetText()) end)
 end
 
 function InitComplete()
