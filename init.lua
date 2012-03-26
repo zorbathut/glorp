@@ -86,6 +86,10 @@ local function testy()
   texite:SetWordwrap(true)
   texite:SetSize(16)
   texite:SetLayer(3)
+  
+  --texite:SetScroll(-1, -1)
+  
+  table.insert(External.Event.System.Update.Begin, function () texite:SetCursor((texite:GetCursor() + 1) % #texite:GetText()) end)
 end
 
 function InitComplete()
