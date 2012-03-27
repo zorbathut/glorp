@@ -89,7 +89,14 @@ local function testy()
   
   texite:SetHeight(100)
   
-  --table.insert(External.Event.System.Update.Begin, function () texite:SetCursor((texite:GetCursor() + 1) % #texite:GetText()) end)
+  texite:SetSelection(30, 240)
+  texite:SetColorSelection(1, 1, 1, 0.5)
+  
+  --[[local v = 0
+  table.insert(External.Event.System.Update.Begin, function ()
+    texite:SetSelection(v, v + 5)
+    v = (v + 1) % #texite:GetText()
+  end)]]
 end
 
 function InitComplete()
