@@ -87,7 +87,7 @@ namespace Glorp {
       l_shutdown();
       l_init();
     } else {
-      // lua event here
+      m_env->MouseMove(event.mouse_x, event.mouse_y);
     }
   }
 
