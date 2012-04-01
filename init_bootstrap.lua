@@ -103,7 +103,7 @@ setup_env.Wrap = wrap
 
 -- kick off the rest of the init
 wrap(function ()
-  setup_env.loadfile("glorp/init.lua")()
+  assert(setup_env.loadfile("glorp/init.lua"))()
 end)
 
 return setup_env

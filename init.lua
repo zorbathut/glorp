@@ -92,11 +92,17 @@ local function testy()
   texite:SetSelection(30, 240)
   texite:SetColorSelection(1, 1, 1, 0.5)
   
-  --[[local v = 0
+  print("Attempting event")
+  texite:EventSizeAttach(function (...) _G.dump("Size!", ...) end)
+  print("Event successful")
+  
+  local v = 0
   table.insert(External.Event.System.Update.Begin, function ()
-    texite:SetSelection(v, v + 5)
-    v = (v + 1) % #texite:GetText()
-  end)]]
+    texite:SetWidth(v % 300 + 100)
+    --v = v + 1
+    --texite:SetSelection(v, v + 5)
+    --v = (v + 1) % #texite:GetText()
+  end)
 end
 
 function InitComplete()
