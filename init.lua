@@ -92,10 +92,14 @@ local function testy()
   texite:SetSelection(30, 240)
   texite:SetColorSelection(1, 1, 1, 0.5)
   
-  texite:EventSizeAttach(function (...) _G.dump("Size!", ...) end)
+  --texite:EventSizeAttach(function (...) _G.dump("Size!", ...) end)
   
-  texite:EventMouseOverAttach(function (...) _G.dump("Mover!", ...) end)
-  texite:EventMouseOutAttach(function (...) _G.dump("Mout!", ...) end)
+  local f = function (...) _G.dump("Movik!", ...) end
+  texite:EventMouseOverAttach(f)
+  texite:EventMouseOutAttach(f)
+  
+  texite:EventMouseOverDetach(f)
+  texite:EventMouseOutDetach(f)
   
   local v = 0
   table.insert(External.Event.System.Update.Begin, function ()
