@@ -92,9 +92,10 @@ local function testy()
   texite:SetSelection(30, 240)
   texite:SetColorSelection(1, 1, 1, 0.5)
   
-  print("Attempting event")
   texite:EventSizeAttach(function (...) _G.dump("Size!", ...) end)
-  print("Event successful")
+  
+  texite:EventMouseOverAttach(function (...) _G.dump("Mover!", ...) end)
+  texite:EventMouseOutAttach(function (...) _G.dump("Mout!", ...) end)
   
   local v = 0
   table.insert(External.Event.System.Update.Begin, function ()
@@ -103,6 +104,10 @@ local function testy()
     --texite:SetSelection(v, v + 5)
     --v = (v + 1) % #texite:GetText()
   end)
+  
+  for k, v in pairs(getmetatable(texite).__index) do
+    print(k, v)
+  end
 end
 
 function InitComplete()
