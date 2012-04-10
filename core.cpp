@@ -25,7 +25,7 @@ namespace Glorp {
   }
 
   /*static*/ bool Core::Prestartup() {
-    if(FLAGS_help) {
+    if (FLAGS_help) {
       map<string, string> flags = getFlagDescriptions();
       #undef printf
       printf("note: CLI help does not really exist in any meaningful enduser fashion, sorry, but that's OK 'cause there aren't really any usable enduser parameters\n");
@@ -52,9 +52,9 @@ namespace Glorp {
         m_event_system_key(LUA_NOREF),
         m_env(0)
   {
-    if(FLAGS_sound) {
+    if (FLAGS_sound) {
       m_alcDevice = alcOpenDevice(NULL);
-      if(m_alcDevice) {
+      if (m_alcDevice) {
         m_alcContext = alcCreateContext(m_alcDevice, NULL);
         CHECK(m_alcContext);
         if (m_alcContext) {
@@ -88,6 +88,29 @@ namespace Glorp {
       l_init();
     } else {
       m_env->MouseMove(event.mouse_x, event.mouse_y);
+
+      int mid = -1;
+      if (event.key == Keys::MouseLButton) {
+        mid = 0;
+      } else if(event.key == Keys::MouseRButton) {
+        mid = 1;
+      } else if(event.key == Keys::MouseMButton) {
+        mid = 2;
+      } else if(event.key == Keys::Mouse4Button) {
+        mid = 3;
+      } else if(event.key == Keys::Mouse5Button) {
+        mid = 4;
+      }
+      
+      if (mid != -1) {
+        if (event.pressed) {
+          m_env->MouseDown(mid);
+        } else {
+          m_env->MouseUp(mid);
+        }
+      }
+
+      // TODO: mousewheel
     }
   }
 
@@ -113,8 +136,8 @@ namespace Glorp {
 
       glBegin(GL_QUADS);
       int scal = 50;
-      for(int x = -5; x < 5; x++) {
-        for(int y = -2; y < 2; y++) {
+      for (int x = -5; x < 5; x++) {
+        for (int y = -2; y < 2; y++) {
           if((x + y) % 2 == 0) {
             glColor3d(1., 1., 1.);
           } else {

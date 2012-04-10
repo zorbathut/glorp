@@ -151,16 +151,17 @@ namespace Glorp {
     const Key PageDown(195);
 
     // Key constants - mouse
-    const int kFirstMouseKeyIndex = 300, kNumMouseButtons = 8;
-    const Key MouseUp(kFirstMouseKeyIndex);
-    const Key MouseRight(kFirstMouseKeyIndex + 1);
-    const Key MouseDown(kFirstMouseKeyIndex + 2);
-    const Key MouseLeft(kFirstMouseKeyIndex + 3);
-    const Key MouseWheelUp(kFirstMouseKeyIndex + 4);
-    const Key MouseWheelDown(kFirstMouseKeyIndex + 5);
-    const Key MouseLButton(kFirstMouseKeyIndex + 6);
-    const Key MouseRButton(kFirstMouseKeyIndex + 7);
-    const Key MouseMButton(kFirstMouseKeyIndex + 8);
+    const int kFirstMouseKeyIndex = 300;
+    const Key MouseWheelUp(kFirstMouseKeyIndex + 0);
+    const Key MouseWheelDown(kFirstMouseKeyIndex + 1);
+    const Key MouseLButton(kFirstMouseKeyIndex + 2);
+    const Key MouseRButton(kFirstMouseKeyIndex + 3);
+    const Key MouseMButton(kFirstMouseKeyIndex + 4);
+    const Key Mouse4Button(kFirstMouseKeyIndex + 5);
+    const Key Mouse5Button(kFirstMouseKeyIndex + 6);
+    const Key Mouse6Button(kFirstMouseKeyIndex + 7);
+    const Key Mouse7Button(kFirstMouseKeyIndex + 8);
+    const Key Mouse8Button(kFirstMouseKeyIndex + 9);
   }
 
   struct KeyEvent {

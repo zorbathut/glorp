@@ -179,12 +179,8 @@ namespace Glorp {
       m_event_system_key = l_registerEvent(L, "System.Key");
 
       // kick off the load of the actual game
-      dprintf("MURFL");
       lua_getfield(L, 1, "Wrap");
       lua_getfield(L, 1, "InitComplete");
-      dprintf("HURFL");
-      dprintf("%s %s", luaL_typename(L, -1), luaL_typename(L, -2));
-      dprintf("DURFL");
       if (lua_pcall(L, 1, 0, 0))
       {
         dprintf("Init crashed!");
@@ -192,7 +188,6 @@ namespace Glorp {
         m_luaCrashed = true;
         lua_pop(L, 1);
       }
-      dprintf("EINIT");
 
       lua_pop(L, 1);
     }

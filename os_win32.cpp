@@ -538,11 +538,43 @@ namespace Glorp {
                 KeyEvent event;
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.key = Keys::MouseRButton;
+                event.pressed = buffer[i].dwData;
                 events.push_back(event);
               } else if (buffer[i].dwOfs == DIMOFS_BUTTON2) {
                 KeyEvent event;
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.key = Keys::MouseMButton;
+                event.pressed = buffer[i].dwData;
+                events.push_back(event);
+              } else if (buffer[i].dwOfs == DIMOFS_BUTTON3) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.key = Keys::Mouse4Button;
+                event.pressed = buffer[i].dwData;
+                events.push_back(event);
+              } else if (buffer[i].dwOfs == DIMOFS_BUTTON4) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.key = Keys::Mouse5Button;
+                event.pressed = buffer[i].dwData;
+                events.push_back(event);
+              } else if (buffer[i].dwOfs == DIMOFS_BUTTON5) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.key = Keys::Mouse6Button;
+                event.pressed = buffer[i].dwData;
+                events.push_back(event);
+              } else if (buffer[i].dwOfs == DIMOFS_BUTTON6) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.key = Keys::Mouse7Button;
+                event.pressed = buffer[i].dwData;
+                events.push_back(event);
+              } else if (buffer[i].dwOfs == DIMOFS_BUTTON7) {
+                KeyEvent event;
+                event.timestamp = buffer[i].dwTimeStamp;
+                event.key = Keys::Mouse8Button;
+                event.pressed = buffer[i].dwData;
                 events.push_back(event);
               }
             }
