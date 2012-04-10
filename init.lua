@@ -94,14 +94,16 @@ local function testy()
   
   --texite:EventSizeAttach(function (...) _G.dump("Size!", ...) end)
   
-  local f = function (...) _G.dump("Movik!", ...) texite:Obliterate() end
-  texite:EventMouseOverAttach(f)
-  texite:EventMouseOutAttach(f)
+  --local f = function (...) _G.dump("Movik!", ...) texite:Obliterate() end
+  --texite:EventMouseOverAttach(f)
+  --texite:EventMouseOutAttach(f)
   
   --texite:EventMouseOverDetach(f)
   --texite:EventMouseOutDetach(f)
   
   --texite:Obliterate()
+  
+  texite:EventMouseLeftClickAttach(function (...) print("EMC", select("#", ...), ...) end)
   
   do return end
   
