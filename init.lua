@@ -103,7 +103,8 @@ local function testy()
   
   --texite:Obliterate()
   
-  texite:EventMouseLeftClickAttach(function (...) print("EMC", select("#", ...), ...) end)
+  texite:EventMouseLeftClickAttach(function (...) print("EMLC", select("#", ...), ...) end)
+  texite:EventMouseButtonClickAttach(function (...) print("EMBC", select("#", ...), ...) end)
   
   do return end
   
