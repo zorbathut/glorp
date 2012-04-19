@@ -86,6 +86,7 @@ local function testy()
   texite:SetWordwrap(true)
   texite:SetSize(16)
   texite:SetLayer(3)
+  texite:SetInteractive("select")
   
   texite:SetHeight(100)
   
