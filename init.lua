@@ -106,6 +106,8 @@ local function testy()
   
   texite:EventMouseLeftClickAttach(function (...) print("EMLC", select("#", ...), ...) end)
   texite:EventMouseButtonClickAttach(function (...) print("EMBC", select("#", ...), ...) end)
+  texite:EventMouseMoveAttach(function (...) print("EMM", select("#", ...), ...) end)
+  texite:EventMouseMoveOutsideAttach(function (...) print("EMMO", select("#", ...), ...) end)
   
   do return end
   
