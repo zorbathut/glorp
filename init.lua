@@ -93,7 +93,10 @@ local function testy()
   texite:SetSelection(30, 240)
   texite:SetColorSelection(1, 1, 1, 0.5)
   
-  --texite:EventSizeAttach(function (...) _G.dump("Size!", ...) end)
+  texite:SetFocus(true)
+  texite:EventKeyDownAttach(function (...) print("Down!", ...) end)
+  texite:EventKeyUpAttach(function (...) print("Up!", ...) end)
+  texite:EventKeyTypeAttach(function (...) print("Attach!", ...) end)
   
   --local f = function (...) _G.dump("Movik!", ...) texite:Obliterate() end
   --texite:EventMouseOverAttach(f)

@@ -173,6 +173,11 @@ namespace Glorp {
 
     Key key;
 
+    // in theory these can be derived from the key event stream, but they're *so* convenient that we're just going to carry them along for now
+    bool shift;
+    bool ctrl;
+    bool alt;
+
     enum { MOUSEPOS_UNKNOWN = -12345678 };
   };
 }

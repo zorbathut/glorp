@@ -89,24 +89,144 @@ namespace Glorp {
     } else {
       m_env->MouseMove(event.mouse_x, event.mouse_y);
 
-      int mid = -1;
-      if (event.key == Keys::MouseLButton) {
-        mid = 0;
-      } else if(event.key == Keys::MouseRButton) {
-        mid = 1;
-      } else if(event.key == Keys::MouseMButton) {
-        mid = 2;
-      } else if(event.key == Keys::Mouse4Button) {
-        mid = 3;
-      } else if(event.key == Keys::Mouse5Button) {
-        mid = 4;
+      // mouse buttons!
+      {
+        int mid = -1;
+        if (event.key == Keys::MouseLButton) {
+          mid = 0;
+        } else if(event.key == Keys::MouseRButton) {
+          mid = 1;
+        } else if(event.key == Keys::MouseMButton) {
+          mid = 2;
+        } else if(event.key == Keys::Mouse4Button) {
+          mid = 3;
+        } else if(event.key == Keys::Mouse5Button) {
+          mid = 4;
+        }
+        
+        if (mid != -1) {
+          if (event.pressed) {
+            m_env->MouseDown(mid);
+          } else {
+            m_env->MouseUp(mid);
+          }
+        }
       }
-      
-      if (mid != -1) {
-        if (event.pressed) {
-          m_env->MouseDown(mid);
-        } else {
-          m_env->MouseUp(mid);
+
+      {
+        Frames::KeyEvent kev;
+
+        if (event.key == 'a') kev.key = Frames::Key::A;
+        if (event.key == 'b') kev.key = Frames::Key::B;
+        if (event.key == 'c') kev.key = Frames::Key::C;
+        if (event.key == 'd') kev.key = Frames::Key::D;
+        if (event.key == 'e') kev.key = Frames::Key::E;
+        if (event.key == 'f') kev.key = Frames::Key::F;
+        if (event.key == 'g') kev.key = Frames::Key::G;
+        if (event.key == 'h') kev.key = Frames::Key::H;
+        if (event.key == 'i') kev.key = Frames::Key::I;
+        if (event.key == 'j') kev.key = Frames::Key::J;
+        if (event.key == 'k') kev.key = Frames::Key::K;
+        if (event.key == 'l') kev.key = Frames::Key::L;
+        if (event.key == 'm') kev.key = Frames::Key::M;
+        if (event.key == 'n') kev.key = Frames::Key::N;
+        if (event.key == 'o') kev.key = Frames::Key::O;
+        if (event.key == 'p') kev.key = Frames::Key::P;
+        if (event.key == 'q') kev.key = Frames::Key::Q;
+        if (event.key == 'r') kev.key = Frames::Key::R;
+        if (event.key == 's') kev.key = Frames::Key::S;
+        if (event.key == 't') kev.key = Frames::Key::T;
+        if (event.key == 'u') kev.key = Frames::Key::U;
+        if (event.key == 'v') kev.key = Frames::Key::V;
+        if (event.key == 'w') kev.key = Frames::Key::W;
+        if (event.key == 'x') kev.key = Frames::Key::X;
+        if (event.key == 'y') kev.key = Frames::Key::Y;
+        if (event.key == 'z') kev.key = Frames::Key::Z;
+        if (event.key == '0') kev.key = Frames::Key::Num0;
+        if (event.key == '1') kev.key = Frames::Key::Num1;
+        if (event.key == '2') kev.key = Frames::Key::Num2;
+        if (event.key == '3') kev.key = Frames::Key::Num3;
+        if (event.key == '4') kev.key = Frames::Key::Num4;
+        if (event.key == '5') kev.key = Frames::Key::Num5;
+        if (event.key == '6') kev.key = Frames::Key::Num6;
+        if (event.key == '7') kev.key = Frames::Key::Num7;
+        if (event.key == '8') kev.key = Frames::Key::Num8;
+        if (event.key == '9') kev.key = Frames::Key::Num9;
+        if (event.key == Keys::Escape) kev.key = Frames::Key::Escape;
+        if (event.key == Keys::LeftControl) kev.key = Frames::Key::ControlLeft;
+        if (event.key == Keys::LeftShift) kev.key = Frames::Key::ShiftLeft;
+        if (event.key == Keys::LeftAlt) kev.key = Frames::Key::AltLeft;
+        if (event.key == Keys::LeftGui) kev.key = Frames::Key::SystemLeft;
+        if (event.key == Keys::RightControl) kev.key = Frames::Key::ControlRight;
+        if (event.key == Keys::RightShift) kev.key = Frames::Key::ShiftRight;
+        if (event.key == Keys::RightAlt) kev.key = Frames::Key::AltRight;
+        if (event.key == Keys::RightGui) kev.key = Frames::Key::SystemRight;
+        //if (event.key == Keys::) kev.key = Frames::Key::Menu;
+        if (event.key == '[') kev.key = Frames::Key::BracketLeft;
+        if (event.key == ']') kev.key = Frames::Key::BracketRight;
+        if (event.key == ';') kev.key = Frames::Key::Semicolon;
+        if (event.key == ',') kev.key = Frames::Key::Comma;
+        if (event.key == '.') kev.key = Frames::Key::Period;
+        if (event.key == '\'') kev.key = Frames::Key::Quote;
+        if (event.key == '/') kev.key = Frames::Key::Slash;
+        if (event.key == '\\') kev.key = Frames::Key::Backslash;
+        if (event.key == '`') kev.key = Frames::Key::Tilde;
+        if (event.key == '=') kev.key = Frames::Key::Equal;
+        if (event.key == '-') kev.key = Frames::Key::Dash;
+        if (event.key == ' ') kev.key = Frames::Key::Space;
+        if (event.key == '\n') kev.key = Frames::Key::Return;
+        if (event.key == Keys::Backspace) kev.key = Frames::Key::Backspace;
+        if (event.key == '\t') kev.key = Frames::Key::Tab;
+        if (event.key == Keys::PageUp) kev.key = Frames::Key::PageUp;
+        if (event.key == Keys::PageDown) kev.key = Frames::Key::PageDown;
+        if (event.key == Keys::End) kev.key = Frames::Key::End;
+        if (event.key == Keys::Home) kev.key = Frames::Key::Home;
+        if (event.key == Keys::Insert) kev.key = Frames::Key::Insert;
+        if (event.key == Keys::Delete) kev.key = Frames::Key::Delete;
+        if (event.key == Keys::PadAdd) kev.key = Frames::Key::Add;
+        if (event.key == Keys::PadSubtract) kev.key = Frames::Key::Subtract;
+        if (event.key == Keys::PadMultiply) kev.key = Frames::Key::Multiply;
+        if (event.key == Keys::PadDivide) kev.key = Frames::Key::Divide;
+        if (event.key == Keys::Left) kev.key = Frames::Key::Left;
+        if (event.key == Keys::Right) kev.key = Frames::Key::Right;
+        if (event.key == Keys::Up) kev.key = Frames::Key::Up;
+        if (event.key == Keys::Down) kev.key = Frames::Key::Down;
+        if (event.key == Keys::Pad0) kev.key = Frames::Key::Numpad0;
+        if (event.key == Keys::Pad1) kev.key = Frames::Key::Numpad1;
+        if (event.key == Keys::Pad2) kev.key = Frames::Key::Numpad2;
+        if (event.key == Keys::Pad3) kev.key = Frames::Key::Numpad3;
+        if (event.key == Keys::Pad4) kev.key = Frames::Key::Numpad4;
+        if (event.key == Keys::Pad5) kev.key = Frames::Key::Numpad5;
+        if (event.key == Keys::Pad6) kev.key = Frames::Key::Numpad6;
+        if (event.key == Keys::Pad7) kev.key = Frames::Key::Numpad7;
+        if (event.key == Keys::Pad8) kev.key = Frames::Key::Numpad8;
+        if (event.key == Keys::Pad9) kev.key = Frames::Key::Numpad9;
+        if (event.key == Keys::F1) kev.key = Frames::Key::F1;
+        if (event.key == Keys::F2) kev.key = Frames::Key::F2;
+        if (event.key == Keys::F3) kev.key = Frames::Key::F3;
+        if (event.key == Keys::F4) kev.key = Frames::Key::F4;
+        if (event.key == Keys::F5) kev.key = Frames::Key::F5;
+        if (event.key == Keys::F6) kev.key = Frames::Key::F6;
+        if (event.key == Keys::F7) kev.key = Frames::Key::F7;
+        if (event.key == Keys::F8) kev.key = Frames::Key::F8;
+        if (event.key == Keys::F9) kev.key = Frames::Key::F9;
+        if (event.key == Keys::F10) kev.key = Frames::Key::F10;
+        if (event.key == Keys::F11) kev.key = Frames::Key::F11;
+        if (event.key == Keys::F12) kev.key = Frames::Key::F12;
+        //if (event.key == Keys::Escape) kev.key = Frames::Key::F13;
+        //if (event.key == Keys::Escape) kev.key = Frames::Key::F14;
+        //if (event.key == Keys::Escape) kev.key = Frames::Key::F15;
+        //if (event.key == Keys::Escape) kev.key = Frames::Key::Pause;
+
+        if (kev.key != Frames::Key::INVALID) {
+          kev.alt = event.alt;
+          kev.ctrl = event.ctrl;
+          kev.shift = event.shift;
+          if (event.pressed) {
+            m_env->KeyDown(kev);
+          } else {
+            m_env->KeyUp(kev);
+          }
         }
       }
 

@@ -481,6 +481,9 @@ namespace Glorp {
               event.pressed = false;
               event.mouse_x = cursor_pos.x;
               event.mouse_y = cursor_pos.y;
+              event.alt = GetKeyState(VK_MENU);
+              event.ctrl = GetKeyState(VK_CONTROL);
+              event.shift = GetKeyState(VK_SHIFT);
               events.push_back(event);
 
               s_mouse_x = cursor_pos.x;
@@ -505,6 +508,9 @@ namespace Glorp {
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.pressed = buffer[i].dwData;
                 event.key = c_keyIndex[buffer[i].dwOfs];
+                event.alt = GetKeyState(VK_MENU);
+                event.ctrl = GetKeyState(VK_CONTROL);
+                event.shift = GetKeyState(VK_SHIFT);
                 events.push_back(event);
               }
             }
@@ -533,18 +539,27 @@ namespace Glorp {
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.key = Keys::MouseLButton;
                 event.pressed = buffer[i].dwData;
+                event.alt = GetKeyState(VK_MENU);
+                event.ctrl = GetKeyState(VK_CONTROL);
+                event.shift = GetKeyState(VK_SHIFT);
                 events.push_back(event);
               } else if (buffer[i].dwOfs == DIMOFS_BUTTON1) {
                 KeyEvent event;
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.key = Keys::MouseRButton;
                 event.pressed = buffer[i].dwData;
+                event.alt = GetKeyState(VK_MENU);
+                event.ctrl = GetKeyState(VK_CONTROL);
+                event.shift = GetKeyState(VK_SHIFT);
                 events.push_back(event);
               } else if (buffer[i].dwOfs == DIMOFS_BUTTON2) {
                 KeyEvent event;
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.key = Keys::MouseMButton;
                 event.pressed = buffer[i].dwData;
+                event.alt = GetKeyState(VK_MENU);
+                event.ctrl = GetKeyState(VK_CONTROL);
+                event.shift = GetKeyState(VK_SHIFT);
                 events.push_back(event);
               } else if (buffer[i].dwOfs == DIMOFS_BUTTON3) {
                 KeyEvent event;
@@ -557,24 +572,36 @@ namespace Glorp {
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.key = Keys::Mouse5Button;
                 event.pressed = buffer[i].dwData;
+                event.alt = GetKeyState(VK_MENU);
+                event.ctrl = GetKeyState(VK_CONTROL);
+                event.shift = GetKeyState(VK_SHIFT);
                 events.push_back(event);
               } else if (buffer[i].dwOfs == DIMOFS_BUTTON5) {
                 KeyEvent event;
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.key = Keys::Mouse6Button;
                 event.pressed = buffer[i].dwData;
+                event.alt = GetKeyState(VK_MENU);
+                event.ctrl = GetKeyState(VK_CONTROL);
+                event.shift = GetKeyState(VK_SHIFT);
                 events.push_back(event);
               } else if (buffer[i].dwOfs == DIMOFS_BUTTON6) {
                 KeyEvent event;
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.key = Keys::Mouse7Button;
                 event.pressed = buffer[i].dwData;
+                event.alt = GetKeyState(VK_MENU);
+                event.ctrl = GetKeyState(VK_CONTROL);
+                event.shift = GetKeyState(VK_SHIFT);
                 events.push_back(event);
               } else if (buffer[i].dwOfs == DIMOFS_BUTTON7) {
                 KeyEvent event;
                 event.timestamp = buffer[i].dwTimeStamp;
                 event.key = Keys::Mouse8Button;
                 event.pressed = buffer[i].dwData;
+                event.alt = GetKeyState(VK_MENU);
+                event.ctrl = GetKeyState(VK_CONTROL);
+                event.shift = GetKeyState(VK_SHIFT);
                 events.push_back(event);
               }
             }
