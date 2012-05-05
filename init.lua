@@ -96,7 +96,7 @@ local function testy()
   texite:SetFocus(true)
   texite:EventKeyDownAttach(function (...) print("Down!", ...) end)
   texite:EventKeyUpAttach(function (...) print("Up!", ...) end)
-  texite:EventKeyTypeAttach(function (...) print("Attach!", ...) end)
+  texite:EventKeyTypeAttach(function (...) print("Type!", ...) end)
   
   --local f = function (...) _G.dump("Movik!", ...) texite:Obliterate() end
   --texite:EventMouseOverAttach(f)

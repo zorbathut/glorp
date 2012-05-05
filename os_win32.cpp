@@ -6,8 +6,8 @@
 #include "version.h"
 #include "init.h"
 
-#define _WIN32_IE 0x0500 // ffff
-#define DIRECTINPUT_VERSION 0x0800
+#define _WIN32_IE 0x0501
+#define _WIN32_WINNT 0x0501
 
 #include <windows.h>
 #include <shlobj.h>
@@ -15,7 +15,6 @@
 #include <excpt.h>
 #include <imagehlp.h>
 #include <direct.h>
-#include <dinput.h>
 
 #include <algorithm>
 
@@ -31,74 +30,50 @@ namespace Glorp {
   static bool s_focused = false;
   static bool s_shutdown = false;
 
-  static int s_mouse_x = 0;
-  static int s_mouse_y = 0;
-
   static HWND s_window = 0;
 
   static int s_width = 0;
   static int s_height = 0;
 
-  static IDirectInput8A *s_di;
-  static IDirectInputDevice8 *s_di_keyboard;
-  static IDirectInputDevice8 *s_di_mouse;
+  static Core *s_core = 0;
 
-  const int c_di_bufferSize = 64;
   const int c_bpp = 32;
   const int c_depth = 16;
   
-  const Key c_keyIndex[] = {0,
-    27, '1', '2', '3', '4',
-    '5', '6', '7', '8', '9',
-    '0', '-', '=', 8, 9,
-    'q', 'w', 'e', 'r', 't',
-    'y', 'u', 'i', 'o', 'p',
-    '[', ']', 13, Keys::LeftControl, 'a',
-    's', 'd', 'f', 'g', 'h',
-    'j', 'k', 'l', ';', '\'',
-    '`', Keys::LeftShift, '\\', 'z', 'x',
-    'c', 'v', 'b', 'n', 'm',                                 // 50
-    ',', '.', '/', Keys::RightShift, Keys::PadMultiply,
-    Keys::LeftAlt, ' ', Keys::CapsLock, Keys::F1, Keys::F2,
-    Keys::F3, Keys::F4, Keys::F5, Keys::F6, Keys::F7,
-    Keys::F8, Keys::F9, Keys::F10, Keys::NumLock, Keys::ScrollLock,
-    Keys::Pad7, Keys::Pad8, Keys::Pad9, Keys::PadSubtract, Keys::Pad4,
-    Keys::Pad5, Keys::Pad6, Keys::PadAdd, Keys::Pad1, Keys::Pad2,
-    Keys::Pad3, Keys::Pad0, Keys::PadDecimal, -1, -1,
-    -1, Keys::F11, Keys::F12, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,                                      // 100
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,                                      // 150
-    -1, -1, -1, -1, -1,
-    Keys::PadEnter, Keys::RightControl, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    Keys::PadDivide, -1, Keys::PrintScreen, Keys::RightAlt, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, Keys::Pause, -1, Keys::Home, Keys::Up,                     // 200
-    Keys::PageUp, -1, Keys::Left, -1, Keys::Right,
-    -1, Keys::End, Keys::Down, Keys::PageDown, Keys::Insert,
-    Keys::Delete, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,                                      // 250
-    -1, -1, -1, -1, -1};
+  const Key c_keyIndex[] = {
+    -1, Keys::MouseLButton, Keys::MouseRButton, -1, Keys::MouseMButton, Keys::Mouse4Button, Keys::Mouse5Button, -1, // 0x00 - 0x07
+    Keys::Backspace, Keys::Tab, -1, -1, -1, Keys::Enter, -1, -1, // 0x08 - 0x0f
+    -1, -1, -1, Keys::Pause, Keys::CapsLock, -1, -1, -1, -1, -1, // 0x10 - 0x17
+    -1, -1, -1, -1, Keys::Escape, -1, -1, -1, -1, // 0x18 - 0x1f
+    ' ', Keys::PageUp, Keys::PageDown, Keys::End, Keys::Home, Keys::Left, Keys::Up, Keys::Right, // 0x20 - 0x27
+    Keys::Down, -1, -1, -1, Keys::PrintScreen, Keys::Insert, Keys::Delete, -1, // 0x28 - 0x2f
+    '0', '1', '2', '3', '4', '5', '6', '7', // 0x30 - 0x37
+    '8', '9', -1, -1, -1, -1, -1, -1, // 0x38 - 0x3f
+    -1, 'a', 'b', 'c', 'd', 'e', 'f', 'g', // 0x40 - 0x47
+    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', // 0x48 - 0x4f
+    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', // 0x50 - 0x57
+    'x', 'y', 'z', Keys::LeftGui, Keys::RightGui, -1, -1, -1, // 0x58 - 0x5f
+    Keys::Pad0, Keys::Pad2, Keys::Pad3, Keys::Pad4, Keys::Pad5, Keys::Pad6, Keys::Pad7,  // 0x60 - 0x67
+    Keys::Pad8, Keys::Pad9, Keys::PadMultiply, Keys::PadAdd, -1, Keys::PadSubtract, Keys::PadDecimal, Keys::PadDivide, // 0x68 - 0x6f
+    Keys::F1, Keys::F2, Keys::F3, Keys::F4, Keys::F5, Keys::F6, Keys::F7, Keys::F8, // 0x70 - 0x77
+    Keys::F9, Keys::F10, Keys::F11, Keys::F12, Keys::F13, Keys::F14, Keys::F15, Keys::F16, // 0x78 - 0x7f
+    Keys::F17, Keys::F18, Keys::F19, Keys::F20, Keys::F21, Keys::F22, Keys::F23, Keys::F24, // 0x80 - 0x87
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0x88 - 0x8f
+    Keys::NumLock, Keys::ScrollLock, -1, -1, -1, -1, -1, -1, // 0x90 - 0x97
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0x98 - 0x9f
+    Keys::LeftShift, Keys::RightShift, Keys::LeftControl, Keys::RightControl, Keys::LeftMenu, Keys::RightMenu, -1, -1, // 0xa0 - 0xa7
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0xa8 - 0xaf
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0xb0 - 0xb7
+    -1, -1, ';', '=', ',', '-', '.', '/', // 0xb8 - 0xbf
+    '`', -1, -1, -1, -1, -1, -1, -1, // 0xc0 - 0xc7
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0xc8 - 0xcf
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0xd0 - 0xd7
+    -1, -1, -1, '[', '\\', ']', '\'', -1, // 0xd8 - 0xdf
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0xe0 - 0xe7
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0xe8 - 0xef
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0xf0 - 0xf7
+    -1, -1, -1, -1, -1, -1, -1, -1, // 0xf8 - 0xff
+  };
 
   void outputDebug(const string &str) {
     OutputDebugString(str.c_str());
@@ -207,6 +182,19 @@ namespace Glorp {
   string directoryDelimiter() {
     return "\\";
   }
+
+  KeyEvent CreateBasicEvent() {
+    KeyEvent rv;
+    POINT mouse;
+    GetCursorPos(&mouse);
+    ScreenToClient(s_window, &mouse);
+    rv.mouse_x = mouse.x;
+    rv.mouse_y = mouse.y;
+    rv.shift = GetKeyState(VK_SHIFT);
+    rv.ctrl = GetKeyState(VK_CONTROL);
+    rv.alt = GetKeyState(VK_MENU);
+    return rv;
+  }
   
   // Handles window messages that arrive by any means, message queue or by direct notification.
   // However, key events are ignored, as input is handled by DirectInput in WindowThink().
@@ -268,15 +256,126 @@ namespace Glorp {
         if (!s_focused)
           UnlockCursorNow();*/
         break;
+      case WM_KEYDOWN:
+      case WM_SYSKEYDOWN:
+        if (s_core && wparam > 0 && wparam < 256) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = true;
+          event.key = c_keyIndex[wparam];
+          s_core->Event(event);
+        }
+        break;
+      case WM_KEYUP:
+      case WM_SYSKEYUP:
+        if (s_core && wparam > 0 && wparam < 256) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = false;
+          event.key = c_keyIndex[wparam];
+          s_core->Event(event);
+        }
+        break;
+      case WM_UNICHAR:
+        if (s_core && wparam != UNICODE_NOCHAR) {
+          KeyEvent event = CreateBasicEvent();
+          event.typed += (char)wparam; // TODO: utf8ize
+          s_core->Event(event);
+        }
+        break;
+      case WM_CHAR:
+        if (s_core) {
+          KeyEvent event = CreateBasicEvent();
+          event.typed += (char)wparam; // TODO: utf8ize
+          s_core->Event(event);
+        }
+        break;
+      case WM_MOUSEMOVE:
+        if (s_core) {
+          s_core->Event(CreateBasicEvent()); // this automatically wraps up the current mouse position
+        }
+        break;
+      case WM_LBUTTONDOWN:
+        if (s_core) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = true;
+          event.key = Keys::MouseLButton;
+          s_core->Event(event);
+        }
+        break;
+      case WM_LBUTTONUP:
+        if (s_core) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = false;
+          event.key = Keys::MouseLButton;
+          s_core->Event(event);
+        }
+        break;
+      case WM_MBUTTONDOWN:
+        if (s_core) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = true;
+          event.key = Keys::MouseMButton;
+          s_core->Event(event);
+        }
+        break;
+      case WM_MBUTTONUP:
+        if (s_core) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = false;
+          event.key = Keys::MouseMButton;
+          s_core->Event(event);
+        }
+        break;
+      case WM_RBUTTONDOWN:
+        if (s_core) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = true;
+          event.key = Keys::MouseRButton;
+          s_core->Event(event);
+        }
+        break;
+      case WM_RBUTTONUP:
+        if (s_core) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = false;
+          event.key = Keys::MouseRButton;
+          s_core->Event(event);
+        }
+        break;
+      case WM_XBUTTONDOWN:
+        if (s_core) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = true;
+          if ((wparam >> 16) == XBUTTON1)
+          {
+            event.key = Keys::Mouse4Button;
+          }
+          else if ((wparam >> 16) == XBUTTON2)
+          {
+            event.key = Keys::Mouse5Button;
+          }
+          s_core->Event(event);
+        }
+        break;
+      case WM_XBUTTONUP:
+        if (s_core) {
+          KeyEvent event = CreateBasicEvent();
+          event.pressed = false;
+          if ((wparam >> 16) == XBUTTON1)
+          {
+            event.key = Keys::Mouse4Button;
+          }
+          else if ((wparam >> 16) == XBUTTON2)
+          {
+            event.key = Keys::Mouse5Button;
+          }
+          s_core->Event(event);
+        }
+        break;
     }
 
     // Pass on remaining messages to the default handler
     
     return DefWindowProcW(window_handle, message, wparam, lparam);
-  }
-
-  bool EventSort(const KeyEvent &lhs, const KeyEvent &rhs) {
-    return lhs.timestamp < rhs.timestamp;
   }
 
   int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -424,32 +523,9 @@ namespace Glorp {
     SetForegroundWindow(s_window);
     SetFocus(s_window);
 
-    // Attempt to initialize DirectInput.
-    // Settings: Non-exclusive (be friendly with other programs), foreground (only accept input
-    //                          events if we are currently in the foreground).
-    if (FAILED(DirectInput8Create(GetModuleHandle(0), DIRECTINPUT_VERSION, IID_IDirectInput8A, (void**)&s_di, 0))) {
-      CHECK(false);
-      return 0;
-    }
-    s_di->CreateDevice(GUID_SysKeyboard, &s_di_keyboard, NULL);
-    s_di_keyboard->SetCooperativeLevel(s_window, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
-    s_di_keyboard->SetDataFormat(&c_dfDIKeyboard);
-    s_di->CreateDevice(GUID_SysMouse, &s_di_mouse, NULL);
-    s_di_mouse->SetCooperativeLevel(s_window, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
-    s_di_mouse->SetDataFormat(&c_dfDIMouse2);
-
-    // Set the DirectInput buffer size - this is the number of events it can store at a single time
-    DIPROPDWORD prop_buffer_size;
-    prop_buffer_size.diph.dwSize = sizeof(DIPROPDWORD);
-    prop_buffer_size.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    prop_buffer_size.diph.dwObj = 0;
-    prop_buffer_size.diph.dwHow = DIPH_DEVICE;
-    prop_buffer_size.dwData = c_di_bufferSize;
-    s_di_keyboard->SetProperty(DIPROP_BUFFERSIZE, &prop_buffer_size.diph);
-    s_di_mouse->SetProperty(DIPROP_BUFFERSIZE, &prop_buffer_size.diph);
-
     {
       Core core;
+      s_core = &core;
 
       // MAIN LOOP HERE
       while (true) {
@@ -457,176 +533,6 @@ namespace Glorp {
         while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE)) {
           TranslateMessage(&message);
           DispatchMessage(&message);
-        }
-
-        if (s_shutdown) {
-          break;
-        }
-
-        {
-          vector<KeyEvent> events;
-
-          // Hack: Insert the mouse position with GetCursorPos().
-          // If we want to be super-accurate then we need to do some crazy synching work with GetCursorPos() and DX deltas
-          // Right now, though, we really don't care about that.
-          {
-            POINT cursor_pos;
-            GetCursorPos(&cursor_pos);
-            ScreenToClient(s_window, &cursor_pos);
-
-            if (s_mouse_x != cursor_pos.x || s_mouse_y != cursor_pos.y)
-            {
-              KeyEvent event;
-              event.timestamp = 0;  // this is somewhat buggy
-              event.pressed = false;
-              event.mouse_x = cursor_pos.x;
-              event.mouse_y = cursor_pos.y;
-              event.alt = GetKeyState(VK_MENU);
-              event.ctrl = GetKeyState(VK_CONTROL);
-              event.shift = GetKeyState(VK_SHIFT);
-              events.push_back(event);
-
-              s_mouse_x = cursor_pos.x;
-              s_mouse_y = cursor_pos.y;
-            }
-          }
-
-          DIDEVICEOBJECTDATA buffer[c_di_bufferSize];
-          unsigned long num_items = 0;
-          HRESULT hr = 0;
-
-          num_items = c_di_bufferSize;
-          hr = s_di_keyboard->GetDeviceData(sizeof(buffer[0]), buffer, &num_items, 0);
-          if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED) {
-            s_di_keyboard->Acquire();
-            hr = s_di_keyboard->GetDeviceData(sizeof(buffer[0]), buffer, &num_items, 0);
-          }
-          if (!FAILED(hr)) {
-            for (int i = 0; i < (int)num_items; i++) {
-              if (buffer[i].dwOfs < 255 && c_keyIndex[buffer[i].dwOfs] != -1) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.pressed = buffer[i].dwData;
-                event.key = c_keyIndex[buffer[i].dwOfs];
-                event.alt = GetKeyState(VK_MENU);
-                event.ctrl = GetKeyState(VK_CONTROL);
-                event.shift = GetKeyState(VK_SHIFT);
-                events.push_back(event);
-              }
-            }
-          }
-
-          num_items = c_di_bufferSize;
-          hr = s_di_mouse->GetDeviceData(sizeof(buffer[0]), buffer, &num_items, 0);
-          if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED) {
-            s_di_mouse->Acquire();
-            hr = s_di_mouse->GetDeviceData(sizeof(buffer[0]), buffer, &num_items, 0);
-          }
-          if (!FAILED(hr)) {
-            for (int i = 0; i < (int)num_items; i++) {
-              /*if (buffer[i].dwOfs == DIMOFS_X) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.mouse_x = buffer[i].dwData;
-                events.push_back(event);
-              } else if (buffer[i].dwOfs == DIMOFS_Y) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.mouse_y = buffer[i].dwData;
-                events.push_back(event);
-              } else*/ if (buffer[i].dwOfs == DIMOFS_BUTTON0) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.key = Keys::MouseLButton;
-                event.pressed = buffer[i].dwData;
-                event.alt = GetKeyState(VK_MENU);
-                event.ctrl = GetKeyState(VK_CONTROL);
-                event.shift = GetKeyState(VK_SHIFT);
-                events.push_back(event);
-              } else if (buffer[i].dwOfs == DIMOFS_BUTTON1) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.key = Keys::MouseRButton;
-                event.pressed = buffer[i].dwData;
-                event.alt = GetKeyState(VK_MENU);
-                event.ctrl = GetKeyState(VK_CONTROL);
-                event.shift = GetKeyState(VK_SHIFT);
-                events.push_back(event);
-              } else if (buffer[i].dwOfs == DIMOFS_BUTTON2) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.key = Keys::MouseMButton;
-                event.pressed = buffer[i].dwData;
-                event.alt = GetKeyState(VK_MENU);
-                event.ctrl = GetKeyState(VK_CONTROL);
-                event.shift = GetKeyState(VK_SHIFT);
-                events.push_back(event);
-              } else if (buffer[i].dwOfs == DIMOFS_BUTTON3) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.key = Keys::Mouse4Button;
-                event.pressed = buffer[i].dwData;
-                events.push_back(event);
-              } else if (buffer[i].dwOfs == DIMOFS_BUTTON4) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.key = Keys::Mouse5Button;
-                event.pressed = buffer[i].dwData;
-                event.alt = GetKeyState(VK_MENU);
-                event.ctrl = GetKeyState(VK_CONTROL);
-                event.shift = GetKeyState(VK_SHIFT);
-                events.push_back(event);
-              } else if (buffer[i].dwOfs == DIMOFS_BUTTON5) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.key = Keys::Mouse6Button;
-                event.pressed = buffer[i].dwData;
-                event.alt = GetKeyState(VK_MENU);
-                event.ctrl = GetKeyState(VK_CONTROL);
-                event.shift = GetKeyState(VK_SHIFT);
-                events.push_back(event);
-              } else if (buffer[i].dwOfs == DIMOFS_BUTTON6) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.key = Keys::Mouse7Button;
-                event.pressed = buffer[i].dwData;
-                event.alt = GetKeyState(VK_MENU);
-                event.ctrl = GetKeyState(VK_CONTROL);
-                event.shift = GetKeyState(VK_SHIFT);
-                events.push_back(event);
-              } else if (buffer[i].dwOfs == DIMOFS_BUTTON7) {
-                KeyEvent event;
-                event.timestamp = buffer[i].dwTimeStamp;
-                event.key = Keys::Mouse8Button;
-                event.pressed = buffer[i].dwData;
-                event.alt = GetKeyState(VK_MENU);
-                event.ctrl = GetKeyState(VK_CONTROL);
-                event.shift = GetKeyState(VK_SHIFT);
-                events.push_back(event);
-              }
-            }
-          }
-
-          // Okay, we've got our events. Next, sort:
-          sort(events.begin(), events.end(), EventSort);
-
-          // And now we want to go through and flesh out the mouse positions
-          for (int i = 0; i < events.size(); ++i) {
-            if (events[i].mouse_x != KeyEvent::MOUSEPOS_UNKNOWN)
-              s_mouse_x = events[i].mouse_x;
-            if (events[i].mouse_y != KeyEvent::MOUSEPOS_UNKNOWN)
-              s_mouse_y = events[i].mouse_y;
-
-            events[i].mouse_x = s_mouse_x;
-            events[i].mouse_y = s_mouse_y;
-          }
-
-          // Finally, start plowing events into the core
-          for (int i = 0; i < events.size(); ++i) {
-            if (i + 1 != events.size() && events[i].timestamp == events[i + 1].timestamp && events[i].key == Keys::NoKey && events[i + 1].key == Keys::NoKey)
-              continue; // this is a first of a mouse event pair, ignore it
-            core.Event(events[i]);
-          }
         }
 
         if (s_shutdown) {
@@ -646,19 +552,14 @@ namespace Glorp {
           CHECK(0);
         }
       }
+
+      s_core = NULL;
     }
     
-    if (s_fullscreen && !s_minimized)
+    if (s_fullscreen && !s_minimized) {
       ChangeDisplaySettings(NULL, 0);
+    }
 
-    if (s_di_keyboard) {
-      s_di_keyboard->Unacquire();
-      s_di_keyboard->Release();
-    }
-    if (s_di_mouse) {
-      s_di_mouse->Unacquire();
-      s_di_mouse->Release();
-    }
     if (glContext) {
       wglDeleteContext(glContext);
     }

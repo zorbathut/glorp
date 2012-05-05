@@ -104,51 +104,65 @@ namespace Glorp {
     const Key F9(137);
     const Key F10(138);
     const Key F11(139);
-    const Key F12(140);
+    const Key F12(141);
+    const Key F13(142);
+    const Key F14(143);
+    const Key F15(144);
+    const Key F16(145);
+    const Key F17(146);
+    const Key F18(147);
+    const Key F19(148);
+    const Key F20(149);
+    const Key F21(150);
+    const Key F22(151);
+    const Key F23(152);
+    const Key F24(153);
 
-    const Key CapsLock(150);
-    const Key NumLock(151);
-    const Key ScrollLock(152);
-    const Key PrintScreen(153);
-    const Key Pause(154);
-    const Key LeftShift(155);
-    const Key RightShift(156);
-    const Key LeftControl(157);
-    const Key RightControl(158);
-    const Key LeftAlt(159);
-    const Key RightAlt(160);
-    const Key LeftGui(161);
-    const Key RightGui(162);
+    const Key CapsLock(160);
+    const Key NumLock(161);
+    const Key ScrollLock(162);
+    const Key PrintScreen(163);
+    const Key Pause(164);
+    const Key LeftShift(165);
+    const Key RightShift(166);
+    const Key LeftControl(167);
+    const Key RightControl(168);
+    const Key LeftAlt(169);
+    const Key RightAlt(170);
+    const Key LeftGui(171);
+    const Key RightGui(172);
+    const Key LeftMenu(173);
+    const Key RightMenu(174);
 
-    const Key Right(166);
-    const Key Left(167);
-    const Key Up(168);
-    const Key Down(169);
+    const Key Right(176);
+    const Key Left(177);
+    const Key Up(178);
+    const Key Down(179);
 
-    const Key PadDivide(170);
-    const Key PadMultiply(171);
-    const Key PadSubtract(172);
-    const Key PadAdd(173);
-    const Key PadEnter(174);
-    const Key PadDecimal(175);
-    const Key PadEquals(176);
-    const Key Pad0(177);
-    const Key Pad1(178);
-    const Key Pad2(179);
-    const Key Pad3(180);
-    const Key Pad4(181);
-    const Key Pad5(182);
-    const Key Pad6(183);
-    const Key Pad7(184);
-    const Key Pad8(185);
-    const Key Pad9(186);
+    const Key PadDivide(180);
+    const Key PadMultiply(181);
+    const Key PadSubtract(182);
+    const Key PadAdd(183);
+    const Key PadEnter(184);
+    const Key PadDecimal(185);
+    const Key PadEquals(186);
+    const Key Pad0(187);
+    const Key Pad1(188);
+    const Key Pad2(189);
+    const Key Pad3(190);
+    const Key Pad4(191);
+    const Key Pad5(192);
+    const Key Pad6(193);
+    const Key Pad7(194);
+    const Key Pad8(195);
+    const Key Pad9(196);
 
-    const Key Delete(190);
-    const Key Home(191);
-    const Key Insert(192);
-    const Key End(193);
-    const Key PageUp(194);
-    const Key PageDown(195);
+    const Key Delete(200);
+    const Key Home(201);
+    const Key Insert(202);
+    const Key End(203);
+    const Key PageUp(204);
+    const Key PageDown(205);
 
     // Key constants - mouse
     const int kFirstMouseKeyIndex = 300;
@@ -165,13 +179,14 @@ namespace Glorp {
   }
 
   struct KeyEvent {
-    KeyEvent() : timestamp(0), mouse_x(MOUSEPOS_UNKNOWN), mouse_y(MOUSEPOS_UNKNOWN), pressed(false) { };
+    KeyEvent() : mouse_x(MOUSEPOS_UNKNOWN), mouse_y(MOUSEPOS_UNKNOWN), pressed(false) { };
 
-    int timestamp;
     int mouse_x, mouse_y;
     bool pressed;
 
     Key key;
+
+    std::string typed;
 
     // in theory these can be derived from the key event stream, but they're *so* convenient that we're just going to carry them along for now
     bool shift;

@@ -230,6 +230,10 @@ namespace Glorp {
         }
       }
 
+      if (!event.typed.empty()) {
+        m_env->KeyType(event.typed);
+      }
+
       // TODO: mousewheel
     }
   }
