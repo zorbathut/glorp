@@ -83,7 +83,7 @@ namespace Glorp {
   }
 
   void Core::Event(const KeyEvent &event) {
-    if (FLAGS_development && event.key == Keys::F12 && event.pressed) {
+    if (FLAGS_development && event.key == Keys::F12 && event.pressed == KeyEvent::DOWN) {
       l_shutdown();
       l_init();
     } else {
@@ -105,7 +105,7 @@ namespace Glorp {
         }
         
         if (mid != -1) {
-          if (event.pressed) {
+          if (event.pressed == KeyEvent::DOWN) {
             m_env->MouseDown(mid);
           } else {
             m_env->MouseUp(mid);
@@ -222,8 +222,10 @@ namespace Glorp {
           kev.alt = event.alt;
           kev.ctrl = event.ctrl;
           kev.shift = event.shift;
-          if (event.pressed) {
+          if (event.pressed == KeyEvent::DOWN) {
             m_env->KeyDown(kev);
+          } else if (event.pressed == KeyEvent::REPEAT) {
+            m_env->KeyRepeat(kev);
           } else {
             m_env->KeyUp(kev);
           }

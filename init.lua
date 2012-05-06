@@ -97,6 +97,7 @@ local function testy()
   texite:EventKeyDownAttach(function (...) print("Down!", ...) end)
   texite:EventKeyUpAttach(function (...) print("Up!", ...) end)
   texite:EventKeyTypeAttach(function (...) print("Type!", ...) end)
+  texite:EventKeyRepeatAttach(function (...) print("Repeat!", ...) end)
   
   --local f = function (...) _G.dump("Movik!", ...) texite:Obliterate() end
   --texite:EventMouseOverAttach(f)

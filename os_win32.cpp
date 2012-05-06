@@ -198,54 +198,54 @@ namespace Glorp {
   
   // Handles window messages that arrive by any means, message queue or by direct notification.
   // However, key events are ignored, as input is handled by DirectInput in WindowThink().
-  LRESULT CALLBACK HandleMessage(HWND window_handle, UINT message, WPARAM wparam, LPARAM lparam) {
+  LRESULT CALLBACK HandleMessage(HWND window_handle, UINT message, WPARAM wParam, LPARAM lParam) {
     // Extract information from the parameters
-    unsigned short wparam1 = LOWORD(wparam)/*, wparam2 = HIWORD(wparam)*/;
-    unsigned short lparam1 = LOWORD(lparam), lparam2 = HIWORD(lparam);
+    unsigned short wParam1 = LOWORD(wParam)/*, wParam2 = HIWORD(wParam)*/;
+    unsigned short lParam1 = LOWORD(lParam), lParam2 = HIWORD(lParam);
 
   	// Handle each message
     switch (message) {
       case WM_SYSCOMMAND:
         // Prevent screen saver and monitor power saving
-        if (wparam == SC_SCREENSAVE || wparam == SC_MONITORPOWER)
+        if (wParam == SC_SCREENSAVE || wParam == SC_MONITORPOWER)
           return 0;
         // Prevent accidental pausing by pushing F10 or what not
-        if (wparam == SC_MOUSEMENU || wparam == SC_KEYMENU)
+        if (wParam == SC_MOUSEMENU || wParam == SC_KEYMENU)
           return 0;
         break;
       case WM_CLOSE:
         s_shutdown = true;
         return 0;
       case WM_MOVE:
-        //os_window->x = (signed short)lparam1;
-        //os_window->y = (signed short)lparam2;
+        //os_window->x = (signed short)lParam1;
+        //os_window->y = (signed short)lParam2;
         break;
       case WM_SIZE:
         // Set the resolution if a full-screen window was alt-tabbed into.
-        if (s_minimized != (wparam == SIZE_MINIMIZED) && s_fullscreen) {
-          if (wparam == SIZE_MINIMIZED) {
+        if (s_minimized != (wParam == SIZE_MINIMIZED) && s_fullscreen) {
+          if (wParam == SIZE_MINIMIZED) {
             ChangeDisplaySettings(0, 0);
           } else {
             DEVMODE screen_settings;
   	        screen_settings.dmSize = sizeof(screen_settings);
             screen_settings.dmDriverExtra = 0;
-  	        screen_settings.dmPelsWidth = lparam1;
-  	        screen_settings.dmPelsHeight = lparam2;
+  	        screen_settings.dmPelsWidth = lParam1;
+  	        screen_settings.dmPelsHeight = lParam2;
             screen_settings.dmBitsPerPel = c_bpp;
             screen_settings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
             ChangeDisplaySettings(&screen_settings, CDS_FULLSCREEN);
           }
         }
-        s_minimized = (wparam == SIZE_MINIMIZED);
+        s_minimized = (wParam == SIZE_MINIMIZED);
         if (!s_minimized) {
-          s_width = lparam1;
-          s_height = lparam2;
+          s_width = lParam1;
+          s_height = lParam2;
         }
         break;
       case WM_SIZING:
         break;
   	  case WM_ACTIVATE:
-        s_focused = (wparam1 == WA_ACTIVE || wparam1 == WA_CLICKACTIVE);
+        s_focused = (wParam1 == WA_ACTIVE || wParam1 == WA_CLICKACTIVE);
         // If the user alt-tabs out of a fullscreen window, the window will keep drawing and will
         // remain in full-screen mode. Here, we minimize the window, which fixes the drawing problem,
         // and then the WM_SIZE event fixes the full-screen problem.
@@ -258,33 +258,38 @@ namespace Glorp {
         break;
       case WM_KEYDOWN:
       case WM_SYSKEYDOWN:
-        if (s_core && wparam > 0 && wparam < 256) {
+        if (s_core && wParam > 0 && wParam < 256) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = true;
-          event.key = c_keyIndex[wparam];
+          if (lParam & (1 << 30)) {
+            event.pressed = KeyEvent::REPEAT;
+          } else {
+            event.pressed = KeyEvent::DOWN;
+          }
+          event.key = c_keyIndex[wParam];
           s_core->Event(event);
+          // TODO: support built-in key repeat, maybe?
         }
         break;
       case WM_KEYUP:
       case WM_SYSKEYUP:
-        if (s_core && wparam > 0 && wparam < 256) {
+        if (s_core && wParam > 0 && wParam < 256) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = false;
-          event.key = c_keyIndex[wparam];
+          event.pressed = KeyEvent::UP;
+          event.key = c_keyIndex[wParam];
           s_core->Event(event);
         }
         break;
       case WM_UNICHAR:
-        if (s_core && wparam != UNICODE_NOCHAR) {
+        if (s_core && wParam != UNICODE_NOCHAR) {
           KeyEvent event = CreateBasicEvent();
-          event.typed += (char)wparam; // TODO: utf8ize
+          event.typed += (char)wParam; // TODO: utf8ize
           s_core->Event(event);
         }
         break;
       case WM_CHAR:
         if (s_core) {
           KeyEvent event = CreateBasicEvent();
-          event.typed += (char)wparam; // TODO: utf8ize
+          event.typed += (char)wParam; // TODO: utf8ize
           s_core->Event(event);
         }
         break;
@@ -296,7 +301,7 @@ namespace Glorp {
       case WM_LBUTTONDOWN:
         if (s_core) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = true;
+          event.pressed = KeyEvent::DOWN;
           event.key = Keys::MouseLButton;
           s_core->Event(event);
         }
@@ -304,7 +309,7 @@ namespace Glorp {
       case WM_LBUTTONUP:
         if (s_core) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = false;
+          event.pressed = KeyEvent::UP;
           event.key = Keys::MouseLButton;
           s_core->Event(event);
         }
@@ -312,7 +317,7 @@ namespace Glorp {
       case WM_MBUTTONDOWN:
         if (s_core) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = true;
+          event.pressed = KeyEvent::DOWN;
           event.key = Keys::MouseMButton;
           s_core->Event(event);
         }
@@ -320,7 +325,7 @@ namespace Glorp {
       case WM_MBUTTONUP:
         if (s_core) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = false;
+          event.pressed = KeyEvent::UP;
           event.key = Keys::MouseMButton;
           s_core->Event(event);
         }
@@ -328,7 +333,7 @@ namespace Glorp {
       case WM_RBUTTONDOWN:
         if (s_core) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = true;
+          event.pressed = KeyEvent::DOWN;
           event.key = Keys::MouseRButton;
           s_core->Event(event);
         }
@@ -336,7 +341,7 @@ namespace Glorp {
       case WM_RBUTTONUP:
         if (s_core) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = false;
+          event.pressed = KeyEvent::UP;
           event.key = Keys::MouseRButton;
           s_core->Event(event);
         }
@@ -344,12 +349,12 @@ namespace Glorp {
       case WM_XBUTTONDOWN:
         if (s_core) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = true;
-          if ((wparam >> 16) == XBUTTON1)
+          event.pressed = KeyEvent::DOWN;
+          if ((wParam >> 16) == XBUTTON1)
           {
             event.key = Keys::Mouse4Button;
           }
-          else if ((wparam >> 16) == XBUTTON2)
+          else if ((wParam >> 16) == XBUTTON2)
           {
             event.key = Keys::Mouse5Button;
           }
@@ -359,12 +364,12 @@ namespace Glorp {
       case WM_XBUTTONUP:
         if (s_core) {
           KeyEvent event = CreateBasicEvent();
-          event.pressed = false;
-          if ((wparam >> 16) == XBUTTON1)
+          event.pressed = KeyEvent::UP;
+          if ((wParam >> 16) == XBUTTON1)
           {
             event.key = Keys::Mouse4Button;
           }
-          else if ((wparam >> 16) == XBUTTON2)
+          else if ((wParam >> 16) == XBUTTON2)
           {
             event.key = Keys::Mouse5Button;
           }
@@ -375,7 +380,7 @@ namespace Glorp {
 
     // Pass on remaining messages to the default handler
     
-    return DefWindowProcW(window_handle, message, wparam, lparam);
+    return DefWindowProcW(window_handle, message, wParam, lParam);
   }
 
   int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)

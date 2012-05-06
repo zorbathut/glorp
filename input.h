@@ -179,10 +179,13 @@ namespace Glorp {
   }
 
   struct KeyEvent {
-    KeyEvent() : mouse_x(MOUSEPOS_UNKNOWN), mouse_y(MOUSEPOS_UNKNOWN), pressed(false) { };
+    enum PressType { DOWN, REPEAT, UP };
+
+    KeyEvent() : mouse_x(MOUSEPOS_UNKNOWN), mouse_y(MOUSEPOS_UNKNOWN), pressed(UP) { };
 
     int mouse_x, mouse_y;
-    bool pressed;
+    
+    PressType pressed;
 
     Key key;
 
