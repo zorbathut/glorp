@@ -43,8 +43,8 @@ namespace Glorp {
   const Key c_keyIndex[] = {
     -1, Keys::MouseLButton, Keys::MouseRButton, -1, Keys::MouseMButton, Keys::Mouse4Button, Keys::Mouse5Button, -1, // 0x00 - 0x07
     Keys::Backspace, Keys::Tab, -1, -1, -1, Keys::Enter, -1, -1, // 0x08 - 0x0f
-    -1, -1, -1, Keys::Pause, Keys::CapsLock, -1, -1, -1, -1, -1, // 0x10 - 0x17
-    -1, -1, -1, -1, Keys::Escape, -1, -1, -1, -1, // 0x18 - 0x1f
+    -1, -1, -1, Keys::Pause, Keys::CapsLock, -1, -1, -1, // 0x10 - 0x17
+    -1, -1, -1, -1, Keys::Escape, -1, -1, -1, // 0x18 - 0x1f
     ' ', Keys::PageUp, Keys::PageDown, Keys::End, Keys::Home, Keys::Left, Keys::Up, Keys::Right, // 0x20 - 0x27
     Keys::Down, -1, -1, -1, Keys::PrintScreen, Keys::Insert, Keys::Delete, -1, // 0x28 - 0x2f
     '0', '1', '2', '3', '4', '5', '6', '7', // 0x30 - 0x37
