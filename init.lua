@@ -93,11 +93,11 @@ local function testy()
   texite:SetSelection(30, 240)
   texite:SetColorSelection(1, 1, 1, 0.5)
   
-  texite:SetFocus(true)
-  texite:EventKeyDownAttach(function (...) print("Down!", ...) end)
-  texite:EventKeyUpAttach(function (...) print("Up!", ...) end)
-  texite:EventKeyTypeAttach(function (...) print("Type!", ...) end)
-  texite:EventKeyRepeatAttach(function (...) print("Repeat!", ...) end)
+  --texite:SetFocus(true)
+  --texite:EventKeyDownAttach(function (...) print("Down!", ...) end)
+  --texite:EventKeyUpAttach(function (...) print("Up!", ...) end)
+  --texite:EventKeyTypeAttach(function (...) print("Type!", ...) end)
+  --texite:EventKeyRepeatAttach(function (...) print("Repeat!", ...) end)
   
   --local f = function (...) _G.dump("Movik!", ...) texite:Obliterate() end
   --texite:EventMouseOverAttach(f)
