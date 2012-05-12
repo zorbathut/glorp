@@ -190,9 +190,9 @@ namespace Glorp {
     ScreenToClient(s_window, &mouse);
     rv.mouse_x = mouse.x;
     rv.mouse_y = mouse.y;
-    rv.shift = GetKeyState(VK_SHIFT);
-    rv.ctrl = GetKeyState(VK_CONTROL);
-    rv.alt = GetKeyState(VK_MENU);
+    rv.shift = GetKeyState(VK_SHIFT) & 0x80;
+    rv.ctrl = GetKeyState(VK_CONTROL) & 0x80;
+    rv.alt = GetKeyState(VK_MENU) & 0x80;
     return rv;
   }
   
