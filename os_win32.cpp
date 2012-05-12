@@ -53,7 +53,7 @@ namespace Glorp {
     'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', // 0x48 - 0x4f
     'p', 'q', 'r', 's', 't', 'u', 'v', 'w', // 0x50 - 0x57
     'x', 'y', 'z', Keys::LeftGui, Keys::RightGui, -1, -1, -1, // 0x58 - 0x5f
-    Keys::Pad0, Keys::Pad2, Keys::Pad3, Keys::Pad4, Keys::Pad5, Keys::Pad6, Keys::Pad7,  // 0x60 - 0x67
+    Keys::Pad0, Keys::Pad1, Keys::Pad2, Keys::Pad3, Keys::Pad4, Keys::Pad5, Keys::Pad6, Keys::Pad7,  // 0x60 - 0x67
     Keys::Pad8, Keys::Pad9, Keys::PadMultiply, Keys::PadAdd, -1, Keys::PadSubtract, Keys::PadDecimal, Keys::PadDivide, // 0x68 - 0x6f
     Keys::F1, Keys::F2, Keys::F3, Keys::F4, Keys::F5, Keys::F6, Keys::F7, Keys::F8, // 0x70 - 0x77
     Keys::F9, Keys::F10, Keys::F11, Keys::F12, Keys::F13, Keys::F14, Keys::F15, Keys::F16, // 0x78 - 0x7f
