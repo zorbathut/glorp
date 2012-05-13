@@ -3,6 +3,7 @@
 #include "core.h"
 #include "debug.h"
 #include "os.h"
+#include "perfbar.h"
 #include "version.h"
 
 #include "GL/glew.h"
@@ -87,6 +88,8 @@ namespace Glorp {
       l_shutdown();
       l_init();
     } else {
+      PerfStack perf(0.5, 0.5, 0.5);
+
       m_env->MouseMove(event.mouse_x, event.mouse_y);
 
       // mouse buttons!
@@ -249,7 +252,12 @@ namespace Glorp {
     if (m_L && !m_luaCrashed) {
       l_callEvent(m_L, m_event_system_update_begin);
       glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-      m_env->Render();
+      {
+        PerfStack perf(0.6, 0.2, 0.2);
+        m_env->Render();
+      }
+      perfbarDraw();
+      perfbarReset();
       l_callEvent(m_L, m_event_system_update_end);
     } else {
       glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);

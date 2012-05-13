@@ -24,6 +24,7 @@ namespace Glorp {
   // performance
   int memoryUsage();
   bool isUnoptimized();
+  int64_t timeMicro();
 
   // OS commands
   void beginShutdown();

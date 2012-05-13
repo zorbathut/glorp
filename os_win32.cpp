@@ -129,6 +129,13 @@ namespace Glorp {
     GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
     return pmc.WorkingSetSize;
   }
+
+  int64_t timeMicro() {
+    LARGE_INTEGER current_time;
+    QueryPerformanceCounter(&current_time);
+    return int64_t((1000000 * (long double)current_time.QuadPart) / s_timerFrequency.QuadPart);
+    // on my windows box, the timer frequency is about 2.4 billion (clock speed ahoy). That gives one overflow every 2 hours if done with the same method GetTime() uses, and without floating-point. On a faster system that might go down to 1 hour. Unacceptable. We go to floating-point to avoid issues of this sort. Dividing by 1000 might do the job, but I'm unsure how *low* TimerFrequency might go. It's all kind of nasty.
+  }
   
   void stackDump(vector<const void*> *data) {
     CONTEXT *context = s_crashContext;
