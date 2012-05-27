@@ -216,7 +216,7 @@ namespace Glorp {
   }
 
   int Core::l_register(lua_State *L) {
-    lua_pushstring(L, "Glorp");
+    lua_pushliteral(L, "Glorp");
     lua_gettable(L, LUA_REGISTRYINDEX);
 
     lua_pushvalue(L, -2);
@@ -228,7 +228,7 @@ namespace Glorp {
   void Core::l_retrieve(lua_State *L, int index) {
     assert(index != LUA_NOREF);
 
-    lua_pushstring(L, "Glorp");
+    lua_pushliteral(L, "Glorp");
     lua_gettable(L, LUA_REGISTRYINDEX);
 
     lua_rawgeti(L, -1, index);
