@@ -4,6 +4,7 @@
 #include "args.h"
 #include "debug.h"
 #include "os.h"
+#include "util.h"
 
 #include "GL/glew.h"
 
@@ -16,13 +17,13 @@ DEFINE_bool(perfbar, false, "Enable performance bar");
 namespace Glorp {
   class PerfChunk {
   public:
-    float start;
-    float end;
+    double start;
+    double end;
     float r, g, b;
     int indent;
   };
 
-  float start;
+  double start;
   static vector<PerfChunk> pchunks;
 
   static stack<pair<const PerfStack *, PerfChunk> > pstack;
@@ -80,9 +81,9 @@ namespace Glorp {
       const float scale = 60.f * (60.f / 70) / 1000000;
       
       for(int i = 0; i < pchunks.size(); i++) {
-        float xps = xstart - xmarg * pchunks[i].indent;
-        float ys = (pchunks[i].start - start) * scale;
-        float ye = (pchunks[i].end - start) * scale;
+        double xps = xstart - xmarg * pchunks[i].indent;
+        double ys = (pchunks[i].start - start) * scale;
+        double ye = (pchunks[i].end - start) * scale;
         
         glColor3f(pchunks[i].r, pchunks[i].g, pchunks[i].b);
         glVertex2f(xps, ys);

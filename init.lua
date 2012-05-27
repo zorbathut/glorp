@@ -94,10 +94,10 @@ local function testy()
   texite:SetColorSelection(1, 1, 1, 0.5)
   
   texite:SetFocus(true)
-  texite:EventKeyDownAttach(function (f, ev) print("Down!") dump(ev) end)
+  --[[texite:EventKeyDownAttach(function (f, ev) print("Down!") dump(ev) end)
   texite:EventKeyUpAttach(function (f, ev) print("Up!") dump(ev) end)
   texite:EventKeyTypeAttach(function (f, ...) print("Type!", ...) end)
-  texite:EventKeyRepeatAttach(function (f, ev) print("Repeat!") dump(ev) end)
+  texite:EventKeyRepeatAttach(function (f, ev) print("Repeat!") dump(ev) end)]]
   
   --local f = function (...) _G.dump("Movik!", ...) texite:Obliterate() end
   --texite:EventMouseOverAttach(f)
@@ -139,14 +139,6 @@ function InitComplete()
   local fram = External.Frames.Frame(External.Frames.Root)
   
   print(External.Frames.Root:GetWidth())
-
-  fram:SetBackground(1, 0, 0, 1)
-  fram:SetPoint("CENTER", External.Frames.Root, "CENTER")
-  
-  local tex = External.Frames.Text(fram)
-  tex:SetText("this is a text this is only a text")
-  tex:SetWidth(40)
-  tex:SetWordwrap(true)
   
   testy()
 end

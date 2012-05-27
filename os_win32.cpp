@@ -1,6 +1,7 @@
 
 #include "os.h"
 
+#include "args.h"
 #include "core.h"
 #include "debug.h"
 #include "version.h"
@@ -21,6 +22,8 @@
 #include <GL/glew.h>
 
 using namespace std;
+
+DECLARE_bool(development);
 
 namespace Glorp {
   static LARGE_INTEGER s_timerFrequency;
@@ -517,7 +520,7 @@ namespace Glorp {
 
 
     // turn vsync on
-    {
+    if (!FLAGS_development) {
       typedef BOOL (APIENTRY *WGLSwapProc)( int );
       WGLSwapProc sSwapProc = 0;
     
@@ -526,7 +529,7 @@ namespace Glorp {
         sSwapProc = (WGLSwapProc)wglGetProcAddress("wglSwapIntervalEXT");
 
       if (sSwapProc)
-        sSwapProc(1);
+        sSwapProc(0);
     }
 
     // Show the window. Note that SetForegroundWindow can fail if the user is currently using another

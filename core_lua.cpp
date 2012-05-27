@@ -3,6 +3,7 @@
 #include "core.h"
 #include "debug.h"
 #include "os.h"
+#include "perfbar.h"
 #include "version.h"
 
 #include "lal.h"
@@ -35,6 +36,17 @@ namespace Glorp {
     }
   };
   static FramesLogger frames_logger;
+
+  class FramesPerformance : public Frames::Configuration::Performance {
+  public:
+    virtual void *Push(float r, float g, float b) {
+      return new PerfStack(r, g, b);
+    }
+    virtual void Pop(void *handle) {
+      delete (PerfStack*)handle;
+    }
+  };
+  static FramesPerformance frames_performance;
 
   // get our own rng. why? because it turns out that lua does weird things with RNGs across coroutines
   boost::lagged_fibonacci9689 rngstate(time(NULL));
@@ -102,6 +114,7 @@ namespace Glorp {
 
     Frames::Configuration config;
     config.logger = &frames_logger;
+    config.performance = &frames_performance;
     config.fontDefaultId = Version::gameFontDefault;
 
     m_env = new Frames::Environment(config);

@@ -84,12 +84,12 @@ namespace Glorp {
   }
 
   void Core::Event(const KeyEvent &event) {
+    PerfStack perf(0.5, 0.5, 0.5);
+
     if (FLAGS_development && event.key == Keys::F12 && event.pressed == KeyEvent::DOWN) {
       l_shutdown();
       l_init();
     } else {
-      PerfStack perf(0.5, 0.5, 0.5);
-
       m_env->MouseMove(event.mouse_x, event.mouse_y);
 
       // mouse buttons!
@@ -248,6 +248,9 @@ namespace Glorp {
     return UR_RENDER;
   }
   
+  // hacky frame limiter
+  const float s_fpsTarget = 60.f;
+  float s_lastSecond = 0;
   void Core::Render() {
     if (m_L && !m_luaCrashed) {
       l_callEvent(m_L, m_event_system_update_begin);
@@ -256,7 +259,15 @@ namespace Glorp {
         PerfStack perf(0.6, 0.2, 0.2);
         m_env->Render();
       }
-      perfbarDraw();
+
+      if (FLAGS_development) {
+        perfbarDraw();
+
+        // frame limiter to make our perfbar work better
+        while (s_lastSecond + 1 / s_fpsTarget > timeMicro() / 1000000.);
+        s_lastSecond = timeMicro() / 1000000.;
+      }
+
       perfbarReset();
       l_callEvent(m_L, m_event_system_update_end);
     } else {
