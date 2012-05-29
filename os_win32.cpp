@@ -297,7 +297,11 @@ namespace Glorp {
         }
         break;
       case WM_CHAR:
-        if (s_core && wParam != '\t' && wParam != '\r' && wParam != '\b' && wParam != '\033') { // windows passes a bunch of nonprintable characters through this way, thanks windows. thwindows.
+        if (s_core && wParam == '\r') {
+          KeyEvent event = CreateBasicEvent();
+          event.typed += '\n'; // thank you windows
+          s_core->Event(event);
+        } else if (s_core && wParam != '\t' && wParam != '\b' && wParam != '\033') { // windows passes a bunch of nonprintable characters through this way, thanks windows. thwindows.
           KeyEvent event = CreateBasicEvent();
           event.typed += (char)wParam; // TODO: utf8ize
           s_core->Event(event);

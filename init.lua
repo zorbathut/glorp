@@ -94,6 +94,15 @@ local function testy()
   texite:SetColorSelection(1, 1, 1, 0.5)
   
   texite:SetFocus(true)
+  texite:EventKeyTypeAttach(function (f, eh, typ)
+    print("Type!", f, eh, typ)
+    print(eh:CanFinalize())
+    if typ == "\n" then
+      eh:Finalize()
+      texite:SetText("")
+    end
+  end, -1)
+  
   --[[texite:EventKeyDownAttach(function (f, ev) print("Down!") dump(ev) end)
   texite:EventKeyUpAttach(function (f, ev) print("Up!") dump(ev) end)
   texite:EventKeyTypeAttach(function (f, ...) print("Type!", ...) end)
