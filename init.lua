@@ -103,6 +103,13 @@ local function testy()
     end
   end, -1)
   
+  local fook
+  fook = function (f, ev)
+    print("Removing")
+    texite:EventKeyDownDetach(fook)
+  end
+  texite:EventKeyDownAttach(fook)
+  
   --[[texite:EventKeyDownAttach(function (f, ev) print("Down!") dump(ev) end)
   texite:EventKeyUpAttach(function (f, ev) print("Up!") dump(ev) end)
   texite:EventKeyTypeAttach(function (f, ...) print("Type!", ...) end)
