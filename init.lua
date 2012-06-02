@@ -106,7 +106,8 @@ local function testy()
   local fook
   fook = function (f, ev)
     print("Removing")
-    texite:Obliterate()
+    --texite:Obliterate()
+    glope()
   end
   texite:EventKeyDownAttach(fook)
   
