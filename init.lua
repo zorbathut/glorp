@@ -110,6 +110,11 @@ local function testy()
   end
   texite:EventKeyDownAttach(fook)
   
+  print("txgn")
+  print(texite:GetName())
+  print(texite:GetNameFull())
+  print("txgn done")
+  
   --[[texite:EventKeyDownAttach(function (f, ev) print("Down!") dump(ev) end)
   texite:EventKeyUpAttach(function (f, ev) print("Up!") dump(ev) end)
   texite:EventKeyTypeAttach(function (f, ...) print("Type!", ...) end)
