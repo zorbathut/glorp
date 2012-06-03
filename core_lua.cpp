@@ -189,7 +189,10 @@ namespace Glorp {
       m_event_system_update_end = l_registerEvent(L, "System.Update.End");
 
       m_event_system_mouse = l_registerEvent(L, "System.Mouse");
-      m_event_system_key = l_registerEvent(L, "System.Key");
+      m_event_system_key_down = l_registerEvent(L, "System.Key.Down");
+      m_event_system_key_up = l_registerEvent(L, "System.Key.Up");
+      m_event_system_key_type = l_registerEvent(L, "System.Key.Type");
+      m_event_system_key_repeat = l_registerEvent(L, "System.Key.Repeat");
 
       // kick off the load of the actual game
       lua_getfield(L, 1, "Wrap");
@@ -250,10 +253,14 @@ namespace Glorp {
     }
     return l_register(L);
   }
-  void Core::l_callEvent(lua_State *L, int event) {
+  void Core::l_callEvent(lua_State *L, int event, int params) {
+    // insert these two before the params
     l_retrieve(L, m_func_wrap);
+    lua_insert(L, -(params + 1));
     l_retrieve(L, event);
-    if (lua_pcall(L, 1, 0, 0)) {
+    lua_insert(L, -(params + 1));
+
+    if (lua_pcall(L, 1 + params, 0, 0)) {
       dprintf("call event error");
       m_luaCrashed = true;
       CHECK(0);

@@ -1,6 +1,6 @@
 
-loadfile("glorp/init_util.lua")()
-loadfile("glorp/init_event.lua")()
+assert(loadfile("glorp/init_util.lua"))()
+assert(loadfile("glorp/init_event.lua"))()
 
 local function testy()
   -- basics test
@@ -102,15 +102,7 @@ local function testy()
       texite:SetText("")
     end
   end, -1)
-  
-  local fook
-  fook = function (f, ev)
-    print("Removing")
-    --texite:Obliterate()
-    glope()
-  end
-  texite:EventKeyDownAttach(fook)
-  
+   
   print("txgn")
   print(texite:GetName())
   print(texite:GetNameFull())
@@ -163,4 +155,6 @@ function InitComplete()
   print(External.Frames.Root:GetWidth())
   
   testy()
+  
+  assert(loadfile("glorp/init_console.lua"))()
 end

@@ -43,7 +43,7 @@ namespace Glorp {
 
     // Event tables here
     int l_registerEvent(lua_State *L, const char *event);
-    void l_callEvent(lua_State *L, int event);
+    void l_callEvent(lua_State *L, int event, int params);
 
     int m_func_wrap;
 
@@ -51,7 +51,10 @@ namespace Glorp {
     int m_event_system_update_end;
 
     int m_event_system_mouse;
-    int m_event_system_key;
+    int m_event_system_key_down;
+    int m_event_system_key_up;
+    int m_event_system_key_type;
+    int m_event_system_key_repeat;
     
     Frames::Environment *m_env;
   };

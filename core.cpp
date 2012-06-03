@@ -50,7 +50,10 @@ namespace Glorp {
         m_event_system_update_begin(LUA_NOREF),
         m_event_system_update_end(LUA_NOREF),
         m_event_system_mouse(LUA_NOREF),
-        m_event_system_key(LUA_NOREF),
+        m_event_system_key_down(LUA_NOREF),
+        m_event_system_key_up(LUA_NOREF),
+        m_event_system_key_type(LUA_NOREF),
+        m_event_system_key_repeat(LUA_NOREF),
         m_env(0)
   {
     if (FLAGS_sound) {
@@ -225,18 +228,29 @@ namespace Glorp {
           kev.alt = event.alt;
           kev.ctrl = event.ctrl;
           kev.shift = event.shift;
+
+          int kevid;
           if (event.pressed == KeyEvent::DOWN) {
             m_env->KeyDown(kev);
+            kevid = m_event_system_key_down;
           } else if (event.pressed == KeyEvent::REPEAT) {
             m_env->KeyRepeat(kev);
+            kevid = m_event_system_key_repeat;
           } else {
             m_env->KeyUp(kev);
+            kevid = m_event_system_key_up;
           }
+
+          lua_pushstring(m_L, Frames::Key::StringFromKey(kev.key));
+          l_callEvent(m_L, kevid, 1);
         }
       }
 
       if (!event.typed.empty()) {
         m_env->KeyType(event.typed);
+
+        lua_pushstring(m_L, event.typed.c_str());
+        l_callEvent(m_L, m_event_system_key_type, 1);
       }
 
       // TODO: mousewheel
@@ -253,7 +267,7 @@ namespace Glorp {
   float s_lastSecond = 0;
   void Core::Render() {
     if (m_L && !m_luaCrashed) {
-      l_callEvent(m_L, m_event_system_update_begin);
+      l_callEvent(m_L, m_event_system_update_begin, 0);
       glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
       {
         PerfStack perf(0.6, 0.2, 0.2);
@@ -269,7 +283,7 @@ namespace Glorp {
       }
 
       perfbarReset();
-      l_callEvent(m_L, m_event_system_update_end);
+      l_callEvent(m_L, m_event_system_update_end, 0);
     } else {
       glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
