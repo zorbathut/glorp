@@ -112,6 +112,8 @@ namespace Glorp {
     if (m_L)
       l_shutdown();
 
+    dprintf("Environment initialize!");
+
     Frames::Configuration config;
     config.logger = &frames_logger;
     config.performance = &frames_performance;
@@ -217,6 +219,9 @@ namespace Glorp {
 
     lua_close(m_L);
     m_L = 0;
+
+    dprintf("Environment shutdown.");
+    dprintf("==============================================");
   }
 
   int Core::l_register(lua_State *L) {
