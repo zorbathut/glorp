@@ -22,8 +22,18 @@ local function dump_worker(key, value, indent, seen)
     else
       seen[value] = true
       print(("  "):rep(indent) .. tostring(key) .. ":")
+      
+      local sorted = {}
       for k, v in pairs(value) do
-        dump_worker(k, v, indent + 1, seen)
+        table.insert(sorted, k)
+      end
+      table.sort(sorted, function (a, b)
+        if type(a) ~= type(b) then return type(a) < type(b) end
+        return a < b
+      end)
+      
+      for _, k in ipairs(sorted) do
+        dump_worker(k, value[k], indent + 1, seen)
       end
     end
   else
@@ -34,4 +44,3 @@ function dump(item)
   dump_worker("dump", item, 0, {})
 end
 External.dump = dump
-
