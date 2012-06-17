@@ -27,9 +27,31 @@ basic.Inspect = nil
 basic.Utility = nil
 basic.Frames.Root = nil
 
+local function RecursiveEventRecreate(target, source, context, eventlist)
+  for k, v in pairs(source) do
+    assert(type(v) == "table")
+    if type(v) ~= "table" then return end
+    
+    if v.CreateContextHandle then
+      target[k] = v.CreateContextHandle(context)
+      local blob = target[k]
+      table.insert(eventlist, function () blob:ClearContext(context) end)
+    else
+      target[k] = {}
+      RecursiveEventRecreate(target[k], source[k], context)
+    end
+  end
+end
+
+local contextlist = {}
+local contextshutdown = setmetatable({}, {__mode = 'k'})
+
 InsertItem(External, "Command.Environment.Create", function (root, label)
   assert(root)
   assert(label)
+  
+  local contextmeta = {}
+  contextmeta.teardown = {}
   
   local nenv = CopyDeep(basic)
   nenv._G = nenv
@@ -41,7 +63,30 @@ InsertItem(External, "Command.Environment.Create", function (root, label)
   nenv.Frames.Root = nenv.Frames.Frame(basic.Frames.Root)
   nenv.Frames.Root:SetAllPoints(basic.Frames.Root)
   
-  -- TODO: event
+  nenv.Event = {}
+  
+  RecursiveEventRecreate(nenv.Event, basic.Event, nenv, contextmeta.teardown)
+  
+  contextlist[nenv] = contextmeta
 
   return nenv
+end)
+
+InsertItem(External, "Command.Environment.Destroy", function (target)
+  local meta = contextlist[target]
+  assert(meta)
+  if not meta then return end
+  
+  for _, v in ipairs(meta.teardown) do
+    v()
+  end
+  
+  contextlist[target] = nil
+  contextshutdown[target] = Inspect.Time()
+end)
+
+External.Event.System.Update.Begin:Attach(function ()
+  for k, v in pairs(contextshutdown) do
+    assert(v < Inspect.Time() - 15)
+  end
 end)
