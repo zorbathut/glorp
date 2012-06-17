@@ -178,6 +178,7 @@ namespace Glorp {
         CHECK(0);
         m_luaCrashed = true;
         lua_pop(L, 1);
+        return;
       }
 
       CHECK(lua_gettop(L) == 1);
