@@ -10,6 +10,8 @@ function InsertItem(root, path, item)
     last, current, lastword = current, current[word], word
   end
 
+  assert(type(last[lastword]) == "table")
+  assert(not next(last[lastword]))
   last[lastword] = item
 
   return item
