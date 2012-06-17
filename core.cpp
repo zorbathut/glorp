@@ -264,7 +264,7 @@ namespace Glorp {
   
   // hacky frame limiter
   const float s_fpsTarget = 60.f;
-  float s_lastSecond = 0;
+  double s_lastSecond = 0;
   void Core::Render() {
     if (m_L && !m_luaCrashed) {
       l_callEvent(m_L, m_event_system_update_begin, 0);
