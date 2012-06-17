@@ -1,3 +1,4 @@
+-- Event system framework.
 
 function CreateEvent(root, name)
   print(root, name)

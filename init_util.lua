@@ -1,3 +1,4 @@
+-- Various utilities that are needed for initialization.
 
 function InsertItem(root, path, item)
   local last = root

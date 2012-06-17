@@ -1,12 +1,15 @@
+-- Bootstrap functionality that is required to get the basic error handling working.
 
 -- pack/unpack, remove if luajit supports these
-function table.pack(...)
-  local t = {...}
-  t.n = select("#", ...)
-  return t
-end
-function table.unpack(t)
-  return unpack(t, 1, t.n)
+if not table.pack then
+  function table.pack(...)
+    local t = {...}
+    t.n = select("#", ...)
+    return t
+  end
+  function table.unpack(t)
+    return unpack(t, 1, t.n)
+  end
 end
 
 -- split into lines, remove various cruft from the error dumps
@@ -78,10 +81,6 @@ function loadfile(file)
 
   if rv and rv:find("No such file or directory") then
     dat, rv = lf(file)
-  end
-
-  if rv and rv:find("No such file or directory") then
-    dat, rv = lf("build/" .. platform .. file)
   end
 
   return dat, rv

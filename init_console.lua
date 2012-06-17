@@ -1,3 +1,4 @@
+-- Error and debug console.
 
 -- rig up console
 local cbacking = Frames.Frame(Frames.Root)
