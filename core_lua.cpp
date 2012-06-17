@@ -206,6 +206,7 @@ namespace Glorp {
         CHECK(0);
         m_luaCrashed = true;
         lua_pop(L, 1);
+        return;
       }
 
       lua_pop(L, 1);
@@ -260,6 +261,8 @@ namespace Glorp {
     return l_register(L);
   }
   void Core::l_callEvent(lua_State *L, int event, int params) {
+    CHECK(m_L && !m_luaCrashed);
+
     // insert these two before the params
     l_retrieve(L, m_func_wrap);
     lua_insert(L, -(params + 1));

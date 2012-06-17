@@ -92,7 +92,7 @@ namespace Glorp {
     if (FLAGS_development && event.key == Keys::F12 && event.pressed == KeyEvent::DOWN) {
       l_shutdown();
       l_init();
-    } else {
+    } else if (m_L && !m_luaCrashed) {
       m_env->MouseMove(event.mouse_x, event.mouse_y);
 
       // mouse buttons!
