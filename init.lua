@@ -13,7 +13,8 @@ function InitComplete()
   assert(loadfile("glorp/init_console.lua"))()
   
   -- All systems initialized, load the game
-  assert(loadfile("init.lua"))()
+  local init = assert(loadfile("init.lua"))
+  setfenv(init, External)()
 end
 
 -- Returns back to C++. InitComplete() will be called once the C++ side's initialization is done.
