@@ -48,6 +48,14 @@ namespace Glorp {
   };
   static FramesPerformance frames_performance;
 
+  class FramesPath : public Frames::Configuration::PathFromId {
+  public:
+    virtual std::string Process(Frames::Environment *env, const std::string &id) {
+      return "data/" + id;
+    }
+  };
+  static FramesPath frames_path;
+
   // get our own rng. why? because it turns out that lua does weird things with RNGs across coroutines
   boost::lagged_fibonacci9689 rngstate(time(NULL));
   static int math_random (lua_State *L) {
@@ -117,6 +125,7 @@ namespace Glorp {
     Frames::Configuration config;
     config.logger = &frames_logger;
     config.performance = &frames_performance;
+    config.pathFromId = &frames_path;
     config.fontDefaultId = Version::gameFontDefault;
 
     m_env = new Frames::Environment(config);
