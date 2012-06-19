@@ -268,7 +268,7 @@ namespace Glorp {
   void Core::Render() {
     if (m_L && !m_luaCrashed) {
       l_callEvent(m_L, m_event_system_update_begin, 0);
-      glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       {
         PerfStack perf(0.6, 0.2, 0.2);
         m_env->Render();
@@ -285,7 +285,7 @@ namespace Glorp {
       perfbarReset();
       l_callEvent(m_L, m_event_system_update_end, 0);
     } else {
-      glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
