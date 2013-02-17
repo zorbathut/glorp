@@ -20,6 +20,7 @@
 #include <frames/texture.h>
 #include <frames/mask.h>
 #include <frames/text.h>
+#include <frames/lua.h>
 #define printf FAILURE
 
 using namespace std;
@@ -197,6 +198,7 @@ namespace Glorp {
       lua_getfield(L, 1, "Wrap");
       m_func_wrap = l_register(L);
 
+      // create events
       m_event_system_update_begin = l_registerEvent(L, "System.Update.Begin");
       m_event_system_update_end = l_registerEvent(L, "System.Update.End");
 
@@ -205,6 +207,9 @@ namespace Glorp {
       m_event_system_key_up = l_registerEvent(L, "System.Key.Up");
       m_event_system_key_type = l_registerEvent(L, "System.Key.Type");
       m_event_system_key_repeat = l_registerEvent(L, "System.Key.Repeat");
+
+      // create functions
+      l_registerInspect(L, "System.Time.Real", l_system_time_real);
 
       // kick off the load of the actual game
       lua_getfield(L, 1, "Wrap");
@@ -244,6 +249,7 @@ namespace Glorp {
 
     return ref;
   }
+
   void Core::l_retrieve(lua_State *L, int index) {
     assert(index != LUA_NOREF);
 
@@ -253,6 +259,28 @@ namespace Glorp {
     lua_rawgeti(L, -1, index);
     assert(!lua_isnil(L, -1));
     lua_replace(L, -2);
+  }
+
+  void Core::l_registerInspect(lua_State *L, const char *name, int (*func)(lua_State *)) {
+    l_retrieve(L, m_func_wrap);
+    lua_getfield(L, -2, "InsertItem");
+    lua_pushvalue(L, LUA_GLOBALSINDEX);
+    lua_pushstring(L, (std::string("Inspect.") + name).c_str());
+    lua_pushcfunction(L, func);
+    if (lua_pcall(L, 4, 0, 0)) {
+      dprintf("register pcall error");
+      m_luaCrashed = true;
+      CHECK(0);
+      lua_pop(L, 1);
+    }
+  }
+
+  /*static*/ int Core::l_system_time_real(lua_State *L) {
+    Frames::l_checkparams(L, 0);
+
+    lua_pushnumber(L, timeMicro() / 1000000.);
+
+    return 1;
   }
 
   int Core::l_registerEvent(lua_State *L, const char *event) {
@@ -269,6 +297,7 @@ namespace Glorp {
     }
     return l_register(L);
   }
+
   void Core::l_callEvent(lua_State *L, int event, int params) {
     CHECK(m_L && !m_luaCrashed);
 

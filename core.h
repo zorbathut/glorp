@@ -41,6 +41,11 @@ namespace Glorp {
     int l_register(lua_State *L);
     void l_retrieve(lua_State *L, int id);
 
+    // functions
+    void l_registerInspect(lua_State *L, const char *name, int (*func)(lua_State *));
+
+    static int l_system_time_real(lua_State *L);
+
     // Event tables here
     int l_registerEvent(lua_State *L, const char *event);
     void l_callEvent(lua_State *L, int event, int params);
