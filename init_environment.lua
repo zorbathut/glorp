@@ -33,12 +33,12 @@ local function RecursiveEventRecreate(target, source, context, eventlist)
     if type(v) ~= "table" then return end
     
     if v.CreateContextHandle then
-      target[k] = v.CreateContextHandle(context)
+      target[k] = v:CreateContextHandle(context)
       local blob = target[k]
       table.insert(eventlist, function () blob:ClearContext(context) end)
     else
       target[k] = {}
-      RecursiveEventRecreate(target[k], source[k], context)
+      RecursiveEventRecreate(target[k], source[k], context, eventlist)
     end
   end
 end
@@ -46,7 +46,7 @@ end
 local contextlist = {}
 local contextshutdown = setmetatable({}, {__mode = 'k'})
 
-InsertItem(External, "Command.Environment.Create", function (root, label)
+InsertItem(External, "Command.Environment.Create", function (root, label, file)
   assert(root)
   assert(label)
   
@@ -60,14 +60,19 @@ InsertItem(External, "Command.Environment.Create", function (root, label)
   nenv.Inspect = CopyDeep(root.Inspect)
   nenv.Utility = CopyDeep(root.Utility)
   
-  nenv.Frames.Root = nenv.Frames.Frame(basic.Frames.Root)
-  nenv.Frames.Root:SetAllPoints(basic.Frames.Root)
+  nenv.Frames.Root = nenv.Frames.Frame(root.Frames.Root)
+  nenv.Frames.Root:SetPoint("TOPLEFT", root.Frames.Root, "TOPLEFT")
+  nenv.Frames.Root:SetPoint("BOTTOMRIGHT", root.Frames.Root, "BOTTOMRIGHT")
   
   nenv.Event = {}
   
-  RecursiveEventRecreate(nenv.Event, basic.Event, nenv, contextmeta.teardown)
+  RecursiveEventRecreate(nenv.Event, root.Event, nenv, contextmeta.teardown)
   
   contextlist[nenv] = contextmeta
+  
+  if file then
+    setfenv(assert(loadfile(file)), nenv)()
+  end
 
   return nenv
 end)
@@ -80,6 +85,8 @@ InsertItem(External, "Command.Environment.Destroy", function (target)
   for _, v in ipairs(meta.teardown) do
     v()
   end
+  
+  target.Frames.Root:Obliterate()
   
   contextlist[target] = nil
   contextshutdown[target] = Inspect.Time()
