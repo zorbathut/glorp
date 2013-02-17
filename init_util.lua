@@ -20,10 +20,10 @@ end
 local function dump_worker(key, value, indent, seen)
   if type(value) == "table" then
     if seen[value] then
-      print(("  "):rep(indent) .. tostring(key) .. ": (infinite loop)")    
+      External.print(("  "):rep(indent) .. tostring(key) .. ": (infinite loop)")    
     else
       seen[value] = true
-      print(("  "):rep(indent) .. tostring(key) .. ":")
+      External.print(("  "):rep(indent) .. tostring(key) .. ":")
       
       local sorted = {}
       for k, v in pairs(value) do
@@ -39,7 +39,7 @@ local function dump_worker(key, value, indent, seen)
       end
     end
   else
-    print(("  "):rep(indent) .. tostring(key) .. ": " .. tostring(value))
+    External.print(("  "):rep(indent) .. tostring(key) .. ": " .. tostring(value))
   end
 end
 function dump(item)

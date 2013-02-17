@@ -85,14 +85,14 @@ tentry:EventKeyTypeAttach(function (f, eh, typ)
   end
 end, -1)
 
-table.insert(External.Event.System.Key.Down, function (ki)
+External.Event.System.Key.Down:Attach(function (ki)
   if ki == "Escape" and cbacking:GetVisible() then
     cbacking:SetVisible(false)
     tentry:SetFocus(false)
     tentry:SetText("")
   end
 end)
-table.insert(External.Event.System.Key.Type, function (ki)
+External.Event.System.Key.Type:Attach(function (ki)
   if ki == "/" and not cbacking:GetVisible() then
     cbacking:SetVisible(true)
     tentry:SetFocus(true)
