@@ -15,6 +15,9 @@
 
 #include <ctime>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #undef printf
 #include <frames/frame.h>
 #include <frames/texture.h>
@@ -51,7 +54,17 @@ namespace Glorp {
 
   class FramesPath : public Frames::Configuration::PathFromId {
   public:
+    bool TestFileExistence(const std::string &fname) {
+      struct _stat buf;
+      return !_stat(fname.c_str(), &buf);
+    }
+
     virtual std::string Process(Frames::Environment *env, const std::string &id) {
+      // We also append an extension to it if applicable
+      std::string prefixed = "data/" + id;
+      if (TestFileExistence(prefixed + ".png")) return prefixed + ".png";
+      if (TestFileExistence(prefixed + ".jpg")) return prefixed + ".jpg";
+      if (TestFileExistence(prefixed + ".ttf")) return prefixed + ".ttf";
       return "data/" + id;
     }
   };
