@@ -5,11 +5,9 @@ assert(loadfile("glorp/init_event.lua"))()
 
 function InitComplete()
   -- Global lua libraries that aren't needed for early init
+  assert(loadfile("glorp/init_stdlib.lua"))()
   
-  -- Must be after globals are introduced, but before locals are introduced
-  assert(loadfile("glorp/init_environment.lua"))()
-  
-  -- Local utilities and tools, like console
+  -- Debug-only tools
   assert(loadfile("glorp/init_console.lua"))()
   
   -- All systems initialized, load the game

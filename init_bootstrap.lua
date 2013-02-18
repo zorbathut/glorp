@@ -18,11 +18,11 @@ local function stripTraceback(err)
   for i in err:gmatch("\n?([^\n]+)") do
     table.insert(linz, i)
   end
-  if linz[#linz]:find("glorp/wrap.lua") then table.remove(linz, #linz) end
+  if linz[#linz]:find("glorp/init_bootstrap.lua") then table.remove(linz, #linz) end
   if linz[#linz]:find("in function 'xpcall'") then table.remove(linz, #linz) end
   if linz[#linz]:find("\(tail call\)") then table.remove(linz, #linz) end
   if linz[1]:find("stack traceback:") then table.remove(linz, 1) end
-  if linz[1]:find("glorp/wrap.lua") then table.remove(linz, 1) end
+  if linz[1]:find("glorp/init_bootstrap.lua") then table.remove(linz, 1) end
   if linz[1]:find("in function 'error'") then table.remove(linz, 1) end
   
   local rz = linz[1]
