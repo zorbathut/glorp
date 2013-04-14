@@ -46,7 +46,7 @@ end
 local contextlist = {}
 local contextshutdown = setmetatable({}, {__mode = 'k'})
 
-InsertItem(External, "Command.Environment.Create", function (root, label, file)
+InsertItem(External, "Command.Environment.Create", function (root, label, ...)
   assert(root)
   assert(label)
   
@@ -70,10 +70,17 @@ InsertItem(External, "Command.Environment.Create", function (root, label, file)
   
   contextlist[nenv] = contextmeta
   
-  if file then
-    setfenv(assert(loadfile(file)), nenv)()
+  for k = 1, select("#", ...) do
+    local v = select(k, ...)
+    if type(v) == "function" then
+      v(nenv)
+    elseif type(v) == "string" then
+      setfenv(assert(loadfile(v)), nenv)(param)
+    else
+      assert(false, "Unknown type fed into Command.Environment.Create")
+    end
   end
-
+  
   return nenv
 end)
 
