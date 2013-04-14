@@ -1,6 +1,10 @@
 -- Event system framework.
 
 function CreateEvent(root, name)
+  assert(root)
+  assert(name)
+  assert(type(name) == "string")
+  
   local db = {}
   local locks = 0
   local buffered = {}
@@ -76,3 +80,5 @@ function CreateEvent(root, name)
     end
   end
 end
+
+InsertItem(External, "Command.Event.Create", CreateEvent)

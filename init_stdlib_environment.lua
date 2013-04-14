@@ -89,11 +89,11 @@ InsertItem(External, "Command.Environment.Destroy", function (target)
   target.Frames.Root:Obliterate()
   
   contextlist[target] = nil
-  contextshutdown[target] = Inspect.Time()
+  contextshutdown[target] = External.Inspect.System.Time.Real()
 end)
 
 External.Event.System.Update.Begin:Attach(function ()
   for k, v in pairs(contextshutdown) do
-    assert(v < Inspect.Time() - 15)
+    assert(v > External.Inspect.System.Time.Real() - 15)
   end
 end)

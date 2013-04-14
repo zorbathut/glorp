@@ -17,6 +17,8 @@ function InsertItem(root, path, item)
   return item
 end
 
+InsertItem(External, "Command.Environment.Insert", InsertItem)
+
 local function dump_worker(key, value, indent, seen)
   if type(value) == "table" then
     if seen[value] then
