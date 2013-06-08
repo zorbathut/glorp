@@ -46,7 +46,10 @@ end
 local contextlist = {}
 local contextshutdown = setmetatable({}, {__mode = 'k'})
 
-InsertItem(External, "Command.Environment.Create", function (root, label, ...)
+-- We create a little fake command hierarchy solely so that notepad++ recognizes these functions
+Command = {}
+Command.Environment = {}
+function Command.Environment.Create(root, label, ...)
   assert(root)
   assert(label)
   
@@ -82,9 +85,10 @@ InsertItem(External, "Command.Environment.Create", function (root, label, ...)
   end
   
   return nenv
-end)
+end
+InsertItem(External, "Command.Environment.Create", Command.Environment.Create)
 
-InsertItem(External, "Command.Environment.Destroy", function (target)
+function Command.Environment.Destroy(target)
   local meta = contextlist[target]
   assert(meta)
   if not meta then return end
@@ -97,7 +101,8 @@ InsertItem(External, "Command.Environment.Destroy", function (target)
   
   contextlist[target] = nil
   contextshutdown[target] = External.Inspect.System.Time.Real()
-end)
+end
+InsertItem(External, "Command.Environment.Destroy", Command.Environment.Destroy)
 
 External.Event.System.Update.Begin:Attach(function ()
   for k, v in pairs(contextshutdown) do
