@@ -100,7 +100,21 @@ InsertItem(External, "Command.Environment.Destroy", function (target)
 end)
 
 External.Event.System.Update.Begin:Attach(function ()
+  local gctimeout = 2
+  
+  local gc = false
+  
   for k, v in pairs(contextshutdown) do
-    assert(v > External.Inspect.System.Time.Real() - 15)
+    if v < External.Inspect.System.Time.Real() - gctimeout then
+      gc = true
+    end
+  end
+  
+  if gc then
+    print("Doing full garbage collection pass to look for leaks")
+    collectgarbage("collect")
+    for k, v in pairs(contextshutdown) do
+      assert(v > External.Inspect.System.Time.Real() - gctimeout)
+    end
   end
 end)
