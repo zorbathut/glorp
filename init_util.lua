@@ -44,7 +44,9 @@ local function dump_worker(key, value, indent, seen)
     External.print(("  "):rep(indent) .. tostring(key) .. ": " .. tostring(value))
   end
 end
-function dump(item)
-  dump_worker("dump", item, 0, {})
+function dump(...)
+  for k = 1, select("#", ...) do
+    dump_worker("dump", select(k, ...), 0, {})
+  end
 end
 External.dump = dump
