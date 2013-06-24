@@ -124,11 +124,7 @@ namespace Glorp {
     dprintf("%s", acul.c_str());
     return 0;
   }
-
-  void PrintWoopWoop() {
-    dprintf("Woop woop!");
-  }
-
+  
   void Core::l_init() {
     CHECK(!m_L);
     if (m_L)
@@ -179,7 +175,6 @@ namespace Glorp {
     CHECK(lua_gettop(L) == 0);
 
     m_env->LuaRegister(L);
-    m_env->LuaRegisterFramesBuiltin(L);
 
     CHECK(lua_gettop(L) == 0);
 
