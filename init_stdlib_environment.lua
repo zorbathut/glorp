@@ -71,19 +71,25 @@ InsertItem(External, "Command.Environment.Create", function (root, label, ...)
   contextlist[nenv] = contextmeta
 
   function nenv.loadfile(...)
-    local res = loadfile(...)
-    setfenv(res, nenv)
-    return res
+    local res, rv = loadfile(...)
+    if res then
+      setfenv(res, nenv)
+    end
+    return res, rv
   end
   function nenv.load(...)
-    local res = load(...)
-    setfenv(res, nenv)
-    return res
+    local res, rv = load(...)
+    if res then
+      setfenv(res, nenv)
+    end
+    return res, rv
   end
   function nenv.loadstring(...)
-    local res = loadstring(...)
-    setfenv(res, nenv)
-    return res
+    local res, rv = loadstring(...)
+    if res then
+      setfenv(res, nenv)
+    end
+    return res, rv
   end
   
   for k = 1, select("#", ...) do
