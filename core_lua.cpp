@@ -284,7 +284,7 @@ namespace Glorp {
   }
 
   /*static*/ int Core::l_system_time_real(lua_State *L) {
-    Frames::l_checkparams(L, 0);
+    Frames::luaF_checkparams(L, 0);
 
     lua_pushnumber(L, timeMicro() / 1000000.);
 
