@@ -69,13 +69,29 @@ InsertItem(External, "Command.Environment.Create", function (root, label, ...)
   RecursiveEventRecreate(nenv.Event, root.Event, nenv, contextmeta.teardown)
   
   contextlist[nenv] = contextmeta
+
+  function nenv.loadfile(...)
+    local res = loadfile(...)
+    setfenv(res, nenv)
+    return res
+  end
+  function nenv.load(...)
+    local res = load(...)
+    setfenv(res, nenv)
+    return res
+  end
+  function nenv.loadstring(...)
+    local res = loadstring(...)
+    setfenv(res, nenv)
+    return res
+  end
   
   for k = 1, select("#", ...) do
     local v = select(k, ...)
     if type(v) == "function" then
       v(nenv)
     elseif type(v) == "string" then
-      setfenv(assert(loadfile(v)), nenv)(param)
+      assert(nenv.loadfile(v))(param)
     else
       assert(false, "Unknown type fed into Command.Environment.Create")
     end

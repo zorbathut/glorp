@@ -1,22 +1,4 @@
 
--- Plays an arbitrary routine
-InsertItem(External, "Command.Coro.Play", function (func)
-  local coro = coroutine.create(func)
-  assert(coroutine.resume(coro))  -- run it one cycle immediately
-  
-  local eventtable = getfenv(2).Event.System.Update.Begin
-  
-  local function runfunc()
-    if coroutine.status(coro) == "dead" then
-      eventtable:Detach(runfunc)
-    else
-      assert(coroutine.resume(coro))
-    end
-  end
-  
-  eventtable:Attach(runfunc)
-end)
-
 -- Pauses for a period of realtime
 -- Not really ideal for game logic
 InsertItem(External, "Command.Coro.Wait", function (duration)
@@ -26,3 +8,19 @@ InsertItem(External, "Command.Coro.Wait", function (duration)
     coroutine.yield()
   end
 end)
+
+function External.coroutine.spawn(coro, ...)
+  assert(coro)
+  local dt = table.pack(...)
+  
+  local result = coroutine.wrap(function ()
+    local rv, err = xpcall(function () return table.pack(coro(table.unpack(dt))) end, function (ter) return {ter, debug.traceback()} end)
+    if not rv then
+      error(string.format("%s\n%s", err[1], err[2]))
+    else
+      coroutine.yield(table.unpack(err))
+    end
+  end)
+  result()
+  return result
+end
