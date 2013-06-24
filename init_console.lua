@@ -3,33 +3,33 @@ do return end
 -- Error and debug console.
 
 -- rig up console
-local cbacking = Frames.Frame(Frames.Root)
+local cbacking = Frame.Frame(Frame.Root)
 cbacking:SetBackground(0.05, 0.05, 0.05, 0.95)
 cbacking:SetStrata(100)
 cbacking:SetVisible(false)
 
-cbacking:SetPoint("TOPLEFT", Frames.Root, "TOPLEFT")
-cbacking:SetPoint("RIGHT", Frames.Root, "RIGHT")
-cbacking:SetPoint("BOTTOM", Frames.Root, nil, 0.75)
+cbacking:SetPoint("TOPLEFT", Frame.Root, "TOPLEFT")
+cbacking:SetPoint("RIGHT", Frame.Root, "RIGHT")
+cbacking:SetPoint("BOTTOM", Frame.Root, nil, 0.75)
 
-local tentry = Frames.Text(cbacking)
+local tentry = Frame.Text(cbacking)
 tentry:SetPoint("BOTTOMLEFT", cbacking, "BOTTOMLEFT", 2, -2)
 tentry:SetPoint("RIGHT", cbacking, "RIGHT", -2, nil)
 tentry:SetInteractive("edit")
 
-local lin = Frames.Frame(cbacking)
+local lin = Frame.Frame(cbacking)
 lin:SetHeight(1)
 lin:SetPoint("BOTTOM", tentry, "TOP", nil, -2)
-lin:SetPoint("LEFT", Frames.Root, "LEFT")
-lin:SetPoint("RIGHT", Frames.Root, "RIGHT")
+lin:SetPoint("LEFT", Frame.Root, "LEFT")
+lin:SetPoint("RIGHT", Frame.Root, "RIGHT")
 lin:SetBackground(1, 1, 1)
 
-local dumptext = Frames.Text(cbacking)
+local dumptext = Frame.Text(cbacking)
 dumptext:SetInteractive("select")
 dumptext:SetWordwrap(true)
 dumptext:SetPoint("BOTTOM", lin, "TOP", nil, -2)
-dumptext:SetPoint("LEFT", Frames.Root, "LEFT", 2, nil)
-dumptext:SetPoint("RIGHT", Frames.Root, "RIGHT", -2, nil)
+dumptext:SetPoint("LEFT", Frame.Root, "LEFT", 2, nil)
+dumptext:SetPoint("RIGHT", Frame.Root, "RIGHT", -2, nil)
 
 local op = print
 local cdump = {}
@@ -66,7 +66,7 @@ local function hookprint(...)
 end
 External.print = hookprint
 
-tentry:EventAttach(Frames.Event.Key.Type, function (f, eh, typ)
+tentry:EventAttach(Frame.Event.Key.Type, function (f, eh, typ)
   if typ == "\n" then
     eh:Finalize()
     local command = tentry:GetText()

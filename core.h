@@ -61,7 +61,7 @@ namespace Glorp {
     int m_event_system_key_type;
     int m_event_system_key_repeat;
     
-    Frames::Environment *m_env;
+    Frame::Environment *m_env;
   };
 }
 

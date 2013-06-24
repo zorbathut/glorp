@@ -25,7 +25,7 @@ basic.Event = nil
 basic.Command = nil
 basic.Inspect = nil
 basic.Utility = nil
-basic.Frames.Root = nil
+basic.Frame.Root = nil
 
 local function RecursiveEventRecreate(target, source, context, eventlist)
   for k, v in pairs(source) do
@@ -60,9 +60,9 @@ InsertItem(External, "Command.Environment.Create", function (root, label, ...)
   nenv.Inspect = CopyDeep(root.Inspect)
   nenv.Utility = CopyDeep(root.Utility)
   
-  nenv.Frames.Root = nenv.Frames.Frame(root.Frames.Root)
-  nenv.Frames.Root:SetPoint("TOPLEFT", root.Frames.Root, "TOPLEFT")
-  nenv.Frames.Root:SetPoint("BOTTOMRIGHT", root.Frames.Root, "BOTTOMRIGHT")
+  nenv.Frame.Root = nenv.Frame.Frame(root.Frame.Root)
+  nenv.Frame.Root:SetPoint("TOPLEFT", root.Frame.Root, "TOPLEFT")
+  nenv.Frame.Root:SetPoint("BOTTOMRIGHT", root.Frame.Root, "BOTTOMRIGHT")
   
   nenv.Event = {}
   
@@ -93,7 +93,7 @@ InsertItem(External, "Command.Environment.Destroy", function (target)
     v()
   end
   
-  target.Frames.Root:Obliterate()
+  target.Frame.Root:Obliterate()
   
   contextlist[target] = nil
   contextshutdown[target] = External.Inspect.System.Time.Real()

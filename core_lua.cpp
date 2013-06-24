@@ -30,18 +30,18 @@ using namespace std;
 
 namespace Glorp {
 
-  class FramesLogger : public Frames::Configuration::Logger {
+  class FrameLogger : public Frame::Configuration::Logger {
   public:
     virtual void LogDebug(const std::string &log) {
-      dprintf("Frames debug: %s", log.c_str());
+      dprintf("Frame debug: %s", log.c_str());
     }
     virtual void LogError(const std::string &log) {
-      dprintf("Frames error: %s", log.c_str());
+      dprintf("Frame error: %s", log.c_str());
     }
   };
-  static FramesLogger frames_logger;
+  static FrameLogger frames_logger;
 
-  class FramesPerformance : public Frames::Configuration::Performance {
+  class FramePerformance : public Frame::Configuration::Performance {
   public:
     virtual void *Push(float r, float g, float b) {
       return new PerfStack(r, g, b);
@@ -50,16 +50,16 @@ namespace Glorp {
       delete (PerfStack*)handle;
     }
   };
-  static FramesPerformance frames_performance;
+  static FramePerformance frames_performance;
 
-  class FramesPath : public Frames::Configuration::PathFromId {
+  class FramePath : public Frame::Configuration::PathFromId {
   public:
     bool TestFileExistence(const std::string &fname) {
       struct _stat buf;
       return !_stat(fname.c_str(), &buf);
     }
 
-    virtual std::string Process(Frames::Environment *env, const std::string &id) {
+    virtual std::string Process(Frame::Environment *env, const std::string &id) {
       // We also append an extension to it if applicable
       std::string prefixed = "data/" + id;
       if (TestFileExistence(prefixed + ".png")) return prefixed + ".png";
@@ -68,7 +68,7 @@ namespace Glorp {
       return "data/" + id;
     }
   };
-  static FramesPath frames_path;
+  static FramePath frames_path;
 
   // get our own rng. why? because it turns out that lua does weird things with RNGs across coroutines
   boost::lagged_fibonacci9689 rngstate(time(NULL));
@@ -132,13 +132,13 @@ namespace Glorp {
 
     dprintf("Environment initialize!");
 
-    Frames::Configuration config;
+    Frame::Configuration config;
     config.logger = &frames_logger;
     config.performance = &frames_performance;
     config.pathFromId = &frames_path;
     config.fontDefaultId = Version::gameFontDefault;
 
-    m_env = new Frames::Environment(config);
+    m_env = new Frame::Environment(config);
     m_env->ResizeRoot(Version::gameXres, Version::gameYres);
     
     m_luaCrashed = false;
@@ -284,7 +284,7 @@ namespace Glorp {
   }
 
   /*static*/ int Core::l_system_time_real(lua_State *L) {
-    Frames::luaF_checkparams(L, 0);
+    Frame::luaF_checkparams(L, 0);
 
     lua_pushnumber(L, timeMicro() / 1000000.);
 
