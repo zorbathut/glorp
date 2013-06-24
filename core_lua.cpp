@@ -19,11 +19,11 @@
 #include <sys/stat.h>
 
 #undef printf
-#include <frames/frame.h>
-#include <frames/texture.h>
-#include <frames/mask.h>
-#include <frames/text.h>
-#include <frames/lua.h>
+#include "frames/frame.h"
+#include "frames/texture.h"
+#include "frames/mask.h"
+#include "frames/text.h"
+#include "frames/lua.h"
 #define printf FAILURE
 
 using namespace std;
