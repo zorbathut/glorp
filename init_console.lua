@@ -1,5 +1,3 @@
-do return end
-
 -- Error and debug console.
 
 -- rig up console
@@ -68,7 +66,7 @@ External.print = hookprint
 
 tentry:EventAttach(Frame.Event.Key.Type, function (f, eh, typ)
   if typ == "\n" then
-    eh:Finalize()
+    --eh:Finalize()
     local command = tentry:GetText()
     tentry:SetText("")
     
