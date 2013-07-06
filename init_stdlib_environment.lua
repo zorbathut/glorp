@@ -46,15 +46,22 @@ end
 local contextlist = {}
 local contextshutdown = setmetatable({}, {__mode = 'k'})
 
-InsertItem(External, "Command.Environment.Create", function (root, label, ...)
+local envchildren = {}
+local envparents = {}
+
+InsertItem(External, "Command.Environment.Create", function (root, label, filename, ...)
   assert(root)
   assert(label)
+  
+  if not envchildren[root] then envchildren[root] = {} end
   
   local contextmeta = {}
   contextmeta.teardown = {}
   
   local nenv = CopyDeep(basic)
   nenv._G = nenv
+  envchildren[root][nenv] = true
+  envparents[nenv] = root
   
   nenv.Command = CopyDeep(root.Command)
   nenv.Inspect = CopyDeep(root.Inspect)
@@ -92,16 +99,7 @@ InsertItem(External, "Command.Environment.Create", function (root, label, ...)
     return res, rv
   end
   
-  for k = 1, select("#", ...) do
-    local v = select(k, ...)
-    if type(v) == "function" then
-      v(nenv)
-    elseif type(v) == "string" then
-      assert(nenv.loadfile(v))(param)
-    else
-      assert(false, "Unknown type fed into Command.Environment.Create")
-    end
-  end
+  assert(nenv.loadfile(filename))(...)
   
   return nenv
 end)
@@ -110,6 +108,16 @@ InsertItem(External, "Command.Environment.Destroy", function (target)
   local meta = contextlist[target]
   assert(meta)
   if not meta then return end
+  
+  -- kill all children first
+  while envchildren[target] and next(envchildren[target]) do
+    External.Command.Environment.Destroy(next(envchildren[target]))
+  end
+  
+  -- delink everything
+  envchildren[target] = nil -- we no longer have children
+  envchildren[envparents[target]][target] = nil -- our parent no longer has us as a child
+  envparents[target] = nil  -- we no longer have a parent
   
   for _, v in ipairs(meta.teardown) do
     v()
