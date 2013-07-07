@@ -2,7 +2,7 @@
 #define GLORP_CORE
 
 // so it doesn't catch the printf define
-#include "frames/environment.h"
+#include "frame/environment.h"
 
 #include "input.h"
 

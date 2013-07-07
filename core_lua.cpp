@@ -19,11 +19,11 @@
 #include <sys/stat.h>
 
 #undef printf
-#include "frames/frame.h"
-#include "frames/texture.h"
-#include "frames/mask.h"
-#include "frames/text.h"
-#include "frames/lua.h"
+#include "frame/frame.h"
+#include "frame/texture.h"
+#include "frame/mask.h"
+#include "frame/text.h"
+#include "frame/lua.h"
 #define printf FAILURE
 
 using namespace std;
@@ -39,7 +39,7 @@ namespace Glorp {
       dprintf("Frame error: %s", log.c_str());
     }
   };
-  static FrameLogger frames_logger;
+  static FrameLogger frame_logger;
 
   class FramePerformance : public Frame::Configuration::Performance {
   public:
@@ -50,7 +50,7 @@ namespace Glorp {
       delete (PerfStack*)handle;
     }
   };
-  static FramePerformance frames_performance;
+  static FramePerformance frame_performance;
 
   class FramePath : public Frame::Configuration::PathFromId {
   public:
@@ -68,7 +68,7 @@ namespace Glorp {
       return "data/" + id;
     }
   };
-  static FramePath frames_path;
+  static FramePath frame_path;
 
   // get our own rng. why? because it turns out that lua does weird things with RNGs across coroutines
   boost::lagged_fibonacci9689 rngstate(time(NULL));
@@ -133,9 +133,9 @@ namespace Glorp {
     dprintf("Environment initialize!");
 
     Frame::Configuration config;
-    config.logger = &frames_logger;
-    config.performance = &frames_performance;
-    config.pathFromId = &frames_path;
+    config.logger = &frame_logger;
+    config.performance = &frame_performance;
+    config.pathFromId = &frame_path;
     config.fontDefaultId = Version::gameFontDefault;
 
     m_env = new Frame::Environment(config);

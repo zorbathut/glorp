@@ -8,7 +8,7 @@
 
 #include "GL/glew.h"
 
-#include "frames/frame.h"
+#include "frame/frame.h"
 
 DEFINE_bool(help, false, "Get help");
 DEFINE_bool(development, false, "Development tools");
