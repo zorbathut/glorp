@@ -1,4 +1,7 @@
 
+#define _WIN32_IE 0x0501
+#define _WIN32_WINNT 0x0501
+
 #include "os.h"
 
 #include "args.h"
@@ -7,8 +10,7 @@
 #include "version.h"
 #include "init.h"
 
-#define _WIN32_IE 0x0501
-#define _WIN32_WINNT 0x0501
+#include "frame/os_win32.h"
 
 #include <windows.h>
 #include <shlobj.h>
@@ -42,41 +44,6 @@ namespace Glorp {
 
   const int c_bpp = 32;
   const int c_depth = 16;
-  
-  const Key c_keyIndex[] = {
-    -1, Keys::MouseLButton, Keys::MouseRButton, -1, Keys::MouseMButton, Keys::Mouse4Button, Keys::Mouse5Button, -1, // 0x00 - 0x07
-    Keys::Backspace, Keys::Tab, -1, -1, -1, Keys::Enter, -1, -1, // 0x08 - 0x0f
-    -1, -1, -1, Keys::Pause, Keys::CapsLock, -1, -1, -1, // 0x10 - 0x17
-    -1, -1, -1, Keys::Escape, -1, -1, -1, -1, // 0x18 - 0x1f
-    ' ', Keys::PageUp, Keys::PageDown, Keys::End, Keys::Home, Keys::Left, Keys::Up, Keys::Right, // 0x20 - 0x27
-    Keys::Down, -1, -1, -1, Keys::PrintScreen, Keys::Insert, Keys::Delete, -1, // 0x28 - 0x2f
-    '0', '1', '2', '3', '4', '5', '6', '7', // 0x30 - 0x37
-    '8', '9', -1, -1, -1, -1, -1, -1, // 0x38 - 0x3f
-    -1, 'a', 'b', 'c', 'd', 'e', 'f', 'g', // 0x40 - 0x47
-    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', // 0x48 - 0x4f
-    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', // 0x50 - 0x57
-    'x', 'y', 'z', Keys::LeftGui, Keys::RightGui, -1, -1, -1, // 0x58 - 0x5f
-    Keys::Pad0, Keys::Pad1, Keys::Pad2, Keys::Pad3, Keys::Pad4, Keys::Pad5, Keys::Pad6, Keys::Pad7,  // 0x60 - 0x67
-    Keys::Pad8, Keys::Pad9, Keys::PadMultiply, Keys::PadAdd, -1, Keys::PadSubtract, Keys::PadDecimal, Keys::PadDivide, // 0x68 - 0x6f
-    Keys::F1, Keys::F2, Keys::F3, Keys::F4, Keys::F5, Keys::F6, Keys::F7, Keys::F8, // 0x70 - 0x77
-    Keys::F9, Keys::F10, Keys::F11, Keys::F12, Keys::F13, Keys::F14, Keys::F15, Keys::F16, // 0x78 - 0x7f
-    Keys::F17, Keys::F18, Keys::F19, Keys::F20, Keys::F21, Keys::F22, Keys::F23, Keys::F24, // 0x80 - 0x87
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0x88 - 0x8f
-    Keys::NumLock, Keys::ScrollLock, -1, -1, -1, -1, -1, -1, // 0x90 - 0x97
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0x98 - 0x9f
-    Keys::LeftShift, Keys::RightShift, Keys::LeftControl, Keys::RightControl, Keys::LeftMenu, Keys::RightMenu, -1, -1, // 0xa0 - 0xa7
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0xa8 - 0xaf
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0xb0 - 0xb7
-    -1, -1, ';', '=', ',', '-', '.', '/', // 0xb8 - 0xbf
-    '`', -1, -1, -1, -1, -1, -1, -1, // 0xc0 - 0xc7
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0xc8 - 0xcf
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0xd0 - 0xd7
-    -1, -1, -1, '[', '\\', ']', '\'', -1, // 0xd8 - 0xdf
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0xe0 - 0xe7
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0xe8 - 0xef
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0xf0 - 0xf7
-    -1, -1, -1, -1, -1, -1, -1, -1, // 0xf8 - 0xff
-  };
 
   void outputDebug(const string &str) {
     OutputDebugString(str.c_str());
@@ -193,19 +160,6 @@ namespace Glorp {
     return "\\";
   }
 
-  KeyEvent CreateBasicEvent() {
-    KeyEvent rv;
-    POINT mouse;
-    GetCursorPos(&mouse);
-    ScreenToClient(s_window, &mouse);
-    rv.mouse_x = mouse.x;
-    rv.mouse_y = mouse.y;
-    rv.shift = GetKeyState(VK_SHIFT) & 0x80;
-    rv.ctrl = GetKeyState(VK_CONTROL) & 0x80;
-    rv.alt = GetKeyState(VK_MENU) & 0x80;
-    return rv;
-  }
-  
   // Handles window messages that arrive by any means, message queue or by direct notification.
   // However, key events are ignored, as input is handled by DirectInput in WindowThink().
   LRESULT CALLBACK HandleMessage(HWND window_handle, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -266,132 +220,16 @@ namespace Glorp {
         if (!s_focused)
           UnlockCursorNow();*/
         break;
-      case WM_KEYDOWN:
-      case WM_SYSKEYDOWN:
-        if (s_core && wParam > 0 && wParam < 256) {
-          KeyEvent event = CreateBasicEvent();
-          if (lParam & (1 << 30)) {
-            event.pressed = KeyEvent::REPEAT;
-          } else {
-            event.pressed = KeyEvent::DOWN;
-          }
-          event.key = c_keyIndex[wParam];
-          s_core->Event(event);
-          // TODO: support built-in key repeat, maybe?
-        }
-        break;
-      case WM_KEYUP:
-      case WM_SYSKEYUP:
-        if (s_core && wParam > 0 && wParam < 256) {
-          KeyEvent event = CreateBasicEvent();
-          event.pressed = KeyEvent::UP;
-          event.key = c_keyIndex[wParam];
-          s_core->Event(event);
-        }
-        break;
-      case WM_UNICHAR:
-        if (s_core && wParam != UNICODE_NOCHAR) {
-          KeyEvent event = CreateBasicEvent();
-          event.typed += (char)wParam; // TODO: utf8ize
-          s_core->Event(event);
-        }
-        break;
-      case WM_CHAR:
-        if (s_core && wParam == '\r') {
-          KeyEvent event = CreateBasicEvent();
-          event.typed += '\n'; // thank you windows
-          s_core->Event(event);
-        } else if (s_core && wParam != '\t' && wParam != '\b' && wParam != '\033') { // windows passes a bunch of nonprintable characters through this way, thanks windows. thwindows.
-          KeyEvent event = CreateBasicEvent();
-          event.typed += (char)wParam; // TODO: utf8ize
-          s_core->Event(event);
-        }
-        break;
-      case WM_MOUSEMOVE:
-        if (s_core) {
-          s_core->Event(CreateBasicEvent()); // this automatically wraps up the current mouse position
-        }
-        break;
-      case WM_LBUTTONDOWN:
-        if (s_core) {
-          KeyEvent event = CreateBasicEvent();
-          event.pressed = KeyEvent::DOWN;
-          event.key = Keys::MouseLButton;
-          s_core->Event(event);
-        }
-        break;
-      case WM_LBUTTONUP:
-        if (s_core) {
-          KeyEvent event = CreateBasicEvent();
-          event.pressed = KeyEvent::UP;
-          event.key = Keys::MouseLButton;
-          s_core->Event(event);
-        }
-        break;
-      case WM_MBUTTONDOWN:
-        if (s_core) {
-          KeyEvent event = CreateBasicEvent();
-          event.pressed = KeyEvent::DOWN;
-          event.key = Keys::MouseMButton;
-          s_core->Event(event);
-        }
-        break;
-      case WM_MBUTTONUP:
-        if (s_core) {
-          KeyEvent event = CreateBasicEvent();
-          event.pressed = KeyEvent::UP;
-          event.key = Keys::MouseMButton;
-          s_core->Event(event);
-        }
-        break;
-      case WM_RBUTTONDOWN:
-        if (s_core) {
-          KeyEvent event = CreateBasicEvent();
-          event.pressed = KeyEvent::DOWN;
-          event.key = Keys::MouseRButton;
-          s_core->Event(event);
-        }
-        break;
-      case WM_RBUTTONUP:
-        if (s_core) {
-          KeyEvent event = CreateBasicEvent();
-          event.pressed = KeyEvent::UP;
-          event.key = Keys::MouseRButton;
-          s_core->Event(event);
-        }
-        break;
-      case WM_XBUTTONDOWN:
-        if (s_core) {
-          KeyEvent event = CreateBasicEvent();
-          event.pressed = KeyEvent::DOWN;
-          if ((wParam >> 16) == XBUTTON1)
-          {
-            event.key = Keys::Mouse4Button;
-          }
-          else if ((wParam >> 16) == XBUTTON2)
-          {
-            event.key = Keys::Mouse5Button;
-          }
-          s_core->Event(event);
-        }
-        break;
-      case WM_XBUTTONUP:
-        if (s_core) {
-          KeyEvent event = CreateBasicEvent();
-          event.pressed = KeyEvent::UP;
-          if ((wParam >> 16) == XBUTTON1)
-          {
-            event.key = Keys::Mouse4Button;
-          }
-          else if ((wParam >> 16) == XBUTTON2)
-          {
-            event.key = Keys::Mouse5Button;
-          }
-          s_core->Event(event);
-        }
-        break;
     }
 
+    if (s_core) {
+      Frame::InputEvent iev;
+      if (InputGatherWin32(&iev, window_handle, message, wParam, lParam))
+      {
+        s_core->Input(iev);
+      }
+    }
+        
     // Pass on remaining messages to the default handler
     
     return DefWindowProcW(window_handle, message, wParam, lParam);

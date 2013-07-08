@@ -1,10 +1,8 @@
 #ifndef GLORP_CORE
 #define GLORP_CORE
 
-// so it doesn't catch the printf define
 #include "frame/environment.h"
-
-#include "input.h"
+#include "frame/input.h"
 
 #include <AL/al.h>
 #include <AL/alc.h>
@@ -19,7 +17,7 @@ namespace Glorp {
 
     static bool Prestartup();
 
-    void Event(const KeyEvent &event);
+    void Input(const Frame::InputEvent &event);
 
     enum UpdateResult { UR_RENDER, UR_QUIT, UR_TICK };
     UpdateResult Update();
