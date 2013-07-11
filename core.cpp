@@ -107,10 +107,10 @@ namespace Glorp {
 
         lua_pushstring(m_L, Frame::Key::StringFromKey(event.GetKey()));
         l_callEvent(m_L, kevid, 1);
+      } else if (event.GetMode() == Frame::InputEvent::MODE_TYPE) {
+        lua_pushstring(m_L, event.GetType().c_str());
+        l_callEvent(m_L, m_event_system_key_type, 1);
       }
-    } else if (event.GetMode() == Frame::InputEvent::MODE_TYPE) {
-      lua_pushstring(m_L, event.GetType().c_str());
-      l_callEvent(m_L, m_event_system_key_type, 1);
     }
   }
 
