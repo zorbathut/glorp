@@ -57,6 +57,7 @@ InsertItem(External, "Command.Environment.Create", function (root, label, filena
   
   local contextmeta = {}
   contextmeta.teardown = {}
+  contextmeta.label = label
   
   local nenv = CopyDeep(basic)
   nenv._G = nenv
@@ -126,8 +127,46 @@ InsertItem(External, "Command.Environment.Destroy", function (target)
   target.Frame.Root:Obliterate()
   
   contextlist[target] = nil
-  contextshutdown[target] = External.Inspect.System.Time.Real()
+  contextshutdown[target] = {time = External.Inspect.System.Time.Real(), label = meta.label}
 end)
+
+local function InsertItem(stack, seen, history, info, this)
+  assert(history)
+  if type(this) == "table" or type(this) == "function" then
+    if not seen[this] then
+      table.insert(stack, {this, history, info})
+    end
+  end
+end
+
+local function TraverseTable(stack, seen, item, history)
+  if getmetatable(item) then
+    InsertItem(stack, seen, item, "metatable", getmetatable(item))
+  end
+  
+  for k, v in pairs(item) do
+    InsertItem(stack, seen, history, "key", k)
+    InsertItem(stack, seen, history, "value, key " .. tostring(k), v)
+  end
+end
+
+local function TraverseFunction(stack, seen, item, history)
+  local t = 1
+  while true do
+    local name, val = debug.getupvalue(item, t)
+    if not name then break end
+    InsertItem(stack, seen, history, name, val)
+    t = t + 1
+  end
+end
+
+local function TraverseItem(stack, seen, item, history)
+  if type(item) == "table" then
+    TraverseTable(stack, seen, item, history)
+  elseif type(item) == "function" then
+    TraverseFunction(stack, seen, item, history)
+  end -- hopefully that will be enough
+end
 
 External.Event.System.Update.Begin:Attach(function ()
   local gctimeout = 2
@@ -135,7 +174,7 @@ External.Event.System.Update.Begin:Attach(function ()
   local gc = false
   
   for k, v in pairs(contextshutdown) do
-    if v < External.Inspect.System.Time.Real() - gctimeout then
+    if v.time < External.Inspect.System.Time.Real() - gctimeout then
       gc = true
     end
   end
@@ -144,7 +183,35 @@ External.Event.System.Update.Begin:Attach(function ()
     print("Doing full garbage collection pass to look for leaks")
     collectgarbage("collect")
     for k, v in pairs(contextshutdown) do
-      assert(v > External.Inspect.System.Time.Real() - gctimeout, string.format("Leak in context!"))
+      if v.time < External.Inspect.System.Time.Real() - gctimeout then
+        -- Found leak, start looking for it
+        print("Found context leak in context", v.label)
+        
+        local stack = {{_G}}
+        local seen = {}
+        seen[contextshutdown] = true
+        while #stack do
+          local itemBlob = table.remove(stack, 1)
+          local item = itemBlob[1]
+          if item == k then
+            print("Found context!")
+            while itemBlob do
+              print(itemBlob[1], itemBlob[2][1], itemBlob[3])
+              itemBlob = itemBlob[2]
+            end
+            assert(false)
+          end
+          
+          if not seen[item] then
+            seen[item] = true
+            
+            TraverseItem(stack, seen, item, itemBlob)
+          end
+        end
+        
+        print("Cannot find context (check coroutines?)")
+        assert(false)
+      end
     end
   end
 end)
