@@ -148,9 +148,9 @@ namespace Glorp {
 
     luaopen_lgl(L);
 
-    CHECK(lua_gettop(L) == 2);
+    CHECK(lua_gettop(L) == 1);
 
-    lua_pop(L, 2);
+    lua_pop(L, 1);
 
     CHECK(lua_gettop(L) == 0);
 
