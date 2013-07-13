@@ -44,6 +44,10 @@ namespace Glorp {
 
   const int c_bpp = 32;
   const int c_depth = 16;
+  
+  // used for aspect ratio enforce
+  int g_window_adjust_x = 0;
+  int g_window_adjust_y = 0;
 
   void outputDebug(const string &str) {
     OutputDebugString(str.c_str());
@@ -160,8 +164,97 @@ namespace Glorp {
     return "\\";
   }
 
+  void resize(int edge, RECT *rect)
+  {
+    int size_x_desired = (rect->right - rect->left) - g_window_adjust_x;
+    int size_y_desired = (rect->bottom - rect->top) - g_window_adjust_y;
+
+    switch (edge)
+    {
+    case WMSZ_BOTTOM:
+    case WMSZ_TOP:
+      {
+        int size_x = g_window_adjust_x + (size_y_desired * Version::gameXres) / Version::gameYres;
+        rect->left = (rect->left + rect->right) / 2 - size_x / 2;
+        rect->right = rect->left + size_x;
+      }
+      break;
+    case WMSZ_BOTTOMLEFT:
+      {
+        int size_x, size_y;
+
+        if (size_x_desired * Version::gameYres > size_y_desired * Version::gameXres) {
+          size_x = rect->right - rect->left;
+          size_y = g_window_adjust_y + ((size_x - g_window_adjust_x) * Version::gameYres) / Version::gameXres;
+        } else {
+          size_y = rect->bottom - rect->top;
+          size_x = g_window_adjust_x + ((size_y - g_window_adjust_y) * Version::gameXres) / Version::gameYres;
+        }
+
+        rect->left = rect->right - size_x;
+        rect->bottom = rect->top + size_y;
+      }
+      break;
+    case WMSZ_BOTTOMRIGHT:
+      {
+        int size_x, size_y;
+
+        if (size_x_desired * Version::gameYres > size_y_desired * Version::gameXres) {
+          size_x = rect->right - rect->left;
+          size_y = g_window_adjust_y + ((size_x - g_window_adjust_x) * Version::gameYres) / Version::gameXres;
+        } else {
+          size_y = rect->bottom - rect->top;
+          size_x = g_window_adjust_x + ((size_y - g_window_adjust_y) * Version::gameXres) / Version::gameYres;
+        }
+
+        rect->right = rect->left + size_x;
+        rect->bottom = rect->top + size_y;
+      }
+      break;
+    case WMSZ_LEFT:
+    case WMSZ_RIGHT:
+      {
+        int size_y = g_window_adjust_y + (size_x_desired * Version::gameYres) / Version::gameXres;
+        rect->top = (rect->top + rect->bottom) / 2 - size_y / 2;
+        rect->bottom = rect->top + size_y;
+      }
+      break;
+    case WMSZ_TOPLEFT:
+      {
+        int size_x, size_y;
+
+        if (size_x_desired * Version::gameYres > size_y_desired * Version::gameXres) {
+          size_x = rect->right - rect->left;
+          size_y = g_window_adjust_y + ((size_x - g_window_adjust_x) * Version::gameYres) / Version::gameXres;
+        } else {
+          size_y = rect->bottom - rect->top;
+          size_x = g_window_adjust_x + ((size_y - g_window_adjust_y) * Version::gameXres) / Version::gameYres;
+        }
+
+        rect->left = rect->right - size_x;
+        rect->top = rect->bottom - size_y;
+      }
+      break;
+    case WMSZ_TOPRIGHT:
+      {
+        int size_x, size_y;
+
+        if (size_x_desired * Version::gameYres > size_y_desired * Version::gameXres) {
+          size_x = rect->right - rect->left;
+          size_y = g_window_adjust_y + ((size_x - g_window_adjust_x) * Version::gameYres) / Version::gameXres;
+        } else {
+          size_y = rect->bottom - rect->top;
+          size_x = g_window_adjust_x + ((size_y - g_window_adjust_y) * Version::gameXres) / Version::gameYres;
+        }
+
+        rect->right = rect->left + size_x;
+        rect->top = rect->bottom - size_y;
+      }
+      break;
+    }
+  }
+
   // Handles window messages that arrive by any means, message queue or by direct notification.
-  // However, key events are ignored, as input is handled by DirectInput in WindowThink().
   LRESULT CALLBACK HandleMessage(HWND window_handle, UINT message, WPARAM wParam, LPARAM lParam) {
     // Extract information from the parameters
     unsigned short wParam1 = LOWORD(wParam)/*, wParam2 = HIWORD(wParam)*/;
@@ -181,8 +274,6 @@ namespace Glorp {
         s_shutdown = true;
         return 0;
       case WM_MOVE:
-        //os_window->x = (signed short)lParam1;
-        //os_window->y = (signed short)lParam2;
         break;
       case WM_SIZE:
         // Set the resolution if a full-screen window was alt-tabbed into.
@@ -202,12 +293,18 @@ namespace Glorp {
         }
         s_minimized = (wParam == SIZE_MINIMIZED);
         if (!s_minimized) {
-          s_width = lParam1;
-          s_height = lParam2;
+          // Commented out so that size changes are "invisible" to the code. TODO fix, once we have a proper scaling UI.
+          //s_width = lParam1;
+          //s_height = lParam2;
         }
         break;
       case WM_SIZING:
-        break;
+        {
+          RECT *rect = reinterpret_cast<RECT *>(lParam);
+          resize(int(wParam), rect);
+          glViewport(0, 0, rect->right - rect->left - g_window_adjust_x, rect->bottom - rect->top - g_window_adjust_y); 
+          break;
+        }
   	  case WM_ACTIVATE:
         s_focused = (wParam1 == WA_ACTIVE || wParam1 == WA_CLICKACTIVE);
         // If the user alt-tabs out of a fullscreen window, the window will keep drawing and will
@@ -272,23 +369,29 @@ namespace Glorp {
     if (!s_fullscreen) {
       window_style = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
       if (Version::resizable)
-        window_style |= WS_MAXIMIZEBOX | WS_THICKFRAME;
+        window_style |= WS_THICKFRAME;
     }
 
     DWORD window_style_ex = 0;
+    
+    int scrx = GetSystemMetrics(SM_CXSCREEN) - 30;
+    int scry = GetSystemMetrics(SM_CYSCREEN) - 60;
 
     // Specify the window dimensions and get the border size
     RECT window_rectangle;
     window_rectangle.left = 0;
-    window_rectangle.right = Version::gameXres;
+    window_rectangle.right = std::min(Version::gameXres, std::min(scrx, scry * Version::gameXres / Version::gameYres));
     window_rectangle.top = 0;
-    window_rectangle.bottom = Version::gameYres;
+    window_rectangle.bottom = std::min(Version::gameYres, std::min(scry, scrx * Version::gameYres / Version::gameXres));
     if (!AdjustWindowRectEx(&window_rectangle, window_style, false, window_style_ex))
     {
       CHECK(false);
       return 0;
     }
 
+    g_window_adjust_x = (window_rectangle.right - window_rectangle.left) - Version::gameXres;
+    g_window_adjust_y = (window_rectangle.bottom - window_rectangle.top) - Version::gameYres;
+    
     s_window = CreateWindowExW(window_style_ex, kClassName, L"Glop window", window_style, CW_USEDEFAULT, CW_USEDEFAULT, window_rectangle.right - window_rectangle.left, window_rectangle.bottom - window_rectangle.top, NULL, NULL, GetModuleHandle(0), NULL);
 
     if (!s_window)
@@ -359,7 +462,6 @@ namespace Glorp {
       return 0;
     }
     wglMakeCurrent(deviceContext, glContext);
-
 
     // turn vsync on
     {
