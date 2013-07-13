@@ -4,9 +4,6 @@
 #include "frame/environment.h"
 #include "frame/input.h"
 
-#include <AL/al.h>
-#include <AL/alc.h>
-
 #include <lua.hpp>
 
 namespace Glorp {
@@ -25,9 +22,6 @@ namespace Glorp {
     void Render();
 
   private:
-    ALCdevice* m_alcDevice;
-    ALCcontext* m_alcContext;
-
     bool m_audioEnabled;
 
     lua_State *m_L;

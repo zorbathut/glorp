@@ -42,8 +42,6 @@ namespace Glorp {
   }
 
   Core::Core() :
-        m_alcDevice(0),
-        m_alcContext(0),
         m_audioEnabled(false),
         m_L(0),
         m_luaCrashed(false),
@@ -57,17 +55,7 @@ namespace Glorp {
         m_env(0)
   {
     if (FLAGS_sound) {
-      m_alcDevice = alcOpenDevice(NULL);
-      if (m_alcDevice) {
-        m_alcContext = alcCreateContext(m_alcDevice, NULL);
-        CHECK(m_alcContext);
-        if (m_alcContext) {
-          alcMakeContextCurrent(m_alcContext);
-          CHECK(alGetError() == AL_NO_ERROR);
-          
-          m_audioEnabled = true;
-        }
-      }
+      // TODO: sound init here, set m_audioenabled to true if it worked
     }
     glewInit();
     l_init();
@@ -75,15 +63,6 @@ namespace Glorp {
 
   Core::~Core() {
     l_shutdown();
-    alcMakeContextCurrent(NULL);
-    if (m_alcContext) {
-      alcDestroyContext(m_alcContext);
-      m_alcContext = NULL;
-    }
-    if (m_alcDevice) {
-      alcCloseDevice(m_alcDevice);
-      m_alcDevice = NULL;
-    }
   }
 
   void Core::Input(const Frame::InputEvent &event) {

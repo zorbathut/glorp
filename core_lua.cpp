@@ -6,7 +6,6 @@
 #include "perfbar.h"
 #include "version.h"
 
-#include "lal.h"
 #include "lgl.h"
 
 #include <lua.hpp>
@@ -148,7 +147,6 @@ namespace Glorp {
     luaL_openlibs(L);
 
     luaopen_lgl(L);
-    luaopen_lal(L);
 
     CHECK(lua_gettop(L) == 2);
 
