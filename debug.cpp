@@ -51,6 +51,7 @@ namespace Glorp {
       first = false;
       //stackOutput();
       Prepare911(file, line, message);
+      crash();
     }
   }
 }

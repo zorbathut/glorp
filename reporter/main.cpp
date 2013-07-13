@@ -103,7 +103,7 @@ int main(int argc, const char *argv[]) {
   const char *msg = argv[7];
   if(strlen(msg) == 0)
   {
-    msg = "Something unexpected has happened, and %s has been shut down.\n\nI've created a datafile including some information that may help Mandible Games fix\nthe error in future versions. It contains no personally identifying information.\n\nMay I send this to Mandible?";
+    msg = "Something unexpected has happened, and %s has been shut down.\n\nI've created a datafile including some information that may help Mandible Games\nfix the error in future versions. It contains no personally identifying information.\n\nMay I send this to Mandible?";
   }
   
   char strbuff[1024];
