@@ -144,7 +144,7 @@ External.Event.System.Update.Begin:Attach(function ()
     print("Doing full garbage collection pass to look for leaks")
     collectgarbage("collect")
     for k, v in pairs(contextshutdown) do
-      assert(v > External.Inspect.System.Time.Real() - gctimeout)
+      assert(v > External.Inspect.System.Time.Real() - gctimeout, string.format("Leak in context!"))
     end
   end
 end)
