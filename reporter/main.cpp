@@ -17,7 +17,7 @@ using namespace std;
 #include <windows.h> // :D
 
 int Message(const string &text, bool yesno) {
-  int rv = MessageBox(NULL, text.c_str(), "Crash Report", yesno ? MB_OKCANCEL : MB_OK);
+  int rv = MessageBox(NULL, text.c_str(), "Croosh Report", (yesno ? MB_OKCANCEL : MB_OK) | MB_SETFOREGROUND);
   if(rv == IDOK)
     return true;
   return false;

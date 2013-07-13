@@ -51,8 +51,8 @@ namespace Glorp {
       
       vector<string> params;
       boost::assign::push_back(params)(Version::gameSlug)(fname)(string(Version::gameSlug) + "-" + Version::gameVersion + "-" + Version::gamePlatform)(crashfname)(Format("%d", crashline))(Format("%d", exeSize()))(message);
-      //spawn("data/reporter", params);
-      spawn("build/cygwin/reporter", params);
+      spawn("data/reporter", params);
+      sleep(1000);
     }
   };
 }
