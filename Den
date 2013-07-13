@@ -316,6 +316,11 @@ do
             local dst = destprefix .. k
             local src = sourceprefix .. k
             
+            -- copyright infringement hack
+            if src:match("copyright_infringement") then
+              src = "glorp/resources/common/nil." .. ext
+            end
+            
             local odst = dst
             
             local cli
