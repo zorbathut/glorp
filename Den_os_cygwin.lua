@@ -20,6 +20,18 @@ local rv = {}
 rv.extension = ".exe"
 rv.lua_buildtype = "cygwin"
 
+rv.extraLinkSources = {}
+do
+  local iconsrc  = params.icon or "glorp/resources/cygwin/mandicomulti.ico"
+  local icondst = params.builddir .. "glorp/icon.ico"
+  local rcsrc = "glorp/resources/cygwin/resource.rc"
+  local rcdst = params.builddir .. "glorp/resource.rc"
+  local icod = ursa.rule{icondst, iconsrc, ursa.util.copy{}}
+  local rc = ursa.rule{rcdst, rcsrc, ursa.util.copy{}}
+  
+  table.insert(rv.extraLinkSources, ursa.rule{params.builddir .. "glorp/resource.res", {icondst, rcdst}, ursa.util.system_template{"nice windres " .. rcdst .. " -O coff -o $TARGET"}})
+end
+
 -- runnable
 rv.create_runnable = function(dat)
   local liboutpath = params.builddir
