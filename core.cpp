@@ -2,10 +2,11 @@
 #include "args.h"
 #include "core.h"
 #include "debug.h"
+#include "reporter.h"
 #include "os.h"
+#include "pak.h"
 #include "perfbar.h"
 #include "version.h"
-#include "reporter.h"
 
 #include "GL/glew.h"
 
@@ -48,6 +49,9 @@ namespace Glorp {
     
     // placed after report() so we don't forkbomb anyone
     Allow911();
+    
+    // get our pak system up and running
+    PakInit();
     
     return false;
   }

@@ -150,7 +150,7 @@ end
 local core_files = "debug util parse args init " .. os_files
 
 local buildables = {
-  [params.name] = {dynfiles = "version lgl", glorpfiles = "core core_lua debug_911 debug util parse args init perfbar reporter " .. os_files, mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", libs = "boost lua luabind zlib libpng libjpeg libvorbis libogg libflac portaudio frame glew libfreetype libcurl" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")}
+  [params.name] = {dynfiles = "version lgl", glorpfiles = "core core_lua debug_911 debug util parse args init perfbar pak reporter " .. os_files, mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", libs = "boost lua luabind zlib libpng libjpeg libvorbis libogg libflac portaudio frame glew libfreetype libcurl" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")}
 }
 
 -- TEST CODE: build all libraries

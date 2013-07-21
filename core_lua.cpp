@@ -3,6 +3,7 @@
 #include "core.h"
 #include "debug.h"
 #include "os.h"
+#include "pak.h"
 #include "perfbar.h"
 #include "version.h"
 
@@ -14,15 +15,13 @@
 
 #include <ctime>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-
 #undef printf
 #include "frame/frame.h"
 #include "frame/texture.h"
 #include "frame/mask.h"
 #include "frame/text.h"
 #include "frame/lua.h"
+#include "frame/stream.h"
 #define printf FAILURE
 
 using namespace std;
@@ -53,21 +52,31 @@ namespace Glorp {
 
   class FramePath : public Frame::Configuration::PathFromId {
   public:
-    bool TestFileExistence(const std::string &fname) {
-      struct _stat buf;
-      return !_stat(fname.c_str(), &buf);
-    }
-
     virtual std::string Process(Frame::Environment *env, const std::string &id) {
       // We also append an extension to it if applicable
       std::string prefixed = "data/" + id;
-      if (TestFileExistence(prefixed + ".png")) return prefixed + ".png";
-      if (TestFileExistence(prefixed + ".jpg")) return prefixed + ".jpg";
-      if (TestFileExistence(prefixed + ".ttf")) return prefixed + ".ttf";
+      if (PakHas(prefixed + ".png")) return prefixed + ".png";
+      if (PakHas(prefixed + ".jpg")) return prefixed + ".jpg";
+      if (PakHas(prefixed + ".ttf")) return prefixed + ".ttf";
       return "data/" + id;
     }
   };
   static FramePath frame_path;
+  
+  class FrameStream : public Frame::Configuration::StreamFromId {
+  public:
+    virtual Frame::Stream *Create(Frame::Environment *env, const std::string &id) {
+      std::string path = env->GetConfiguration().pathFromId->Process(env, id);
+      if (!path.empty()) {
+        std::vector<unsigned char> data;
+        PakRead(path, &data);
+        return Frame::StreamBuffer::Create(data);
+      }
+
+      return 0;
+    }
+  };
+  static FrameStream frame_stream;
 
   // get our own rng. why? because it turns out that lua does weird things with RNGs across coroutines
   boost::lagged_fibonacci9689 rngstate(time(NULL));
@@ -135,6 +144,7 @@ namespace Glorp {
     config.logger = &frame_logger;
     config.performance = &frame_performance;
     config.pathFromId = &frame_path;
+    config.streamFromId = &frame_stream;
     config.fontDefaultId = Version::gameFontDefault;
 
     m_env = new Frame::Environment(config);
