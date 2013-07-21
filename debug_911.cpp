@@ -50,8 +50,8 @@ namespace Glorp {
       }
       
       vector<string> params;
-      boost::assign::push_back(params)(Version::gameSlug)(fname)(string(Version::gameSlug) + "-" + Version::gameVersion + "-" + Version::gamePlatform)(crashfname)(Format("%d", crashline))(Format("%d", exeSize()))(message);
-      spawn("data/reporter", params);
+      boost::assign::push_back(params)("--report_send")("--reporter_dumpfile=" + fname)("--reporter_version=" + string(Version::gameSlug) + "-" + Version::gameVersion + "-" + Version::gamePlatform)("--reporter_file=" + std::string(crashfname))("--reporter_line=" + Format("%d", crashline))("--reporter_exesize=" + Format("%d", exeSize()));
+      spawn(exeName(), params);
       sleep(1000);
     }
   };

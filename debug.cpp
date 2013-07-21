@@ -44,13 +44,20 @@ namespace Glorp {
     
     return 0;
   };
+  
+  static bool allow = false;
+  void Allow911() {
+    allow = true;
+  }
 
   static bool first = true;
   void CheckHandler(const char *file, int line, const char *message) {
     if (first) {
       first = false;
       //stackOutput();
-      Prepare911(file, line, message);
+      if (allow) {
+        Prepare911(file, line, message);
+      }
       crash();
     }
   }

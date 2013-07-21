@@ -1,0 +1,4 @@
+
+namespace Glorp {
+  void report();
+}

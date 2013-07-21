@@ -14,6 +14,8 @@ namespace Glorp
   void CheckHandler(const char *file, int line, const char *message);
   int rdprintf(const char *format, ...) __attribute__((format(printf,1,2)));
   int rdprintf();
+  
+  void Allow911();
 }
 
 #define dprintf(format, args...) Glorp::rdprintf("%16.16s:%4d: " format, __FILE__, __LINE__, ## args)

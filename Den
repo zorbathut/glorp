@@ -150,8 +150,7 @@ end
 local core_files = "debug util parse args init " .. os_files
 
 local buildables = {
-  [params.name] = {dynfiles = "version lgl", glorpfiles = "core core_lua debug_911 debug util parse args init perfbar " .. os_files, mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", libs = "boost lua luabind zlib libpng libjpeg libvorbis libogg libflac portaudio frame glew libfreetype" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")},
-  ["reporter"] = {dynfiles = "version", glorpfiles = "reporter/main", mmfiles = (platform == "osx") and "os_ui_osx" or "", libs = "zlib libcurl", flags = "-DSUPPRESS_GLOP"},
+  [params.name] = {dynfiles = "version lgl", glorpfiles = "core core_lua debug_911 debug util parse args init perfbar reporter " .. os_files, mmfiles = (osd.gles and "main_iphone") or ((platform == "osx") and "os_ui_osx") or "", libs = "boost lua luabind zlib libpng libjpeg libvorbis libogg libflac portaudio frame glew libfreetype libcurl" .. (params.libs.box2d and " box2d" or "") .. (params.libs.lfs and " lfs" or "")}
 }
 
 -- TEST CODE: build all libraries
@@ -272,7 +271,6 @@ local function build_program(name)
 end
 
 local mainprog = build_program(params.name)
-local reporter = build_program("reporter")
 
 ------------------------------------------------------------------
 -- PACKAGING
@@ -427,7 +425,7 @@ end
 ------------------------------------------------------------------
 -- RUN THINGS
 
-local runnable = osd.create_runnable{mainprog = mainprog, reporter = reporter}
+local runnable = osd.create_runnable{mainprog = mainprog}
 
 ursa.command{ursa.command.default, {runnable.deps, genfiles}}
 
@@ -438,7 +436,6 @@ else
   ursa.command{"runsound", {runnable.deps, genfiles}, runnable.cli .. " debug"}
   ursa.command{"runclean", {runnable.deps, genfiles}, runnable.cli}
   ursa.command{"editor", {runnable.deps, genfiles}, runnable.cli .. " editor"}
-  ursa.command{"reporter", reporter}
 end
 
 if not noluajit and optflags == "-O2" then

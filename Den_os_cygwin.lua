@@ -49,16 +49,15 @@ function rv.installers()
 
   -- DLLs and executables
   table.insert(data, ursa.rule{params.builddir .. "deploy/" .. params.name .. ".exe", params.builddir .. params.name .. ".exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
-  table.insert(data, ursa.rule{params.builddir .. "deploy/data/reporter.exe", params.builddir .. "reporter.exe", ursa.util.system_template{"cp $SOURCE $TARGET && strip -s $TARGET"}})
   
   cull_data({data})
 
   ursa.token.rule{"installers", "#version", function ()
     local v = ursa.token{"version"}
     
-    local exesuffix = ("%s-%s.exe"):format(params.midname, v)
+    local exesuffix = ("%s-%s-installer.exe"):format(params.midname, v)
     local exedest = "build/" .. exesuffix
-    ursa.rule{params.builddir .. "installer.nsi", {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version", "glorp/resources/cygwin/installer.nsi.template"}, function()
+    ursa.rule{params.builddir .. "installer.nsi", {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version", "glorp/resources/cygwin/installer.nsi.template", "!" .. exesuffix}, function()
       local files = ursa.system{("cd %sdeploy && find . -type f | sed s*\\\\./**"):format(params.builddir)}
       local dir = ursa.system{("cd %sdeploy && find . -type d | sed s*\\\\./**"):format(params.builddir)}
       
@@ -102,9 +101,31 @@ function rv.installers()
       otp:close()
     end}
     
+    local standalonesuffix = ("%s-%s.exe"):format(params.midname, v)
+    local standalonedest = "build/" .. standalonesuffix
+    local ziptemp = params.builddir .. "standalone.zip"
+    local zipresult = ursa.rule{ziptemp, {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{string.format("cd #BUILDDIR/deploy ; zip -0 -j ../standalone.zip %s.exe ; zip -9 -r ../standalone.zip data", params.name)}}
+    
     return {
       ursa.rule{("build/%s-%s.zip"):format(params.midname, v), {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version"}, ursa.util.system_template{"cd #BUILDDIR/deploy ; zip -9 -r ../../../$TARGET *"}},
       ursa.rule{exedest, {data, ursa.util.token_deferred{"built_data"}, "#culled_data", "#version", params.builddir .. "installer.nsi"}, ursa.util.system_template{"cd #BUILDDIR && /cygdrive/c/Program\\ Files\\ \\(x86\\)/NSIS/makensis.exe installer.nsi"}},
+      ursa.rule{standalonedest, zipresult, function ()
+        local exec = io.open(params.builddir .. "deploy/" .. params.name .. ".exe", "rb")
+        local dat = exec:read("*a")
+        exec:close()
+        
+        local zip = io.open(params.builddir .. "standalone.zip", "rb")
+        zip:read(#dat)
+        local ziprest = zip:read("*a")
+        zip:close()
+        
+        local out = io.open(standalonedest, "wb")
+        out:write(dat)
+        out:write(ziprest)
+        out:close()
+        
+        ursa.system{"chmod +x " .. standalonedest}
+      end}
     }
   end, always_rebuild = true}
   

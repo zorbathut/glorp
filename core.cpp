@@ -5,6 +5,7 @@
 #include "os.h"
 #include "perfbar.h"
 #include "version.h"
+#include "reporter.h"
 
 #include "GL/glew.h"
 
@@ -14,6 +15,7 @@ DEFINE_bool(help, false, "Get help");
 DEFINE_bool(development, false, "Development tools");
 DEFINE_bool(permit_ogl1, false, "Permit OpenGL 1.0 renderer. Note this may crash in many fascinating manners or fail to render important parts of the game, this is strictly for local testing, here there be dragons");
 DEFINE_bool(sound, true, "Enable sound");
+DEFINE_bool(report_send, false, "Send error report");
 
 namespace Glorp {
 
@@ -38,6 +40,15 @@ namespace Glorp {
       beginShutdown();
       return true;
     }
+    
+    if (FLAGS_report_send) {
+      report();
+      return true;
+    }
+    
+    // placed after report() so we don't forkbomb anyone
+    Allow911();
+    
     return false;
   }
 
