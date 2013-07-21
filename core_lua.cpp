@@ -5,6 +5,7 @@
 #include "os.h"
 #include "pak.h"
 #include "perfbar.h"
+#include "util.h"
 #include "version.h"
 
 #include "lgl.h"
@@ -133,6 +134,48 @@ namespace Glorp {
     return 0;
   }
   
+  struct ReaderData {
+    ReaderData() : finished(false) { }
+    
+    std::vector<unsigned char> dat;
+    bool finished;
+  };
+  
+  static const char *package_reader(lua_State *L, void *ud, size_t *size)
+  {
+    ReaderData *rdat = (ReaderData *)ud;
+    if (rdat->finished) {
+      return 0;
+    } else {
+      rdat->finished = true;
+      *size = rdat->dat.size();
+      return (const char *)&rdat->dat[0];
+    }
+  }
+  
+  static int package_loadfile(lua_State *L) {
+    const char *fname = luaL_checkstring(L, 1);
+    
+    if (!PakHas(fname)) {
+      lua_pushnil(L);
+      lua_pushfstring(L, "cannot open %s: No such file or directory", fname);
+      return 2;
+    }
+    
+    ReaderData rdat;
+    PakRead(fname, &rdat.dat);
+    
+    if (lua_load(L, package_reader, &rdat, Format("@%s", fname).c_str())) {
+      // error
+      lua_pushnil(L);
+      lua_insert(L, -2);
+      return 2;
+    } else {
+      // no error
+      return 1;
+    }
+  }
+  
   void Core::l_init() {
     CHECK(!m_L);
     if (m_L)
@@ -175,6 +218,10 @@ namespace Glorp {
     // replace print
     lua_pushcfunction(L, debug_print);
     lua_setglobal(L, "print");
+    
+    // replace loadfile
+    lua_pushcfunction(L, package_loadfile);
+    lua_setglobal(L, "loadfile");
 
     // push registry
     lua_newtable(L);
@@ -188,20 +235,45 @@ namespace Glorp {
 
     // the bulk of the lua init
     {
-      int error = luaL_loadfile(L, "data/glorp/init_bootstrap.lua");
-      if(error) {
-        lua_pop(L, 1);
-        error = luaL_loadfile(L, "glorp/init_bootstrap.lua");
-      }
-      if(error) {
-        CHECK(0, "%s", lua_tostring(L, -1));
+      // boot up our bootstrap file
+      lua_getglobal(L, "loadfile");
+      lua_pushstring(L, "data/glorp/init_bootstrap.lua");
+      if (lua_pcall(L, 1, 2, 0)) {
+        dprintf("Init crashed!");
+        CHECK(0);
         m_luaCrashed = true;
-        lua_pop(L, 1);
+        lua_pop(L, 2);
         return;
       }
+      
+      if (lua_isnil(L, -2)) {
+        lua_pop(L, 2);
+        
+        // try again with a different path
+        lua_getglobal(L, "loadfile");
+        lua_pushstring(L, "glorp/init_bootstrap.lua");
+        if (lua_pcall(L, 1, 2, 0)) {  // we want to include the error message this time to make debugging easier
+          dprintf("Init crashed!");
+          CHECK(0);
+          m_luaCrashed = true;
+          lua_pop(L, 2);
+          return;
+        }
+      }
+      
+      if (lua_isnil(L, -2)) {
+        // welp, crashed - dump error message and abort
+        CHECK(0, "%s", lua_tostring(L, -1));
+        m_luaCrashed = true;
+        lua_pop(L, 2);
+        return;
+      }
+      
+      // toss the error message
+      lua_pop(L, 1);
 
-      if (lua_pcall(L, 0, 1, 0))
-      {
+      // call our bootstrap function
+      if (lua_pcall(L, 0, 1, 0)) {
         dprintf("Init crashed!");
         CHECK(0);
         m_luaCrashed = true;
@@ -209,6 +281,7 @@ namespace Glorp {
         return;
       }
 
+      // we should now have our bootstrap package
       CHECK(lua_gettop(L) == 1);
 
       lua_getfield(L, 1, "Wrap");
