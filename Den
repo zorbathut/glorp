@@ -89,7 +89,6 @@ local function addHeadersFor(lib)
 end
 
 -- Test code to build a single library easily
-print(params.targets[1])
 if params.targets[1] == "libtest" then
   local testy = params.targets[2]
   addHeadersFor(testy)
@@ -101,7 +100,8 @@ end
 local libcflags = string.format("%s -I%s/build/%s/lib_release/include", ursa.token{"CCFLAGS"}, ursa.token{"PWD"}, platform)
 local libldflags = string.format("%s -L%s/build/%s/lib_release/lib", ursa.token{"LDFLAGS"}, ursa.token{"PWD"}, platform)
 
-ursa.token.rule{"version", nil, ("git describe --always --match %s-* | sed s/%s-//"):format(params.name, params.name), always_rebuild = true}
+ursa.token.rule{"gitrefs", nil, "git show-ref", always_rebuild = true}
+ursa.token.rule{"version", "#gitrefs", ("git describe --always --match %s-* | sed s/%s-//"):format(params.name, params.name)}
 
 local genfiles = {}
 
