@@ -69,6 +69,9 @@ function CreateEvent(root, name)
   InsertItem(root, "Event." .. name, CreateContextHandle(nil, root))
 
   return function (...)
+    if not name:match("System") then
+      print("Event." .. name, ...)
+    end
     locks = locks + 1
     for i = 1, #db do
       assert(type(db[i].f) == "function")

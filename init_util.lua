@@ -6,12 +6,12 @@ function InsertItem(root, path, item)
   local current = root
   for word in path:gmatch("([^.]+)") do
     current[word] = current[word] or {}
-    --assert(type(current[word]) == "table")
+    assert(type(current[word]) == "table")
     last, current, lastword = current, current[word], word
   end
 
-  --assert(type(last[lastword]) == "table")
-  --assert(not next(last[lastword]))
+  assert(type(last[lastword]) == "table")
+  assert(not next(last[lastword]))
   last[lastword] = item
 
   return item

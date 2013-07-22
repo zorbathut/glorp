@@ -13,19 +13,7 @@ function CopyDeep(src)
   end
 end
 
-local basic = {}
-for k, v in pairs(External) do
-  -- we kill _G because of infinite loops
-  -- we kill package because package.loaded causes infinite loops, and honestly, I don't use package for anything
-  if k ~= "_G" and k ~= "package" then
-    basic[CopyDeep(k)] = CopyDeep(v)
-  end
-end
-basic.Event = nil
-basic.Command = nil
-basic.Inspect = nil
-basic.Utility = nil
-basic.Frame.Root = nil
+local basic = {}  -- we fill this once the Environment stuff is inserted
 
 local function RecursiveEventRecreate(target, source, context, eventlist)
   for k, v in pairs(source) do
@@ -49,7 +37,7 @@ local contextshutdown = setmetatable({}, {__mode = 'k'})
 local envchildren = {}
 local envparents = {}
 
-InsertItem(External, "Command.Environment.Create", function (root, label, filename, ...)
+InsertItem(External, "Command.Environment.Create", function (root, label, filename, propogations, ...)
   assert(root)
   assert(label)
   
@@ -61,20 +49,34 @@ InsertItem(External, "Command.Environment.Create", function (root, label, filena
   
   local nenv = CopyDeep(basic)
   nenv._G = nenv
+  -- Need to blow away the events and recreate it so that the teardown works right
+  nenv.Event = {}
+  RecursiveEventRecreate(nenv.Event, basic.Event, nenv, contextmeta.teardown)
   envchildren[root][nenv] = true
   envparents[nenv] = root
+
+  local function PropogateSingle(k)
+    nenv.Command[k] = CopyDeep(root.Command[k])
+    nenv.Inspect[k] = CopyDeep(root.Inspect[k])
+    nenv.Utility[k] = CopyDeep(root.Utility[k])
+    if root.Event[k] then
+      nenv.Event[k] = {}
+      RecursiveEventRecreate(nenv.Event[k], root.Event[k], nenv, contextmeta.teardown)
+    end
+  end
   
-  nenv.Command = CopyDeep(root.Command)
-  nenv.Inspect = CopyDeep(root.Inspect)
-  nenv.Utility = CopyDeep(root.Utility)
+  PropogateSingle("Debug")
+  PropogateSingle("Library")
+  
+  if propogations then
+    for _, k in ipairs(propogations) do
+      PropogateSingle(k)
+    end
+  end
   
   nenv.Frame.Root = nenv.Frame.Frame(root.Frame.Root)
   nenv.Frame.Root:SetPoint("TOPLEFT", root.Frame.Root, "TOPLEFT")
   nenv.Frame.Root:SetPoint("BOTTOMRIGHT", root.Frame.Root, "BOTTOMRIGHT")
-  
-  nenv.Event = {}
-  
-  RecursiveEventRecreate(nenv.Event, root.Event, nenv, contextmeta.teardown)
   
   contextlist[nenv] = contextmeta
 
@@ -129,6 +131,19 @@ InsertItem(External, "Command.Environment.Destroy", function (target)
   contextlist[target] = nil
   contextshutdown[target] = {time = External.Inspect.System.Time.Real(), label = meta.label}
 end)
+
+-- Build "basic"
+for k, v in pairs(External) do
+  -- we kill _G because of infinite loops
+  -- we kill package because package.loaded causes infinite loops, and honestly, I don't use package for anything
+  if k ~= "_G" and k ~= "package" then
+    basic[CopyDeep(k)] = CopyDeep(v)
+  end
+end
+basic.Frame.Root = nil
+
+--------------------------------------
+-- GC cleanup code below this point
 
 local function InsertItem(stack, seen, history, info, this)
   assert(history)
@@ -190,7 +205,7 @@ External.Event.System.Update.Begin:Attach(function ()
         local stack = {{_G}}
         local seen = {}
         seen[contextshutdown] = true
-        while #stack do
+        while #stack > 0 do
           local itemBlob = table.remove(stack, 1)
           local item = itemBlob[1]
           if item == k then

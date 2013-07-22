@@ -7,7 +7,7 @@ function InitComplete()
   -- Global lua libraries that aren't needed for early init
   assert(loadfile("glorp/init_stdlib.lua"))()
   
-  -- Debug-only tools
+  -- Debug-only tools that don't need to propogate through environment
   assert(loadfile("glorp/init_console.lua"))()
   
   -- All systems initialized, load the game

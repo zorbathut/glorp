@@ -27,6 +27,8 @@
 
 using namespace std;
 
+DEFINE_bool(debug, false, "Debug flag")
+
 namespace Glorp {
 
   class FrameLogger : public Frame::Configuration::Logger {
@@ -399,7 +401,9 @@ namespace Glorp {
     if (lua_pcall(L, 1 + params, 0, 0)) {
       dprintf("call event error");
       m_luaCrashed = true;
-      CHECK(0);
+      if (!FLAGS_debug) {
+        CHECK(0);
+      }
       lua_pop(L, 1);
     }
   }
