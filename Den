@@ -439,7 +439,7 @@ end
 if not noluajit and optflags == "-O2" then
   local installers = osd.installers("datafiles")
   ursa.command{"package", installers}
-  ursa.command{"deploy", installers, "deploy.sh " .. params.name .. "-" .. ursa.token{"version"}}
+  ursa.command{"deploy", installers, "deploy.sh " .. params.midname .. "-" .. ursa.token{"version"} .. ".exe"}
 end
 
 clean_dirs = {}
