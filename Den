@@ -438,6 +438,7 @@ end
 
 if not noluajit and optflags == "-O2" then
   ursa.command{"package", osd.installers("datafiles")}
+  ursa.command{"deploy", osd.installers("datafiles"), "deploy.sh " .. params.name .. "-" .. ursa.token{"version"}}
 end
 
 clean_dirs = {}
